@@ -66,8 +66,8 @@ export default function DashboardLayout({ children, userRole }) {
             ],
             admin: [
                 { name: 'User Management', icon: HiUsers, position: 1 },
-                { name: 'Reports', icon: HiChartBar, position: 2 },
-                { name: 'System Settings', icon: HiCog, position: 3 },
+                { name: 'Beneficiary Logs', icon: HiClipboardCheck, position: 2 },
+                { name: 'Donation Requests', icon: HiDatabase, position: 3 },
                 { name: 'Notifications', icon: HiBell, position: 4 },
                 { name: 'Calendar', icon: HiCalendar, position: 5 },
                 { name: 'Settings', icon: HiCog, position: 6 }

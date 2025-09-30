@@ -84,7 +84,7 @@ function DonationRequests() {
         </button>
       </div>
 
-      {/* Table */}
+      {/* Donation Requests Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-red-600">

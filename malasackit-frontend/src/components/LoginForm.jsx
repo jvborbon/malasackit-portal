@@ -35,7 +35,7 @@ export default function LoginForm({ onSwitchToRegister }) {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             // Mock authentication logic
-            // In a real app, this would be an API call to your backend
+            // would be an API call to your backend
             const mockUsers = [
                 { email: 'donor@example.com', password: 'password123', type: 'donor' },
                 { email: 'staff@example.com', password: 'staff123', type: 'staff' },

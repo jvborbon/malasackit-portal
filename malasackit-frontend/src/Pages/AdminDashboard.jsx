@@ -6,37 +6,23 @@ import TopParishesSection from '../analytics/descriptivechart/admin/TopParishesS
 import TopMunicipalitySection from '../analytics/descriptivechart/admin/TopMunicipalitySection';
 import DonatedItemsChart from '../analytics/descriptivechart/staff/DonatedItemsChart';
 import UserProfileSettings from '../components/UserProfileSettings';
+import DonationRequests from '../components/DonationRequests';
+import BeneficiaryLogs from '../components/BeneficiaryLogs';
+import UserManagement from '../components/UserManagement';
+
 
 export default function AdminDashboard() {
     // Function to render main content based on active navigation
     const renderMainContent = ({ activeNav, userInfo }) => {
         switch (activeNav) {
             case 'User Management':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">User Management</h2>
-                        <p className="text-gray-600">Manage users, roles, and permissions.</p>
-                        {/* Add user management components here */}
-                    </div>
-                );
+                return <UserManagement />;
             
-            case 'Reports':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Reports</h2>
-                        <p className="text-gray-600">View system reports and analytics.</p>
-                        {/* Add reporting components here */}
-                    </div>
-                );
+            case 'Beneficiary Logs':
+               return <BeneficiaryLogs />;
 
-            case 'System Settings':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">System Settings</h2>
-                        <p className="text-gray-600">Configure system-wide settings.</p>
-                        {/* Add system settings components here */}
-                    </div>
-                );
+            case 'Donation Requests':
+                return <DonationRequests />;
 
             case 'Notifications':
                 return (
@@ -62,17 +48,16 @@ export default function AdminDashboard() {
             default: // Dashboard (Overview)
                 return (
                     <div className="space-y-6">
-                        {/* KPI Cards */}
                         <StaffKPICards />
                         
                         {/* Charts Grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Donation Reports Chart */}
+
                             <div className="bg-white rounded-lg shadow-sm p-6">
                                 <DonationReportsChart />
                             </div>
 
-                            {/* Top Donors Section */}
+                            
                             <div className="bg-white rounded-lg shadow-sm p-6">
                                 <TopDonorsSection />
                             </div>
@@ -80,14 +65,10 @@ export default function AdminDashboard() {
 
                         {/* New KPI Sections Grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Top Parishes Section */}
                             <TopParishesSection />
-
-                            {/* Top Municipality Section */}
                             <TopMunicipalitySection />
                         </div>
 
-                        {/* Donated Items Chart */}
                         <div className="bg-white rounded-lg shadow-sm p-6">
                             <DonatedItemsChart />
                         </div>

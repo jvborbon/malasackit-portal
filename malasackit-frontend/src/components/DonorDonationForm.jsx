@@ -65,7 +65,7 @@ export default function DonorDonationForm() {
         
         console.log('Donation submitted:', donationData);
         
-        // Here you would typically send the data to your backend
+        // would send the data to your backend
         alert('Donation submitted successfully!');
         
         // Reset form
@@ -193,7 +193,6 @@ export default function DonorDonationForm() {
                                 </div>
                             </div>
 
-                            {/* Description */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Description

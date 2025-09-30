@@ -168,7 +168,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
               <HiLightBulb className="w-6 h-6 text-red-600 mr-3" />
               Distribution Planning
             </h3>
-            <p className="text-gray-600 mt-1">AI-optimized donation distribution system</p>
+            <p className="text-gray-600 mt-1">Create plans for distributing beneficiary needs.</p>
           </div>
           <button
             onClick={onClose}
@@ -220,7 +220,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                     Location Selection
                   </span>
                   <span className={`font-medium transition-colors text-center ${step >= 2 ? 'text-red-600' : 'text-gray-500'}`}>
-                    AI Analytics
+                    Data Analytics
                   </span>
                   <span className={`font-medium transition-colors text-center ${step >= 3 ? 'text-red-600' : 'text-gray-500'}`}>
                     Distribution Plan
