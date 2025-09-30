@@ -87,72 +87,74 @@ function BeneficiaryLogs() {
 
       {/* Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-red-600">
-            <tr>
-              <th className="px-6 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedItems.length === filteredLogs.length && filteredLogs.length > 0}
-                  onChange={toggleSelectAll}
-                  className="rounded border-white text-red-600 focus:ring-red-500"
-                />
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Full Name</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Beneficiary ID</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Details</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Action</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredLogs.map((log, idx) => (
-              <tr key={log.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
+        <div className="overflow-y-auto max-h-96">
+          <table className="min-w-full">
+            <thead className="bg-red-600 sticky top-0">
+              <tr>
+                <th className="px-6 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={selectedItems.includes(log.id)}
-                    onChange={() => toggleSelectItem(log.id)}
-                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    checked={selectedItems.length === filteredLogs.length && filteredLogs.length > 0}
+                    onChange={toggleSelectAll}
+                    className="rounded border-white text-red-600 focus:ring-red-500"
                   />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.fullName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{log.beneficiaryId}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{log.details}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={
-                      log.status === "Completed"
-                        ? "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
-                        : "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                    }
-                  >
-                    {log.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                  <button className="text-blue-600 hover:text-blue-900">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button className="text-red-600 hover:text-red-900">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </td>
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Full Name</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Beneficiary ID</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Details</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Action</th>
               </tr>
-            ))}
-            {filteredLogs.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">No logs found.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredLogs.map((log, idx) => (
+                <tr key={log.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(log.id)}
+                      onChange={() => toggleSelectItem(log.id)}
+                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.fullName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{log.beneficiaryId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{log.details}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={
+                        log.status === "Completed"
+                          ? "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+                          : "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
+                      }
+                    >
+                      {log.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                    <button className="text-blue-600 hover:text-blue-900">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredLogs.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">No logs found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Update Logs Button */}
+        {/* Update Logs Button - Fixed at bottom */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
           <button className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
             Add
