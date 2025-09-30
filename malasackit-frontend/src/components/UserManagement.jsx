@@ -86,6 +86,11 @@ export default function UserManagement() {
         setLoading(false);
     }, []);
 
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterRole, filterStatus]);
+
     // Filter and search logic
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -322,30 +327,28 @@ export default function UserManagement() {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                        Showing {currentUsers.length} of {filteredUsers.length} users
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-sm text-gray-700">Page {currentPage} of {totalPages}</span>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Next
-                        </button>
-                    </div>
+            <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                    Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} users
                 </div>
-            )}
+                <div className="flex items-center space-x-2">
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm text-gray-700">Page {currentPage} of {Math.max(1, totalPages)}</span>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages || totalPages <= 1}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
 
             {/* Modals */}
             {showAddModal && (
