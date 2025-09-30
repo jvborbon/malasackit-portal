@@ -81,10 +81,9 @@ export default function UserManagement() {
             }
         ];
         
-        setTimeout(() => {
-            setUsers(mockUsers);
-            setLoading(false);
-        }, 1000);
+        // Load data immediately instead of using setTimeout
+        setUsers(mockUsers);
+        setLoading(false);
     }, []);
 
     // Filter and search logic
