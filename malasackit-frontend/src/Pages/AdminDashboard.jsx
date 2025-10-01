@@ -9,6 +9,7 @@ import UserProfileSettings from '../components/UserProfileSettings';
 import DonationRequests from '../components/DonationRequests';
 import BeneficiaryLogs from '../components/BeneficiaryLogs';
 import UserManagement from '../components/UserManagement';
+import Calendar from '../components/Calendar';
 
 
 export default function AdminDashboard() {
@@ -34,13 +35,7 @@ export default function AdminDashboard() {
                 );
 
             case 'Calendar':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">System Calendar</h2>
-                        <p className="text-gray-600">System events and maintenance schedule.</p>
-                        {/* Add admin calendar here */}
-                    </div>
-                );
+                return <Calendar />;
 
             case 'Settings':
                 return <UserProfileSettings userInfo={userInfo} />;

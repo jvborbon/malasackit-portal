@@ -9,6 +9,7 @@ import Inventory from '../components/Inventory';
 import DonationRequests from '../components/DonationRequests';
 import BeneficiaryLogs from '../components/BeneficiaryLogs';
 import UserProfileSettings from '../components/UserProfileSettings';
+import Calendar from '../components/Calendar';
 
 export default function StaffDashboard() {
     // Function to render main content based on active navigation
@@ -24,13 +25,7 @@ export default function StaffDashboard() {
                 return <BeneficiaryLogs />;
 
             case 'Calendar':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Work Schedule</h2>
-                        <p className="text-gray-600">View work schedule and upcoming tasks.</p>
-                        {/* Add staff calendar here */}
-                    </div>
-                );
+                return <Calendar />;
 
             case 'Settings':
                 return <UserProfileSettings userInfo={userInfo} />;
