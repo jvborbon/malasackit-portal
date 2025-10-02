@@ -175,7 +175,7 @@ export default function UserManagement() {
         <div className="space-y-6">
             {/* Header with Search and Actions */}
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+                <h1 className="text-2xl font-bold text-gray-900">User Activity and Logs</h1>
                 <div className="flex items-center space-x-2">
                     <button className="p-2 text-gray-400 hover:text-gray-600">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
