@@ -21,7 +21,7 @@ export default function StaffDashboard() {
             case 'Inventory Management':
                 return <Inventory />;
 
-            case 'Beneficiary Logs':
+            case 'Distribution Logs':
                 return <BeneficiaryLogs />;
 
             case 'Calendar':

@@ -1,7 +1,7 @@
 export default function UserProfileSettings({ userInfo }) {
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Account Settings</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Set Profile for Your Account</h2>
             
             {/* Profile Picture Section */}
             <div className="mb-8 pb-6 border-b border-gray-200">

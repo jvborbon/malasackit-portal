@@ -74,7 +74,7 @@ export default function DashboardLayout({ children, userRole }) {
                 { name: 'Settings', icon: HiCog, position: 6 }
             ],
             staff: [
-                { name: 'Inventory Management', icon: HiDatabase, position: 1 },
+                { name: 'Inventory', icon: HiDatabase, position: 1 },
                 { name: 'Donation Requests', icon: HiClipboardCheck, position: 2 },
                 { name: 'Distribution Logs', icon: HiUsers, position: 3 },
                 { name: 'Calendar', icon: HiCalendar, position: 4 },
@@ -94,6 +94,23 @@ export default function DashboardLayout({ children, userRole }) {
     };
 
     const navigationItems = getNavigationItems(userRole);
+
+    // Get header title based on active navigation
+    const getHeaderTitle = (activeNav) => {
+        const titleMap = {
+            'Dashboard': 'Dashboard',
+            'Inventory': 'Inventory Management', 
+            'Donation Requests': 'Donation Request Management',
+            'Distribution Logs': 'Distribution Management',
+            'User Management': 'User Administration',
+            'Donate Now': 'Make a Donation',
+            'Donation History': 'My Donation History',
+            'Notifications': 'Notifications Center',
+            'Calendar': 'Event Calendar',
+            'Settings': 'Account Settings'
+        };
+        return titleMap[activeNav] || activeNav;
+    };
 
     // Get portal name based on role
     const getPortalName = (role) => {
@@ -200,7 +217,7 @@ export default function DashboardLayout({ children, userRole }) {
                                 <HiMenu className="w-6 h-6" />
                             </button>
                             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                                {activeNav === 'Dashboard' ? 'Dashboard' : activeNav}
+                                {getHeaderTitle(activeNav)}
                             </h1>
                         </div>
                         <div className="flex items-center space-x-2 lg:space-x-4">

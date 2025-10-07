@@ -35,10 +35,8 @@ export default function DonorDashboard() {
             default: // Dashboard (Overview)
                 return (
                     <>
-                        {/* Statistics Cards */}
                         <DonorKPICards />
                         
-                        {/* Donation Trends Chart */}
                         <DonationTrendsChart />
                     </>
                 );
