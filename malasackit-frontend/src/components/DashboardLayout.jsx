@@ -96,9 +96,21 @@ export default function DashboardLayout({ children, userRole }) {
     const navigationItems = getNavigationItems(userRole);
 
     // Get header title based on active navigation
-    const getHeaderTitle = (activeNav) => {
+    const getHeaderTitle = (activeNav, userRole) => {
+        if (activeNav === 'Dashboard') {
+            switch(userRole) {
+                case 'admin':
+                    return 'Admin Dashboard';
+                case 'staff':
+                    return 'Staff Dashboard';
+                case 'donor':
+                    return 'Donor Dashboard';
+                default:
+                    return 'Dashboard';
+            }
+        }
+        
         const titleMap = {
-            'Dashboard': 'Dashboard',
             'Inventory': 'Inventory Management', 
             'Donation Requests': 'Donation Request Management',
             'Distribution Logs': 'Distribution Management',
@@ -217,7 +229,7 @@ export default function DashboardLayout({ children, userRole }) {
                                 <HiMenu className="w-6 h-6" />
                             </button>
                             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                                {getHeaderTitle(activeNav)}
+                                {getHeaderTitle(activeNav, userRole)}
                             </h1>
                         </div>
                         <div className="flex items-center space-x-2 lg:space-x-4">
