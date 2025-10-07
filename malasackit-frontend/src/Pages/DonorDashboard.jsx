@@ -14,7 +14,15 @@ export default function DonorDashboard() {
         switch (activeNav) {
             case 'Donate Now':
                 return <DonorDonationForm />;
-            
+
+            case 'Donation History':
+                return (
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                        <h2 className="text-lg font-semibold mb-4">You don't have any request at the moment.</h2>
+                        {/* Render donation history content here */}
+                    </div>
+                );
+
             case 'Notifications':
                 return <Notifs />;
 

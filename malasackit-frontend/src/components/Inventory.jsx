@@ -30,10 +30,23 @@ function Inventory() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
+    <div className="space-y-2">
+      {/* Search Bar with Action Icons */}
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search donation"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="block w-full pl-10 pr-3 py-1.5 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+          />
+        </div>
         <div className="flex items-center space-x-2">
           <button className="p-2 text-gray-400 hover:text-gray-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,29 +66,13 @@ function Inventory() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <input
-          type="text"
-          placeholder="Search donation"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
-        />
-      </div>
-
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
         {summary.map((card, idx) => (
-          <div key={idx} className="bg-white rounded-lg border border-gray-200 p-6">
+          <div key={idx} className="bg-white rounded-lg border border-gray-200 p-2">
             <div className="flex flex-col">
-              <dt className={`text-sm font-medium ${card.color} mb-2`}>{card.label}</dt>
-              <dd className="text-2xl font-bold text-gray-900">{card.value}</dd>
+              <dt className={`text-sm font-medium ${card.color} mb-1`}>{card.label}</dt>
+              <dd className="text-base font-bold text-gray-900">{card.value}</dd>
             </div>
           </div>
         ))}
@@ -84,8 +81,8 @@ function Inventory() {
       {/* Products Section */}
       <div className="bg-white rounded-lg border border-gray-200">
         {/* Products Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Products</h2>
+        <div className="px-6 py-2 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900">Products</h2>
           <div className="flex space-x-3">
             <button className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700">
               Add Donation
@@ -106,55 +103,60 @@ function Inventory() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated Values</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProducts.map((product, idx) => (
-                <tr key={idx} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.value}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.quantity}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={
-                        product.status === "Available"
-                          ? "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
-                          : "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                      }
-                    >
-                      {product.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {filteredProducts.length === 0 && (
+        <div className="overflow-y-auto max-h-96">
+          <table className="min-w-full">
+              <thead className="bg-red-600 sticky top-0">
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">No products found.</td>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Products</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Estimated Values</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Quantity</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Status</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredProducts.map((product, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{product.value}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{product.quantity}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <span
+                        className={
+                          product.status === "Available"
+                            ? "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+                            : "inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
+                        }
+                      >
+                        {product.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {filteredProducts.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-6 text-center text-sm text-gray-500">No products found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-            Previous
-          </button>
-          <span className="text-sm text-gray-700">Page 1 of 10</span>
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-            Next
-          </button>
+        <div className="flex items-center justify-between px-6 py-2 border-t border-gray-200">
+          <div className="text-sm text-gray-700">
+            Showing {filteredProducts.length} products
+          </div>
+          <div className="flex items-center space-x-2">
+            <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              Previous
+            </button>
+            <span className="text-sm text-gray-700">Page 1 of 1</span>
+            <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              Next
+            </button>
+          </div>
         </div>
       </div>
 

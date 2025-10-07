@@ -12,7 +12,7 @@ import {
     HiClipboardCheck,
     HiChartBar,
     HiDatabase,
-    HiClock,
+    HiClipboardList,
     HiMenu,
     HiX
 } from 'react-icons/hi';
@@ -60,13 +60,14 @@ export default function DashboardLayout({ children, userRole }) {
         const roleSpecificItems = {
             donor: [
                 { name: 'Donate Now', icon: HiGift, position: 1 },
-                { name: 'Notifications', icon: HiBell, position: 2 },
-                { name: 'Calendar', icon: HiCalendar, position: 3 },
-                { name: 'Settings', icon: HiCog, position: 4 }
+                { name: 'Donation History', icon: HiClipboardList, position: 2 },
+                { name: 'Notifications', icon: HiBell, position: 3 },
+                { name: 'Calendar', icon: HiCalendar, position: 4 },
+                { name: 'Settings', icon: HiCog, position: 5 }
             ],
             admin: [
                 { name: 'User Management', icon: HiUsers, position: 1 },
-                { name: 'Beneficiary Logs', icon: HiClipboardCheck, position: 2 },
+                { name: 'Distribution Logs', icon: HiClipboardCheck, position: 2 },
                 { name: 'Donation Requests', icon: HiDatabase, position: 3 },
                 { name: 'Notifications', icon: HiBell, position: 4 },
                 { name: 'Calendar', icon: HiCalendar, position: 5 },
@@ -75,7 +76,7 @@ export default function DashboardLayout({ children, userRole }) {
             staff: [
                 { name: 'Inventory Management', icon: HiDatabase, position: 1 },
                 { name: 'Donation Requests', icon: HiClipboardCheck, position: 2 },
-                { name: 'Beneficiary Logs', icon: HiUsers, position: 3 },
+                { name: 'Distribution Logs', icon: HiUsers, position: 3 },
                 { name: 'Calendar', icon: HiCalendar, position: 4 },
                 { name: 'Settings', icon: HiCog, position: 5 }
             ]
