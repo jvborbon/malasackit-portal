@@ -18,7 +18,7 @@ export default function StaffDashboard() {
             case 'Donation Requests':
                 return <DonationRequests />;
             
-            case 'Inventory Management':
+            case 'Inventory':
                 return <Inventory />;
 
             case 'Distribution Logs':
