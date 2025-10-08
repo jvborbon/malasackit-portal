@@ -7,11 +7,10 @@ import {
     HiTrash, 
     HiEye,
     HiUserAdd,
-    HiChevronDown,
-    HiBan,
-    HiCheck
+    HiChevronDown
 } from 'react-icons/hi';
 import UserModalForm from './UserModalForm';
+import UserDetails from './UserDetails';
 
 export default function UserManagement() {
     const [users, setUsers] = useState([]);
@@ -22,6 +21,7 @@ export default function UserManagement() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showUserDetails, setShowUserDetails] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [usersPerPage] = useState(10);
@@ -37,7 +37,15 @@ export default function UserManagement() {
                 status: 'active',
                 lastLogin: '2024-01-15 10:30 AM',
                 dateCreated: '2024-01-01',
-                permissions: ['user_management', 'system_settings', 'reports']
+                permissions: ['user_management', 'system_settings', 'reports'],
+                phone: '+63 912 345 6789',
+                streetAddress: '123 Main Street',
+                brgysubdivision: 'Barangay San Antonio',
+                city: 'Manila',
+                state: 'Metro Manila',
+                zipCode: '1000',
+                parish: 'St. John the Baptist Parish',
+                vicariate: 'Manila Vicariate'
             },
             {
                 id: 2,
@@ -47,7 +55,13 @@ export default function UserManagement() {
                 status: 'active',
                 lastLogin: '2024-01-14 02:15 PM',
                 dateCreated: '2024-01-05',
-                permissions: ['inventory_management', 'beneficiary_logs', 'donation_requests']
+                permissions: ['inventory_management', 'beneficiary_logs', 'donation_requests'],
+                phone: '+63 917 234 5678',
+                streetAddress: '456 Oak Avenue',
+                brgysubdivision: 'Barangay Santa Maria',
+                city: 'Quezon City',
+                state: 'Metro Manila',
+                zipCode: '1100'
             },
             {
                 id: 3,
@@ -57,7 +71,14 @@ export default function UserManagement() {
                 status: 'inactive',
                 lastLogin: '2024-01-10 09:45 AM',
                 dateCreated: '2024-01-03',
-                permissions: ['donate', 'view_history']
+                permissions: ['donate', 'view_history'],
+                phone: '+63 905 123 4567',
+                streetAddress: '789 Pine Road',
+                brgysubdivision: 'Barangay San Jose',
+                city: 'Makati',
+                state: 'Metro Manila',
+                zipCode: '1200',
+                parish: 'Our Lady of Perpetual Help Parish'
             },
             {
                 id: 4,
@@ -67,7 +88,12 @@ export default function UserManagement() {
                 status: 'active',
                 lastLogin: '2024-01-15 08:20 AM',
                 dateCreated: '2024-01-08',
-                permissions: ['inventory_management', 'beneficiary_logs']
+                permissions: ['inventory_management', 'beneficiary_logs'],
+                phone: '+63 922 987 6543',
+                streetAddress: '321 Elm Street',
+                city: 'Pasig',
+                state: 'Metro Manila',
+                zipCode: '1600'
             },
             {
                 id: 5,
@@ -77,7 +103,14 @@ export default function UserManagement() {
                 status: 'active',
                 lastLogin: '2024-01-13 11:00 AM',
                 dateCreated: '2024-01-12',
-                permissions: ['donate', 'view_history']
+                permissions: ['donate', 'view_history'],
+                phone: '+63 918 567 8901',
+                streetAddress: '654 Maple Drive',
+                brgysubdivision: 'Barangay San Miguel',
+                city: 'Taguig',
+                state: 'Metro Manila',
+                zipCode: '1630',
+                vicariate: 'South Manila Vicariate'
             }
         ];
         
@@ -117,17 +150,26 @@ export default function UserManagement() {
         setShowEditModal(true);
     };
 
+    const handleViewUser = (user) => {
+        setSelectedUser(user);
+        setShowUserDetails(true);
+    };
+
     const handleDeleteUser = (user) => {
         setSelectedUser(user);
         setShowDeleteModal(true);
     };
 
-    const handleToggleStatus = (userId) => {
-        setUsers(users.map(user => 
-            user.id === userId 
-                ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' }
-                : user
-        ));
+    const handleUserDetailsEdit = (user) => {
+        setShowUserDetails(false);
+        setSelectedUser(user);
+        setShowEditModal(true);
+    };
+
+    const handleUserDetailsDelete = (user) => {
+        setShowUserDetails(false);
+        setSelectedUser(user);
+        setShowDeleteModal(true);
     };
 
     const getRoleBadge = (role) => {
@@ -289,22 +331,18 @@ export default function UserManagement() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                                         <button
+                                            onClick={() => handleViewUser(user)}
+                                            className="text-gray-600 hover:text-gray-900"
+                                            title="View Details"
+                                        >
+                                            <HiEye className="w-4 h-4" />
+                                        </button>
+                                        <button
                                             onClick={() => handleEditUser(user)}
                                             className="text-blue-600 hover:text-blue-900"
                                             title="Edit User"
                                         >
                                             <HiPencil className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleToggleStatus(user.id)}
-                                            className={`${
-                                                user.status === 'active'
-                                                    ? 'text-red-600 hover:text-red-900'
-                                                    : 'text-green-600 hover:text-green-900'
-                                            }`}
-                                            title={user.status === 'active' ? 'Deactivate User' : 'Activate User'}
-                                        >
-                                            {user.status === 'active' ? <HiBan className="w-4 h-4" /> : <HiCheck className="w-4 h-4" />}
                                         </button>
                                         <button
                                             onClick={() => handleDeleteUser(user)}
@@ -382,6 +420,16 @@ export default function UserManagement() {
                         ));
                         setShowEditModal(false);
                     }}
+                />
+            )}
+
+            {showUserDetails && selectedUser && (
+                <UserDetails
+                    isOpen={showUserDetails}
+                    onClose={() => setShowUserDetails(false)}
+                    user={selectedUser}
+                    onEdit={handleUserDetailsEdit}
+                    onDelete={handleUserDetailsDelete}
                 />
             )}
 

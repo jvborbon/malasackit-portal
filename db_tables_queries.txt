@@ -1,0 +1,28 @@
+ CREATE TYPE roles AS ENUM ('Donor', 'Resource Staff', 'Executive Admin')
+
+
+CREATE TABLE Users (
+    
+)
+
+CREATE TABLE UserActivityLogs 
+
+CREATE TABLE Donations
+
+CREATE TABLE DonatedItems
+
+CREATE TABLE Distributions
+
+CREATE TABLE DistributedItems
+
+CREATE TABLE Beneficiary
+
+CREATE TABLE DonationInventory
+
+CREATE TABLE BazaarInventory
+
+CREATE TABLE Schedules
+
+CREATE TABLE ItemType
+
+CREATE TABLE ItemTypeCategory
