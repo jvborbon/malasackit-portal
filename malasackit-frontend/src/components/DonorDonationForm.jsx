@@ -4,6 +4,7 @@ import { HiPlus, HiCalendar } from 'react-icons/hi';
 export default function DonorDonationForm() {
     const [formData, setFormData] = useState({
         itemName: '',
+        brandName: '',
         category: '',
         quantity: '',
         value: '',
@@ -30,10 +31,11 @@ export default function DonorDonationForm() {
     };
 
     const addDonationItem = () => {
-        if (formData.itemName && formData.category && formData.quantity && formData.value) {
+        if (formData.itemName && formData.brandName && formData.category && formData.quantity && formData.value) {
             const newItem = {
                 id: Date.now(),
                 itemName: formData.itemName,
+                brandName: formData.brandName,
                 category: formData.category,
                 quantity: parseInt(formData.quantity),
                 value: parseFloat(formData.value)
@@ -45,6 +47,7 @@ export default function DonorDonationForm() {
             setFormData(prev => ({
                 ...prev,
                 itemName: '',
+                brandName: '',
                 category: '',
                 quantity: '',
                 value: ''
@@ -78,6 +81,7 @@ export default function DonorDonationForm() {
         setDonationItems([]);
         setFormData({
             itemName: '',
+            brandName: '',
             category: '',
             quantity: '',
             value: '',
@@ -88,27 +92,41 @@ export default function DonorDonationForm() {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-sm p-8">
-            <h1 className="text-3xl font-bold text-red-600 mb-8">Donation Form</h1>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 lg:p-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-red-600 mb-6">Donation Form</h1>
             
-            <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Main Layout Grid */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Main Layout - Responsive Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Side - Add Donation Item */}
-                    <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-6">Add Donation Item</h2>
-                        <div className="space-y-6">
-                            {/* Item Name */}
+                    <div className="lg:col-span-1 bg-white border-2 border-gray-200 rounded-lg p-4 sm:p-6 h-fit">
+                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Add Item</h2>
+                        <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Item Name
+                                    Item Type
                                 </label>
                                 <input
                                     type="text"
                                     name="itemName"
                                     value={formData.itemName}
                                     onChange={handleInputChange}
-                                    placeholder="Enter items"
+                                    placeholder="Enter item type"
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-gray-50"
+                                />
+                            </div>
+
+                            {/* Brand Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Item Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="brandName"
+                                    value={formData.brandName}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter brand/item name"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-gray-50"
                                 />
                             </div>
@@ -123,7 +141,7 @@ export default function DonorDonationForm() {
                                     name="category"
                                     value={formData.category}
                                     onChange={handleInputChange}
-                                    placeholder="Enter item type"
+                                    placeholder="Enter item category"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-gray-50"
                                 />
                             </div>
@@ -146,7 +164,7 @@ export default function DonorDonationForm() {
                             {/* Value */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Value
+                                    Value (₱)
                                 </label>
                                 <input
                                     type="number"
@@ -154,6 +172,7 @@ export default function DonorDonationForm() {
                                     value={formData.value}
                                     onChange={handleInputChange}
                                     placeholder="Enter value"
+                                    step="0.01"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-gray-50"
                                 />
                             </div>
@@ -171,44 +190,52 @@ export default function DonorDonationForm() {
                     </div>
 
                     {/* Right Side - Added Items Display */}
-                    <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6">
+                    <div className="lg:col-span-2 bg-gray-50 border-2 border-gray-200 rounded-lg p-4 sm:p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">
                             Added Donation Items ({donationItems.length})
                         </h3>
                         {donationItems.length === 0 ? (
-                            <div className="text-center py-12">
-                                <div className="text-gray-400 mb-4">
-                                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="text-center py-8">
+                                <div className="text-gray-400 mb-3">
+                                    <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                     </svg>
                                 </div>
-                                <p className="text-gray-500">No items added yet</p>
-                                <p className="text-sm text-gray-400 mt-1">Add donation items to see them here</p>
+                                <p className="text-gray-500 text-sm">No items added yet</p>
+                                <p className="text-xs text-gray-400 mt-1">Add donation items to see them here</p>
                             </div>
                         ) : (
                             <>
-                                <div className="space-y-3 max-h-96 overflow-y-auto">
+                                <div className="space-y-3 max-h-64 lg:max-h-80 overflow-y-auto pr-2">
                                     {donationItems.map((item, index) => (
-                                        <div key={item.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                        <div key={item.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
                                                     <div className="grid grid-cols-1 gap-2 text-sm">
-                                                        <div>
-                                                            <span className="font-medium text-gray-700">Item:</span>
-                                                            <span className="ml-2 text-gray-900">{item.itemName}</span>
+                                                        <div className="flex flex-wrap gap-4">
+                                                            <div>
+                                                                <span className="font-medium text-gray-700">Type:</span>
+                                                                <span className="ml-1 text-gray-900">{item.itemName}</span>
+                                                            </div>
+                                                            {item.brandName && (
+                                                                <div>
+                                                                    <span className="font-medium text-gray-700">Name:</span>
+                                                                    <span className="ml-1 text-gray-900">{item.brandName}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div>
-                                                            <span className="font-medium text-gray-700">Category:</span>
-                                                            <span className="ml-2 text-gray-900">{item.category}</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-2">
+                                                        <div className="flex flex-wrap gap-4">
+                                                            <div>
+                                                                <span className="font-medium text-gray-700">Category:</span>
+                                                                <span className="ml-1 text-gray-900">{item.category}</span>
+                                                            </div>
                                                             <div>
                                                                 <span className="font-medium text-gray-700">Qty:</span>
-                                                                <span className="ml-2 text-gray-900">{item.quantity}</span>
+                                                                <span className="ml-1 text-gray-900">{item.quantity}</span>
                                                             </div>
                                                             <div>
                                                                 <span className="font-medium text-gray-700">Value:</span>
-                                                                <span className="ml-2 text-gray-900">₱{item.value.toLocaleString()}</span>
+                                                                <span className="ml-1 text-gray-900">₱{item.value.toLocaleString()}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -216,10 +243,10 @@ export default function DonorDonationForm() {
                                                 <button
                                                     type="button"
                                                     onClick={() => removeDonationItem(item.id)}
-                                                    className="ml-4 text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                                    className="ml-3 text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors"
                                                     title="Remove this item"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
                                                 </button>
@@ -228,10 +255,14 @@ export default function DonorDonationForm() {
                                     ))}
                                 </div>
                                 <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <p className="text-sm text-blue-800">
-                                        <strong>Total Items:</strong> {donationItems.length} | 
-                                        <strong className="ml-2">Total Value:</strong> ₱{donationItems.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
-                                    </p>
+                                    <div className="flex flex-wrap gap-4 text-sm text-blue-800">
+                                        <div>
+                                            <strong>Total Items:</strong> {donationItems.length}
+                                        </div>
+                                        <div>
+                                            <strong>Total Value:</strong> ₱{donationItems.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
+                                        </div>
+                                    </div>
                                 </div>
                             </>
                         )}
@@ -239,15 +270,15 @@ export default function DonorDonationForm() {
                 </div>
 
                 {/* Donation Details Section */}
-                <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Donation Details</h2>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="bg-white border-2 border-gray-200 rounded-lg p-4 sm:p-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Donation Details</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                         {/* Delivery Method */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-4">
-                                How would you like to reach us your donations?
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Delivery Method
                             </label>
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 <label className="flex items-center">
                                     <input
                                         type="radio"
@@ -257,7 +288,7 @@ export default function DonorDonationForm() {
                                         onChange={() => handleDeliveryMethodChange('dropoff')}
                                         className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300"
                                     />
-                                    <span className="ml-3 text-gray-700">Drop-off</span>
+                                    <span className="ml-2 text-sm text-gray-700">Drop-off</span>
                                 </label>
                                 <label className="flex items-center">
                                     <input
@@ -268,7 +299,7 @@ export default function DonorDonationForm() {
                                         onChange={() => handleDeliveryMethodChange('pickup')}
                                         className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300"
                                     />
-                                    <span className="ml-3 text-gray-700">Pickup</span>
+                                    <span className="ml-2 text-sm text-gray-700">Pickup</span>
                                 </label>
                             </div>
                         </div>
@@ -282,44 +313,39 @@ export default function DonorDonationForm() {
                                 name="description"
                                 value={formData.description}
                                 onChange={handleInputChange}
-                                placeholder="Enter text"
-                                rows={4}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors resize-none bg-gray-50"
+                                placeholder="Enter description"
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors resize-none bg-gray-50 text-sm"
                             />
                         </div>
 
                         {/* Set Schedule */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Set Schedule
+                                Schedule Date
                             </label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    name="scheduleDate"
-                                    value={formData.scheduleDate}
-                                    onChange={handleInputChange}
-                                    style={{
-                                        colorScheme: 'dark'
-                                    }}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-white [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:bg-red-500 [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:p-1"
-                                />
-                            </div>
+                            <input
+                                type="date"
+                                name="scheduleDate"
+                                value={formData.scheduleDate}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-gray-50 text-sm"
+                            />
                         </div>
                     </div>
                 </div>
 
-                   
-                    <div className="flex justify-end">
-                        <button
-                            type="submit"
-                            disabled={donationItems.length === 0}
-                            className="bg-red-600 text-white py-3 px-8 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Submit
-                        </button>
-                    </div>
-                </form>
-            </div>
+                {/* Submit Button */}
+                <div className="flex justify-end">
+                    <button
+                        type="submit"
+                        disabled={donationItems.length === 0}
+                        className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Submit Donation
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 }
