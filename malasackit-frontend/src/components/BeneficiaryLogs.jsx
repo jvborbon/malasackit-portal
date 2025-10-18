@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BeneficiaryRequestForm from "./BeneficiaryRequestForm";
 
 const beneficiaryLogs = [
   { id: "BEN001", fullName: "Maria Santos", beneficiaryId: "BID001", details: "Rice, Canned Goods", status: "Completed" },
@@ -14,6 +15,7 @@ const beneficiaryLogs = [
 function BeneficiaryLogs() {
   const [search, setSearch] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
   const filteredLogs = beneficiaryLogs.filter(log =>
     log.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -35,6 +37,15 @@ function BeneficiaryLogs() {
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
+  };
+
+  const handleSubmitRequest = (formData) => {
+    // Here you would typically send the data to your backend
+    console.log("New beneficiary request:", formData);
+    
+    // Close modal and show success message
+    setShowModal(false);
+    alert("Beneficiary request logged successfully!");
   };
 
   return (
@@ -156,7 +167,10 @@ function BeneficiaryLogs() {
 
         {/* Update Logs Button - Fixed at bottom */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+          <button 
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+          >
             Add
           </button>
         </div>
@@ -177,6 +191,13 @@ function BeneficiaryLogs() {
           </button>
         </div>
       </div>
+
+      {/* Beneficiary Request Form Modal */}
+      <BeneficiaryRequestForm
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleSubmitRequest}
+      />
     </div>
   );
 }

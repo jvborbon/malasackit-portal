@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -35,12 +35,26 @@ ChartJS.register(
 const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    location: '',
-    beneficiaryType: '',
+    selectedRequests: [],
     distributionDate: '',
     notes: '',
+    distributionPlan: {},
     selectedDistribution: {}
   });
+
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setStep(1);
+      setFormData({
+        selectedRequests: [],
+        distributionDate: '',
+        notes: '',
+        distributionPlan: {},
+        selectedDistribution: {}
+      });
+    }
+  }, [isOpen]);
 
   // Sample prescriptive analytics data
   const locations = [
@@ -60,27 +74,46 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     'Taguig City': { food: 20, medical: 30, clothing: 20, education: 25, others: 5 }
   };
 
+  // Inventory with thresholds and recommendations
+  const inventoryData = [
+    { name: 'Food Items', current: 450, threshold: 200, critical: 100, status: 'safe', safeToDistribute: 250 },
+    { name: 'Medical Supplies', current: 280, threshold: 150, critical: 75, status: 'safe', safeToDistribute: 130 },
+    { name: 'Clothing', current: 320, threshold: 250, critical: 125, status: 'safe', safeToDistribute: 70 },
+    { name: 'Educational Materials', current: 180, threshold: 200, critical: 100, status: 'low', safeToDistribute: 0 },
+    { name: 'Others', current: 90, threshold: 100, critical: 50, status: 'low', safeToDistribute: 0 }
+  ];
+
+  // Ensure data is valid for charts
+  const safeInventoryData = inventoryData.filter(item => 
+    item && typeof item.current === 'number' && typeof item.threshold === 'number'
+  );
+
   const currentInventory = {
-    labels: ['Food Items', 'Medical Supplies', 'Clothing', 'Educational Materials', 'Others'],
-    datasets: [{
-      label: 'Available Stock',
-      data: [450, 280, 320, 180, 90],
-      backgroundColor: [
-        'rgba(239, 68, 68, 0.8)',
-        'rgba(34, 197, 94, 0.8)',
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(168, 85, 247, 0.8)',
-        'rgba(107, 114, 128, 0.8)'
-      ],
-      borderColor: [
-        'rgba(239, 68, 68, 1)',
-        'rgba(34, 197, 94, 1)',
-        'rgba(59, 130, 246, 1)',
-        'rgba(168, 85, 247, 1)',
-        'rgba(107, 114, 128, 1)'
-      ],
-      borderWidth: 2
-    }]
+    labels: safeInventoryData.map(item => item.name || 'Unknown'),
+    datasets: [
+      {
+        label: 'Current Stock',
+        data: safeInventoryData.map(item => item.current || 0),
+        backgroundColor: safeInventoryData.map(item => 
+          item.status === 'safe' ? 'rgba(34, 197, 94, 0.8)' :
+          item.status === 'low' ? 'rgba(251, 191, 36, 0.8)' :
+          'rgba(239, 68, 68, 0.8)'
+        ),
+        borderColor: safeInventoryData.map(item => 
+          item.status === 'safe' ? 'rgba(34, 197, 94, 1)' :
+          item.status === 'low' ? 'rgba(251, 191, 36, 1)' :
+          'rgba(239, 68, 68, 1)'
+        ),
+        borderWidth: 2
+      },
+      {
+        label: 'Minimum Threshold',
+        data: safeInventoryData.map(item => item.threshold || 0),
+        backgroundColor: 'rgba(107, 114, 128, 0.5)',
+        borderColor: 'rgba(107, 114, 128, 1)',
+        borderWidth: 2
+      }
+    ]
   };
 
   const getOptimalDistribution = (location) => {
@@ -125,6 +158,38 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     },
   };
 
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.dataset.label}: ${context.parsed.y} units`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Quantity (units)'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Item Categories'
+        }
+      }
+    }
+  };
+
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high':
@@ -142,6 +207,25 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleRequestChange = (itemName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      requests: {
+        ...prev.requests,
+        [itemName]: parseInt(value) || 0
+      }
+    }));
+  };
+
+  const handleRequestSelection = (requestId) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedRequests: prev.selectedRequests?.includes(requestId)
+        ? prev.selectedRequests.filter(id => id !== requestId)
+        : [...(prev.selectedRequests || []), requestId]
     }));
   };
 
@@ -166,9 +250,9 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
           <div>
             <h3 className="text-2xl font-bold text-gray-900 flex items-center">
               <HiLightBulb className="w-6 h-6 text-red-600 mr-3" />
-              Distribution Planning
+              Create Distribution Plan
             </h3>
-            <p className="text-gray-600 mt-1">Create plans for distributing beneficiary needs.</p>
+            <p className="text-gray-600 mt-1">Plan distribution for approved beneficiary requests.</p>
           </div>
           <button
             onClick={onClose}
@@ -217,229 +301,330 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                 </div>
                 <div className="flex justify-between mt-4 text-xs sm:text-sm px-2">
                   <span className={`font-medium transition-colors text-center ${step >= 1 ? 'text-red-600' : 'text-gray-500'}`}>
-                    Location Selection
+                    Select Requests
                   </span>
                   <span className={`font-medium transition-colors text-center ${step >= 2 ? 'text-red-600' : 'text-gray-500'}`}>
-                    Data Analytics
+                    Plan Distribution
                   </span>
                   <span className={`font-medium transition-colors text-center ${step >= 3 ? 'text-red-600' : 'text-gray-500'}`}>
-                    Distribution Plan
+                    Execute Plan
                   </span>
                 </div>
               </div>
 
-              {/* Step 1: Location Selection */}
+              {/* Inventory Status Overview */}
+              <div className="mb-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <HiChartBar className="w-5 h-5 text-blue-600 mr-2" />
+                  Current Inventory Status
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {safeInventoryData.map((item, index) => (
+                    <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="text-sm font-medium text-gray-700 truncate">{item.name}</h5>
+                        <div className={`w-3 h-3 rounded-full ${
+                          item.status === 'safe' ? 'bg-green-500' :
+                          item.status === 'low' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}></div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-2xl font-bold text-gray-900">{item.current}</div>
+                        <div className="text-xs text-gray-500">Threshold: {item.threshold}</div>
+                        {item.status === 'safe' ? (
+                          <div className="text-xs text-green-600 font-medium">
+                            ✓ Safe to distribute: {item.safeToDistribute}
+                          </div>
+                        ) : item.status === 'low' ? (
+                          <div className="text-xs text-yellow-600 font-medium">
+                            ⚠ Restock recommended
+                          </div>
+                        ) : (
+                          <div className="text-xs text-red-600 font-medium">
+                            🚨 Critical - Hold distribution
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 1: Select Pending Requests */}
               {step === 1 && (
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-                    {/* Enhanced Form Fields */}
+                    {/* Pending Requests Selection */}
                     <div className="space-y-6">
                       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
                         <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                          <HiLocationMarker className="w-5 h-5 text-red-600 mr-2" />
-                          Distribution Details
+                          <HiExclamation className="w-5 h-5 text-yellow-600 mr-2" />
+                          Pending Beneficiary Requests
                         </h4>
-                        <div className="space-y-6">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                              Target Location
-                            </label>
-                            <select
-                              value={formData.location}
-                              onChange={(e) => handleInputChange('location', e.target.value)}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                          <p className="text-sm text-blue-800 flex items-center">
+                            <HiExclamation className="w-4 h-4 mr-2 flex-shrink-0" />
+                            Select beneficiary requests that are ready for distribution planning.
+                          </p>
+                        </div>
+                        
+                        {/* Sample pending requests */}
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {[
+                            { id: 'BID003', name: 'Ana Rodriguez', location: 'Brgy. Poblacion, Lipa City', items: 'School Supplies', count: '30 students', date: '2024-10-20' },
+                            { id: 'BID006', name: 'Miguel Torres', location: 'Brgy. Marawoy, Lipa City', items: 'Emergency Blankets', count: '25 families', date: '2024-10-22' },
+                            { id: 'BID007', name: 'Barangay Captain Santos', location: 'Brgy. Tibig, Lipa City', items: 'Food Package', count: '100 families', date: '2024-10-25' },
+                            { id: 'BID008', name: 'Parish Social Services', location: 'Multiple Barangays', items: 'Medical Supplies', count: '50 individuals', date: '2024-10-23' }
+                          ].map((request, index) => (
+                            <div 
+                              key={request.id} 
+                              className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                                formData.selectedRequests?.includes(request.id) 
+                                  ? 'border-red-500 bg-red-50' 
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              onClick={() => handleRequestSelection(request.id)}
                             >
-                              <option value="">Select a location</option>
-                              {locations.map((location) => (
-                                <option key={location.id} value={location.name}>
-                                  {location.name} (Population: {location.population.toLocaleString()})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                              Beneficiary Type
-                            </label>
-                            <select
-                              value={formData.beneficiaryType}
-                              onChange={(e) => handleInputChange('beneficiaryType', e.target.value)}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
-                            >
-                              <option value="">Select beneficiary type</option>
-                              <option value="families">Low-income Families</option>
-                              <option value="elderly">Senior Citizens</option>
-                              <option value="children">Children & Students</option>
-                              <option value="disabled">Persons with Disabilities</option>
-                              <option value="medical">Medical Patients</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                              Distribution Date
-                            </label>
-                            <input
-                              type="date"
-                              value={formData.distributionDate}
-                              onChange={(e) => handleInputChange('distributionDate', e.target.value)}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
-                            />
-                          </div>
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.selectedRequests?.includes(request.id) || false}
+                                    onChange={() => handleRequestSelection(request.id)}
+                                    className="mr-3 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                  />
+                                  <div>
+                                    <h5 className="font-semibold text-gray-900">{request.name}</h5>
+                                    <p className="text-sm text-gray-600">{request.id}</p>
+                                  </div>
+                                </div>
+                                <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+                                  Pending
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div><strong>Location:</strong> {request.location}</div>
+                                <div><strong>Items:</strong> {request.items}</div>
+                                <div><strong>Beneficiaries:</strong> {request.count}</div>
+                                <div><strong>Requested Date:</strong> {request.date}</div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
 
-                    {/* Enhanced Current Inventory Chart */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-6 border border-blue-200">
+                    {/* Needs Assessment Form */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
                       <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                        <HiChartBar className="w-5 h-5 text-blue-600 mr-2" />
-                        Current Inventory
+                        <HiExclamation className="w-5 h-5 text-yellow-600 mr-2" />
+                        Assessed Needs
                       </h4>
-                      <div className="h-64 bg-white rounded-lg p-4 shadow-sm flex items-center justify-center">
-                        <Doughnut data={currentInventory} options={chartOptions} />
-                      </div>
-                      <div className="mt-6 p-4 bg-white/70 rounded-lg">
-                        <p className="text-sm text-gray-600 text-center">
-                          Total items available: <span className="font-bold text-gray-900">1,320</span>
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-yellow-800">
+                          Record the specific quantities needed based on survey findings, community assessment, or direct requests.
                         </p>
                       </div>
+                      <div className="space-y-4">
+                        {safeInventoryData.map((item, index) => (
+                          <div key={index} className="border border-gray-100 rounded-lg p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="font-medium text-gray-900">{item.name}</span>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                item.status === 'safe' ? 'bg-green-100 text-green-800' :
+                                item.status === 'low' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                Current Stock: {item.current}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <label className="text-sm text-gray-600 w-24">Requested:</label>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                min="0"
+                                value={formData.requests?.[item.name] || ''}
+                                onChange={(e) => handleRequestChange(item.name, e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                              />
+                              <span className="text-sm text-gray-500 w-16">units</span>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-500">
+                              Priority: {item.status === 'safe' ? 'Available for distribution' : 
+                                        item.status === 'low' ? 'Limited availability' : 'Not recommended - low stock'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                </div>
+              )}
 
-            {/* Location Priority Cards */}
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-6">Priority Locations</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {locations.map((location) => (
-                  <div
-                    key={location.id}
-                    className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
-                      formData.location === location.name
-                        ? 'border-red-500 bg-red-50 shadow-md'
-                        : `border-gray-200 hover:border-gray-300 ${getPriorityColor(location.priority)}`
-                    }`}
-                    onClick={() => handleInputChange('location', location.name)}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <h5 className="font-semibold text-gray-900">{location.name}</h5>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full uppercase ${getPriorityColor(location.priority)}`}>
-                        {location.priority}
-                      </span>
-                    </div>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <HiUsers className="w-4 h-4 mr-2 text-gray-400" />
-                        {location.population.toLocaleString()} people
-                      </div>
-                      <div className="flex items-center">
-                        <HiTrendingUp className="w-4 h-4 mr-2 text-gray-400" />
-                        Demand: {location.demand}%
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: AI Analytics */}
-        {step === 2 && formData.location && (
+        {/* Step 2: Create Distribution Plan */}
+        {step === 2 && formData.selectedRequests && formData.selectedRequests.length > 0 && (
           <div className="space-y-8">
-            {/* AI Recommendations Header */}
+            {/* Distribution Plan Header */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <div className="flex items-center">
                 <HiLightBulb className="w-6 h-6 text-blue-600 mr-3" />
                 <div>
-                  <h4 className="font-semibold text-blue-900">AI-Powered Distribution Analysis</h4>
-                  <p className="text-blue-700 text-sm mt-1">Based on historical data, current needs, and demographic analysis for {formData.location}</p>
+                  <h4 className="font-semibold text-blue-900">Distribution Planning</h4>
+                  <p className="text-blue-700 text-sm mt-1">Create distribution plan for {formData.selectedRequests?.length || 0} selected beneficiary requests</p>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-              {/* Recommended Distribution Chart */}
+              {/* Request vs Inventory Matching */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-6">Recommended Distribution</h4>
-                <div className="h-64 flex items-center justify-center">
-                  <Doughnut data={getOptimalDistribution(formData.location)} options={chartOptions} />
+                <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                  <HiLightBulb className="w-5 h-5 text-green-600 mr-2" />
+                  Recommended Distribution Plan
+                </h4>
+                <div className="space-y-4">
+                  {safeInventoryData.map((item, index) => {
+                    const requested = formData.requests[item.name] || 0;
+                    const available = item.current;
+                    const recommended = Math.min(requested, item.safeToDistribute, available);
+                    const canFulfill = recommended === requested;
+                    
+                    return (
+                      <div key={index} className="border border-gray-100 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-medium text-gray-900">{item.name}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            canFulfill ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {canFulfill ? 'FULL MATCH' : 'PARTIAL'}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Requested:</span>
+                            <span className="font-medium">{requested} units</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Available:</span>
+                            <span className="font-medium">{available} units</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Recommended:</span>
+                            <span className={`font-bold ${
+                              recommended > 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {recommended} units
+                            </span>
+                          </div>
+                          {requested > 0 && recommended < requested && (
+                            <div className="mt-2 p-2 bg-yellow-50 rounded text-xs text-yellow-800">
+                              ⚠ Shortfall: {requested - recommended} units - {
+                                available < requested ? 'Insufficient stock' : 'Below safety threshold'
+                              }
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Analytics Insights */}
-              <div className="space-y-6">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                  <div className="flex items-center mb-3">
-                    <HiCheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                    <span className="font-medium text-green-900">Optimal Match Found</span>
-                  </div>
-                  <p className="text-green-700 text-sm">
-                    Your inventory aligns well with {formData.location}'s current needs. Expected efficiency: 92%
-                  </p>
-                </div>
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                  <div className="flex items-center mb-3">
-                    <HiExclamation className="w-5 h-5 text-yellow-600 mr-2" />
-                    <span className="font-medium text-yellow-900">High Demand Items</span>
-                  </div>
-                  <p className="text-yellow-700 text-sm">
-                    Food items and medical supplies are in high demand in this area. Consider prioritizing these categories.
-                  </p>
-                </div>
-
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h5 className="font-medium text-gray-900 mb-4">Key Insights</h5>
-                  <ul className="space-y-3 text-sm text-gray-600">
-                    <li className="flex items-center">
-                      <div className="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0"></div>
-                      Food shortage reported in 3 barangays
-                    </li>
-                    <li className="flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
-                      Medical facility within 5km radius
-                    </li>
-                    <li className="flex items-center">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
-                      3 schools actively requesting supplies
-                    </li>
-                    <li className="flex items-center">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-3 flex-shrink-0"></div>
-                      Best distribution time: 9AM - 3PM
-                    </li>
-                  </ul>
+              {/* Visual Chart */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-6">Stock vs Distribution Plan</h4>
+                <div className="h-64 flex items-center justify-center">
+                  <Bar 
+                    data={currentInventory} 
+                    options={barChartOptions}
+                    key="inventory-bar-chart"
+                  />
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 3: Distribution Plan */}
+        {/* Step 3: Execute Distribution Plan */}
         {step === 3 && (
           <div className="space-y-8">
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <h4 className="text-lg font-semibold text-green-900 mb-6">Distribution Summary</h4>
+              <h4 className="text-lg font-semibold text-green-900 mb-6">Execute Distribution Plan</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                  <p className="text-gray-900 font-medium">{formData.location}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Selected Requests</label>
+                  <p className="text-gray-900 font-medium">{formData.selectedRequests?.length || 0} requests</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Beneficiaries</label>
-                  <p className="text-gray-900 font-medium">{formData.beneficiaryType}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Distribution Date</label>
+                  <input
+                    type="date"
+                    value={formData.distributionDate}
+                    onChange={(e) => handleInputChange('distributionDate', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                  <p className="text-gray-900 font-medium">{formData.distributionDate}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <p className="text-gray-900 font-medium">Ready for Execution</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Selected Requests Summary */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h5 className="text-lg font-semibold text-gray-900 mb-4">Selected Requests Summary</h5>
+              <div className="space-y-4">
+                {formData.selectedRequests?.map((requestId) => {
+                  const request = mockPendingRequests.find(r => r.id === requestId);
+                  return (
+                    <div key={requestId} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <h6 className="text-sm font-medium text-gray-900">Request #{request?.id}</h6>
+                        <span className="text-xs text-gray-500">{request?.date}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div><strong>Location:</strong> {request?.location}</div>
+                        <div><strong>Beneficiaries:</strong> {request?.count}</div>
+                        <div className="col-span-2"><strong>Items:</strong> {request?.items}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Execution Checklist */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h5 className="text-lg font-semibold text-gray-900 mb-4">Pre-Distribution Checklist</h5>
+              <div className="space-y-3">
+                <label className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <input type="checkbox" className="rounded text-red-600 mr-3" />
+                  <span className="text-sm font-medium">Transport vehicle arranged and fueled</span>
+                </label>
+                <label className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <input type="checkbox" className="rounded text-red-600 mr-3" />
+                  <span className="text-sm font-medium">Distribution staff assigned and briefed</span>
+                </label>
+                <label className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <input type="checkbox" className="rounded text-red-600 mr-3" />
+                  <span className="text-sm font-medium">Beneficiaries notified of distribution schedule</span>
+                </label>
+                <label className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <input type="checkbox" className="rounded text-red-600 mr-3" />
+                  <span className="text-sm font-medium">Distribution site prepared and secured</span>
+                </label>
+                <label className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <input type="checkbox" className="rounded text-red-600 mr-3" />
+                  <span className="text-sm font-medium">Distribution forms and documentation ready</span>
+                </label>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Additional Notes
+                Staff Notes & Justification
               </label>
               <textarea
                 rows="4"
@@ -491,7 +676,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       disabled={step === 1 && (!formData.location || !formData.beneficiaryType || !formData.distributionDate)}
                       className="flex-1 sm:flex-none px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
                     >
-                      {step === 1 ? 'Analyze Location' : 'Create Plan'}
+                      {step === 1 ? 'Generate Plan' : 'Review & Submit'}
                       <HiTrendingUp className="w-4 h-4 ml-2" />
                     </button>
                   ) : (
@@ -500,7 +685,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       className="flex-1 sm:flex-none px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
                     >
                       <HiCheckCircle className="w-4 h-4 mr-2" />
-                      Create Distribution Plan
+                      Execute Distribution Plan
                     </button>
                   )}
                 </div>
