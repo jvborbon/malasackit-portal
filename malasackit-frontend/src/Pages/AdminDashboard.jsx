@@ -19,7 +19,7 @@ export default function AdminDashboard() {
             case 'User Management':
                 return <UserManagement />;
             
-            case 'Beneficiary Logs':
+            case 'Distribution Logs':
                return <BeneficiaryLogs />;
 
             case 'Donation Requests':
