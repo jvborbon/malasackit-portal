@@ -40,6 +40,55 @@ const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon:
     );
 };
 
+const loginUser = async (email, password) => {
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Important: Include cookies
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+};
+
+const logoutUser = async () => {
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include', // Include cookies
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Logout error:', error);
+        throw error;
+    }
+};
+
+const getUserProfile = async () => {
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/profile', {
+            method: 'GET',
+            credentials: 'include', // Include cookies
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Get profile error:', error);
+        throw error;
+    }
+};
+
 export default function LoginForm({ onSwitchToRegister }) {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -64,49 +113,60 @@ export default function LoginForm({ onSwitchToRegister }) {
         setError('');
 
         try {
-            // Basic form validation
             if (!formData.email || !formData.password) {
                 throw new Error('Please fill in all fields');
             }
 
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('Attempting login with:', formData.email); // Debug log
 
-            // Mock authentication logic
-            // would be an API call to your backend
-            const mockUsers = [
-                { email: 'donor@example.com', password: 'password123', type: 'donor' },
-                { email: 'staff@example.com', password: 'staff123', type: 'staff' },
-                { email: 'admin@example.com', password: 'test123', type: 'admin' }
-            ];
+            const response = await fetch('http://localhost:3000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // Include cookies
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password
+                }),
+            });
 
-            const user = mockUsers.find(u => 
-                u.email === formData.email && u.password === formData.password
-            );
+            console.log('Response status:', response.status); // Debug log
+            const data = await response.json();
+            console.log('Response data:', data); // Debug log
 
-            if (user) {
-                // Store user info in localStorage
-                const userInfo = {
-                    email: user.email,
-                    type: user.type,
-                    loginTime: new Date().toISOString()
-                };
-
-                localStorage.setItem('userInfo', JSON.stringify(userInfo));
-                localStorage.setItem('userToken', 'mock-jwt-token-' + Date.now());
-
-                // Redirect based on user type
-                if (user.type === 'donor') {
+            if (data.success) {
+                console.log('Login successful, user role:', data.data.user.role_name); // Debug log
+                // No need to store token - it's in HTTP-only cookie
+                // Just redirect based on user role
+                const userRole = data.data.user.role_name;
+                console.log('About to navigate, user role:', userRole); // Debug log
+                
+                if (userRole === 'Donor') {
+                    console.log('Navigating to /donor-dashboard'); // Debug log
                     navigate('/donor-dashboard');
-                } else if (user.type === 'staff') {
+                } else if (userRole === 'Resource Staff') {
+                    console.log('Navigating to /staff-dashboard'); // Debug log
                     navigate('/staff-dashboard');
-                } else {
+                } else if (userRole === 'Executive Admin') {
+                    console.log('Navigating to /admin-dashboard'); // Debug log
                     navigate('/admin-dashboard');
+                } else {
+                    console.log('Unknown role, navigating to home'); // Debug log
+                    // Fallback for unknown roles
+                    navigate('/');
                 }
+                
+                // Add a small delay to ensure navigation completes
+                setTimeout(() => {
+                    console.log('Current location after navigation:', window.location.pathname); // Debug log
+                }, 100);
             } else {
-                throw new Error('Invalid email or password');
+                console.log('Login failed:', data.message); // Debug log
+                throw new Error(data.message || 'Login failed');
             }
         } catch (error) {
+            console.error('Login error:', error); // Debug log
             setError(error.message);
         } finally {
             setIsLoading(false);

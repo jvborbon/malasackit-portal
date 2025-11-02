@@ -26,21 +26,51 @@ export default function DashboardLayout({ children, userRole }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
-        // Get user info from localStorage (set during login)
-        const user = localStorage.getItem('userInfo');
-        if (user) {
-            setUserInfo(JSON.parse(user));
-        } else {
-            // If no user info, redirect to login
-            navigate('/login');
-        }
+        // Fetch user info from the backend using the HTTP-only cookie
+        const fetchUserInfo = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/profile', {
+                    method: 'GET',
+                    credentials: 'include', // Include cookies
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        setUserInfo(data.data.user);
+                    } else {
+                        // If no valid session, redirect to login
+                        navigate('/login');
+                    }
+                } else {
+                    // If unauthorized, redirect to login
+                    navigate('/login');
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+                navigate('/login');
+            }
+        };
+
+        fetchUserInfo();
     }, [navigate]);
 
     const handleLogoutClick = () => {
         setShowLogoutConfirm(true);
     };
 
-    const handleLogoutConfirm = () => {
+    const handleLogoutConfirm = async () => {
+        try {
+            // Call the backend logout endpoint
+            await fetch('http://localhost:3000/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include', // Include cookies
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+        
+        // Clear any remaining localStorage (if any) and redirect
         localStorage.removeItem('userInfo');
         localStorage.removeItem('userToken');
         setShowLogoutConfirm(false);
