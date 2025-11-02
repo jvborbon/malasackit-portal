@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import locationRoutes from './routes/locationRoutes.js';
+
 
 
 const app = express();
@@ -13,7 +15,9 @@ app.get('/', (req, res) => {
 
 
 // Register location routes
-import locationRoutes from './routes/locationRoutes.js';
+
+
+
 app.use('/api', locationRoutes);
 
 
