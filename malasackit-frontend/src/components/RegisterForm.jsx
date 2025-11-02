@@ -326,50 +326,36 @@ export default function RegisterForm({ onSwitchToLogin }) {
                         />
                     </div>
 
-                    {/* Donor Type - Compact Radio Buttons */}
-                    <div className="flex items-center space-x-6">
-                        <span className="text-white font-semibold text-sm">Donor Type:</span>
-                        <div className="flex space-x-4">
-                            <label className="flex items-center cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="donorType"
-                                    value="INDIVIDUAL"
-                                    checked={formData.donorType === 'INDIVIDUAL'}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, donorType: e.target.value }))}
-                                    className="sr-only"
-                                />
-                                <div className={`w-4 h-4 rounded-full border-2 mr-2 transition-all duration-200 ${
-                                    formData.donorType === 'INDIVIDUAL'
-                                        ? 'border-white bg-white'
-                                        : 'border-red-200 bg-transparent'
-                                }`}>
-                                    {formData.donorType === 'INDIVIDUAL' && (
-                                        <div className="w-2 h-2 bg-red-600 rounded-full m-0.5"></div>
-                                    )}
+                    {/* Account Type - Card Style */}
+                    <div className="space-y-3 mt-12 pt-9">
+                        <span className="text-white font-semibold text-base">Account Type:</span>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div 
+                                className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                                    formData.accountType === 'INDIVIDUAL' 
+                                        ? 'border-white bg-white/20 text-white shadow-lg' 
+                                        : 'border-red-200 bg-transparent text-white hover:border-white hover:bg-white/10 hover:shadow-md'
+                                }`}
+                                onClick={() => setFormData(prev => ({ ...prev, accountType: 'INDIVIDUAL' }))}
+                            >
+                                <div className="text-center">
+                                    <div className="text-lg font-medium">Individual</div>
+                                    <div className="text-sm opacity-80">Personal account</div>
                                 </div>
-                                <span className="text-white text-sm font-medium">Individual</span>
-                            </label>
-                            <label className="flex items-center cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="donorType"
-                                    value="ORGANIZATION"
-                                    checked={formData.donorType === 'ORGANIZATION'}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, donorType: e.target.value }))}
-                                    className="sr-only"
-                                />
-                                <div className={`w-4 h-4 rounded-full border-2 mr-2 transition-all duration-200 ${
-                                    formData.donorType === 'ORGANIZATION'
-                                        ? 'border-white bg-white'
-                                        : 'border-red-200 bg-transparent'
-                                }`}>
-                                    {formData.donorType === 'ORGANIZATION' && (
-                                        <div className="w-2 h-2 bg-red-600 rounded-full m-0.5"></div>
-                                    )}
+                            </div>
+                            <div 
+                                className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                                    formData.accountType === 'ORGANIZATION' 
+                                        ? 'border-white bg-white/20 text-white shadow-lg' 
+                                        : 'border-red-200 bg-transparent text-white hover:border-white hover:bg-white/10 hover:shadow-md'
+                                }`}
+                                onClick={() => setFormData(prev => ({ ...prev, accountType: 'ORGANIZATION' }))}
+                            >
+                                <div className="text-center">
+                                    <div className="text-lg font-medium">Organization</div>
+                                    <div className="text-sm opacity-80">Business account</div>
                                 </div>
-                                <span className="text-white text-sm font-medium">Organization</span>
-                            </label>
+                            </div>
                         </div>
                     </div>
 
@@ -416,13 +402,6 @@ export default function RegisterForm({ onSwitchToLogin }) {
 
                         {/* Address Details with Dropdowns */}
                         <div className="space-y-3">
-                        <FloatingInput
-                            label="Street Address/Subdivision"
-                            name="streetAddress"
-                            value={formData.streetAddress}
-                            onChange={handleInputChange}
-                            required
-                        />
                         
                         {/* Address Dropdowns with Simple Styling */}
                         <div className="space-y-3">
@@ -519,6 +498,21 @@ export default function RegisterForm({ onSwitchToLogin }) {
                                         </option>
                                     ))}
                                 </select>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-white text-sm font-medium mb-1">
+                                    Street Address/Subdivision <span className="text-red-200">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="streetAddress"
+                                    value={formData.streetAddress}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2.5 border-2 border-white bg-transparent text-white rounded-lg focus:border-red-200 focus:outline-none placeholder-gray-300"
+                                    placeholder="Enter your street address"
+                                    required
+                                />
                             </div>
                         </div>
                         </div>

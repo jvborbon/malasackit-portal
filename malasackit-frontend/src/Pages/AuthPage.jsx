@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
 import lasacLogo from '../assets/images/lasac-logo.png';
+import kasaloImage from '../assets/images/kasalo.jpg';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
 
@@ -120,8 +121,20 @@ export default function AuthPage() {
             )}
 
             {/* Left side - Welcome message */}
-            <div className="w-full lg:w-1/3 min-h-[40vh] lg:min-h-screen min-w-0 flex items-center justify-center p-6 lg:p-12 flex-shrink-0">
-                <div className="max-w-md w-full text-center lg:text-left">
+            <div 
+                className="w-full lg:w-2/5 min-h-[40vh] lg:min-h-screen min-w-0 flex items-center justify-center p-6 lg:p-12 flex-shrink-0 relative bg-gray-100"
+                style={{
+                    backgroundImage: `url(${kasaloImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                }}
+            >
+                {/* Semi-transparent overlay to blend with white background */}
+                <div className="absolute inset-0 bg-white bg-opacity-85"></div>
+                
+                {/* Content */}
+                <div className="max-w-md w-full text-center lg:text-left relative z-10">
                     <div className="mb-6 lg:mb-8">
                         <img src={lasacLogo} alt="LASAC Logo" className="w-16 h-16 lg:w-20 lg:h-20 mx-auto lg:mx-0" />
                     </div>
