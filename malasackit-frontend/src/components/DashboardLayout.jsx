@@ -16,7 +16,7 @@ import {
     HiMenu,
     HiX
 } from 'react-icons/hi';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../auth/Authentication';
 import LogoutConfirm from './dialogs/LogoutConfim';
 
 export default function DashboardLayout({ children, userRole }) {
@@ -26,9 +26,8 @@ export default function DashboardLayout({ children, userRole }) {
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    // Simple effect to redirect if no user (handled by RouteProtection now)
     useEffect(() => {
-        // If no user is available, redirect to login
-        // This is a safety check since ProtectedRoute should handle this
         if (!user) {
             navigate('/login');
         }

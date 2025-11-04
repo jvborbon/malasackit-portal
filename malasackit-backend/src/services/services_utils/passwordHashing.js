@@ -11,7 +11,7 @@ export const comparePassword = async (password, hash) => {
 };
 
 // Utility function to generate test hashes (for development only)
-export const generateTestHashes = async () => {
+/*export const generateTestHashes = async () => {
     const passwords = [
         { user: 'admin', password: 'admin123' },
         { user: 'staff', password: 'staff123' },
@@ -23,4 +23,4 @@ export const generateTestHashes = async () => {
         const hash = await hashPassword(password);
         console.log(`${user}@test.com (${password}): ${hash}`);
     }
-};
+};*/

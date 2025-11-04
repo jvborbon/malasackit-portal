@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { HiUser, HiLockClosed } from 'react-icons/hi';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../auth/Authentication';
 
 // Google-style Floating Input Component
 const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon: Icon, required = false, disabled = false }) => {
@@ -92,8 +92,7 @@ const getUserProfile = async () => {
 
 export default function LoginForm({ onSwitchToRegister }) {
     const navigate = useNavigate();
-    const location = useLocation();
-    const { login } = useAuth();
+    const { loginAuthentication } = useAuth();
     
     const [formData, setFormData] = useState({
         email: '',
@@ -123,55 +122,26 @@ export default function LoginForm({ onSwitchToRegister }) {
 
             console.log('Attempting login with:', formData.email); // Debug log
 
-            const response = await fetch('http://localhost:3000/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include', // Include cookies
-                body: JSON.stringify({
-                    email: formData.email,
-                    password: formData.password
-                }),
-            });
-
-            console.log('Response status:', response.status); // Debug log
-            const data = await response.json();
-            console.log('Response data:', data); // Debug log
-
-            if (data.success) {
-                console.log('Login successful, user role:', data.data.user.role_name); // Debug log
-                
-                // Update authentication context
-                await login(data.data.user);
-                
-                // Get the intended destination or default based on role
-                const from = location.state?.from;
-                const userRole = data.data.user.role_name;
-                
-                let redirectPath;
-                if (from && from !== '/login') {
-                    // User was trying to access a specific page
-                    redirectPath = from;
-                } else {
-                    // Default redirect based on role
-                    if (userRole === 'Donor') {
-                        redirectPath = '/donor-dashboard';
-                    } else if (userRole === 'Resource Staff') {
-                        redirectPath = '/staff-dashboard';
-                    } else if (userRole === 'Executive Admin') {
-                        redirectPath = '/admin-dashboard';
-                    } else {
-                        redirectPath = '/';
-                    }
-                }
-                
-                console.log('Navigating to:', redirectPath);
-                navigate(redirectPath, { replace: true });
+            // Use the new authentication system
+            const userRole = await loginAuthentication(formData.email, formData.password);
+            
+            console.log('Login successful, user role:', userRole); // Debug log
+            
+            // Redirect based on role
+            let redirectPath;
+            if (userRole === 'Donor') {
+                redirectPath = '/donor-dashboard';
+            } else if (userRole === 'Resource Staff') {
+                redirectPath = '/staff-dashboard';
+            } else if (userRole === 'Executive Admin') {
+                redirectPath = '/admin-dashboard';
             } else {
-                console.log('Login failed:', data.message); // Debug log
-                throw new Error(data.message || 'Login failed');
+                redirectPath = '/';
             }
+            
+            console.log('Navigating to:', redirectPath);
+            navigate(redirectPath, { replace: true });
+            
         } catch (error) {
             console.error('Login error:', error); // Debug log
             setError(error.message);

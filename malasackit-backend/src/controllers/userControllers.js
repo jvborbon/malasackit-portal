@@ -70,10 +70,18 @@ export const logout = async (req, res) => {
 
 export const getProfile = async (req, res) => {
     try {
-        // User info is available from middleware
+        // User info is available from middleware (JWT payload)
+        // Convert JWT structure to match what frontend expects
+        const userProfile = {
+            user_id: req.user.userId,
+            email: req.user.email,
+            role_name: req.user.role,
+            // Add other fields if needed
+        };
+        
         res.json({
             success: true,
-            data: { user: req.user }
+            data: { user: userProfile }
         });
         
     } catch (error) {
