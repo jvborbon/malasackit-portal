@@ -26,6 +26,14 @@ export default function DashboardLayout({ children, userRole }) {
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    useEffect(() => {
+        // If no user is available, redirect to login
+        // This is a safety check since ProtectedRoute should handle this
+        if (!user) {
+            navigate('/login');
+        }
+    }, [user, navigate]);
+
     const handleLogoutClick = () => {
         setShowLogoutConfirm(true);
     };
@@ -37,7 +45,7 @@ export default function DashboardLayout({ children, userRole }) {
             navigate('/login');
         } catch (error) {
             console.error('Logout error:', error);
-            // Still redirect to login even if logout API fails
+            // Even if logout fails, clear local state and redirect
             setShowLogoutConfirm(false);
             navigate('/login');
         }
@@ -139,7 +147,7 @@ export default function DashboardLayout({ children, userRole }) {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading user data...</p>
+                    <p className="mt-4 text-gray-600">Loading...</p>
                 </div>
             </div>
         );
@@ -231,7 +239,7 @@ export default function DashboardLayout({ children, userRole }) {
                         </div>
                         <div className="flex items-center space-x-2 lg:space-x-4">
                             <span className="text-gray-600 text-sm lg:text-base font-medium">
-                                Welcome, {user.full_name || user.first_name || userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
+                                Welcome, {userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
                             </span>
                             <div className="w-8 h-8 bg-gray-800 rounded-full"></div>
                         </div>
