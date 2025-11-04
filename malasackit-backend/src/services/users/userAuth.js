@@ -16,19 +16,23 @@ export const loginUser = async (email, password) => {
         const result = await query(userQuery, [email]);
         
         if (result.rows.length === 0) {
-            return { success: false, message: 'Invalid credentials' };
+            return { success: false, message: 'No account found with this email address' };
         }
         
         const user = result.rows[0];
         
-        if (!user.is_approved || user.status !== 'active') {
-            return { success: false, message: 'Account not active' };
+        if (!user.is_approved) {
+            return { success: false, message: 'Your account is pending approval. Please contact an administrator.' };
+        }
+        
+        if (user.status !== 'active') {
+            return { success: false, message: 'Your account has been deactivated. Please contact an administrator.' };
         }
         
         const isValidPassword = await comparePassword(password, user.password_hash);
         
         if (!isValidPassword) {
-            return { success: false, message: 'Invalid credentials' };
+            return { success: false, message: 'Incorrect password. Please try again.' };
         }
         
         // Update last login
@@ -39,6 +43,6 @@ export const loginUser = async (email, password) => {
         
     } catch (error) {
         console.error('Login error:', error);
-        return { success: false, message: 'Login failed' };
+        return { success: false, message: 'Login failed. Please try again later.' };
     }
 };

@@ -5,6 +5,7 @@ import TopDonorsSection from '../components/analytics/descriptivechart/staff/Top
 import TopParishesSection from '../components/analytics/descriptivechart/admin/TopParishesSection';
 import TopMunicipalitySection from '../components/analytics/descriptivechart/admin/TopMunicipalitySection';
 import DonatedItemsChart from '../components/analytics/descriptivechart/staff/DonatedItemsChart';
+import UserKPICards from '../components/analytics/descriptivechart/admin/UserKPICards';
 import UserProfileSettings from '../components/UserProfileSettings';
 import DonationRequests from '../components/DonationRequests';
 import BeneficiaryLogs from '../components/BeneficiaryLogs';
@@ -14,7 +15,7 @@ import Calendar from '../components/Calendar';
 
 export default function AdminDashboard() {
     // Function to render main content based on active navigation
-    const renderMainContent = ({ activeNav, userInfo }) => {
+    const renderMainContent = ({ activeNav, userInfo, setActiveNav }) => {
         switch (activeNav) {
             case 'User Management':
                 return <UserManagement />;
@@ -45,14 +46,20 @@ export default function AdminDashboard() {
                     <div className="space-y-6">
                         <StaffKPICards />
                         
+                        {/* User Management KPIs */}
+                        <UserKPICards />
+                        
+                        {/* Donation Reports Chart - Full Width */}
+                        <div className="bg-white rounded-lg shadow-sm p-6">
+                            <DonationReportsChart />
+                        </div>
+                        
                         {/* Charts Grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
                             <div className="bg-white rounded-lg shadow-sm p-6">
-                                <DonationReportsChart />
+                                <DonatedItemsChart />
                             </div>
 
-                            
                             <div className="bg-white rounded-lg shadow-sm p-6">
                                 <TopDonorsSection />
                             </div>
@@ -62,10 +69,6 @@ export default function AdminDashboard() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <TopParishesSection />
                             <TopMunicipalitySection />
-                        </div>
-
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <DonatedItemsChart />
                         </div>
                     </div>
                 );

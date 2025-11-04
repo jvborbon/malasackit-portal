@@ -1,4 +1,5 @@
 import FloatingInput from '../common/FloatingInput';
+import FloatingSelect from '../common/FloatingSelect';
 
 const ParishVicariateStep = ({ 
     formData, 
@@ -7,7 +8,11 @@ const ParishVicariateStep = ({
     onSkip,
     onBack, 
     onSwitchToLogin, 
-    isTransitioning 
+    isTransitioning,
+    vicariates = [],
+    parishes = [],
+    isLoadingVicariates = false,
+    isLoadingParishes = false
 }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -16,8 +21,8 @@ const ParishVicariateStep = ({
 
     const handleSkip = () => {
         // Clear parish and vicariate fields when skipping
-        handleInputChange({ target: { name: 'parish', value: '' } });
-        handleInputChange({ target: { name: 'vicariate', value: '' } });
+        handleInputChange({ target: { name: 'vicariateId', value: '' } });
+        handleInputChange({ target: { name: 'parishId', value: '' } });
         onSkip();
     };
 
@@ -37,18 +42,26 @@ const ParishVicariateStep = ({
 
                 {/* Parish and Vicariate Fields */}
                 <div className="space-y-4">
-                    <FloatingInput
-                        label="Parish (Optional)"
-                        name="parish"
-                        value={formData.parish}
+                    <FloatingSelect
+                        label="Vicariate (Optional)"
+                        name="vicariateId"
+                        value={formData.vicariateId}
                         onChange={handleInputChange}
+                        options={vicariates}
+                        loading={isLoadingVicariates}
+                        theme="dark"
                         required={false}
                     />
-                    <FloatingInput
-                        label="Vicariate (Optional)"
-                        name="vicariate"
-                        value={formData.vicariate}
+                    
+                    <FloatingSelect
+                        label="Parish (Optional)"
+                        name="parishId"
+                        value={formData.parishId}
                         onChange={handleInputChange}
+                        options={parishes}
+                        loading={isLoadingParishes}
+                        disabled={!formData.vicariateId}
+                        theme="dark"
                         required={false}
                     />
                 </div>
@@ -65,7 +78,8 @@ const ParishVicariateStep = ({
                             <h4 className="text-white font-medium text-sm">Why do we ask for this?</h4>
                             <p className="text-red-200 text-xs mt-1">
                                 This helps us coordinate donations and distributions with your local church community, 
-                                ensuring resources reach those who need them most in your area.
+                                ensuring resources reach those who need them most in your area. 
+                                First select your vicariate, then choose your specific parish.
                             </p>
                         </div>
                     </div>

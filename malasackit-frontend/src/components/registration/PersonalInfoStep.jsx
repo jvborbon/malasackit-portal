@@ -5,15 +5,11 @@ const PersonalInfoStep = ({
     handleInputChange, 
     onNext, 
     onSwitchToLogin, 
-    isTransitioning 
+    isTransitioning,
+    validationErrors = {}
 }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Validate step 1 fields
-        if (!formData.fullName || !formData.email || !formData.phoneNumber) {
-            alert('Please fill in all required fields');
-            return;
-        }
         onNext();
     };
 
@@ -36,6 +32,7 @@ const PersonalInfoStep = ({
                         value={formData.fullName}
                         onChange={handleInputChange}
                         required
+                        error={validationErrors.fullName}
                     />
                     <FloatingInput
                         label="Email Address"
@@ -44,6 +41,7 @@ const PersonalInfoStep = ({
                         value={formData.email}
                         onChange={handleInputChange}
                         required
+                        error={validationErrors.email}
                     />
                     <FloatingInput
                         label="Phone Number"
@@ -51,7 +49,8 @@ const PersonalInfoStep = ({
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleInputChange}
-                        required
+                        required={false}
+                        error={validationErrors.phoneNumber}
                     />
                 </div>
 

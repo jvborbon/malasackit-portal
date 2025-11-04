@@ -1,9 +1,10 @@
 import express from 'express';
-import { login, logout, getProfile } from '../controllers/userControllers.js';
+import { login, logout, getProfile, register } from '../controllers/userControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.post('/register', register); // Registration endpoint enabled but logic disabled
 router.post('/login', login);
 router.post('/logout', logout);
 router.get('/profile', authenticateToken, getProfile);

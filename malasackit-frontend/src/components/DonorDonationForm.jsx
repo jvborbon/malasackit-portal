@@ -1,19 +1,124 @@
 import { useState } from 'react';
-import { HiPlus, HiCalendar } from 'react-icons/hi';
+import { HiPlus, HiCalendar, HiChevronDown, HiX } from 'react-icons/hi';
 
 export default function DonorDonationForm() {
     const [formData, setFormData] = useState({
-        itemName: '',
+        selectedCategory: '',
+        selectedItemType: '',
+        customItemName: '',
         brandName: '',
-        category: '',
         quantity: '',
+        weight: '',
         value: '',
-        deliveryMethod: 'pickup', // 'pickup' or 'dropoff'
+        deliveryMethod: 'pickup',
         description: '',
         scheduleDate: ''
     });
 
     const [donationItems, setDonationItems] = useState([]);
+    const [showItemTypeModal, setShowItemTypeModal] = useState(false);
+
+    // Categorized donation items based on DSWD guidelines
+    const donationCategories = {
+        'Food Items': {
+            icon: '🍲',
+            description: 'Canned goods, rice, noodles, etc.',
+            items: [
+                'Canned Goods',
+                'Rice',
+                'Noodles',
+                'Cooking Oil',
+                'Sugar',
+                'Salt',
+                'Coffee',
+                'Milk Powder',
+                'Biscuits',
+                'Dried Fish',
+                'Other Food Items'
+            ]
+        },
+        'Non-Food Items': {
+            icon: '🧴',
+            description: 'Personal care, hygiene, household items',
+            items: [
+                'Soap',
+                'Shampoo',
+                'Toothpaste',
+                'Toothbrush',
+                'Toilet Paper',
+                'Detergent',
+                'Sanitary Pads',
+                'Diapers',
+                'Face Masks',
+                'Alcohol',
+                'Other Hygiene Items'
+            ]
+        },
+        'Clothing': {
+            icon: '👕',
+            description: 'New or gently used clothes',
+            items: [
+                'T-Shirts',
+                'Pants',
+                'Dresses',
+                'Shorts',
+                'Underwear (New Only)',
+                'Socks',
+                'Shoes',
+                'Jackets',
+                'School Uniforms',
+                'Baby Clothes',
+                'Other Clothing'
+            ]
+        },
+        'Shelter Materials': {
+            icon: '🏠',
+            description: 'Emergency shelter and construction materials',
+            items: [
+                'Blankets',
+                'Tents',
+                'Tarpaulins',
+                'Pillows',
+                'Bed Sheets',
+                'Mosquito Nets',
+                'Jerry Cans',
+                'Plastic Containers',
+                'Emergency Kits',
+                'Other Shelter Items'
+            ]
+        },
+        'Educational Materials': {
+            icon: '📚',
+            description: 'School supplies and learning materials',
+            items: [
+                'Notebooks',
+                'Pens',
+                'Pencils',
+                'Erasers',
+                'Rulers',
+                'Crayons',
+                'Books',
+                'Backpacks',
+                'School Supplies',
+                'Other Educational Items'
+            ]
+        },
+        'Kitchen Utensils': {
+            icon: '🍴',
+            description: 'Cooking and eating utensils',
+            items: [
+                'Plates',
+                'Cups',
+                'Spoons',
+                'Forks',
+                'Knives',
+                'Cooking Pots',
+                'Pans',
+                'Water Containers',
+                'Other Kitchen Items'
+            ]
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -23,37 +128,51 @@ export default function DonorDonationForm() {
         }));
     };
 
-    const handleDeliveryMethodChange = (method) => {
+    const handleCategorySelect = (category) => {
         setFormData(prev => ({
             ...prev,
-            deliveryMethod: method
+            selectedCategory: category,
+            selectedItemType: ''
         }));
     };
 
+    const handleItemTypeSelect = (itemType) => {
+        setFormData(prev => ({
+            ...prev,
+            selectedItemType: itemType,
+            customItemName: itemType === 'Other' ? '' : itemType
+        }));
+        setShowItemTypeModal(false);
+    };
+
     const addDonationItem = () => {
-        if (formData.itemName && formData.brandName && formData.category && formData.quantity && formData.value) {
+        const itemName = formData.selectedItemType === 'Other' ? formData.customItemName : formData.selectedItemType;
+        
+        if (formData.selectedCategory && itemName && formData.quantity && formData.value) {
             const newItem = {
                 id: Date.now(),
-                itemName: formData.itemName,
+                category: formData.selectedCategory,
+                itemType: itemName,
                 brandName: formData.brandName,
-                category: formData.category,
                 quantity: parseInt(formData.quantity),
+                weight: formData.weight ? parseFloat(formData.weight) : null,
                 value: parseFloat(formData.value)
             };
             
             setDonationItems(prev => [...prev, newItem]);
             
-            // Reset only item fields, keep delivery method, description, and schedule
+            // Reset only item fields
             setFormData(prev => ({
                 ...prev,
-                itemName: '',
+                selectedItemType: '',
+                customItemName: '',
                 brandName: '',
-                category: '',
                 quantity: '',
+                weight: '',
                 value: ''
             }));
         } else {
-            alert('Please fill in all item details before adding.');
+            alert('Please fill in all required fields before adding.');
         }
     };
 
@@ -64,6 +183,11 @@ export default function DonorDonationForm() {
     const handleSubmit = (e) => {
         e.preventDefault();
         
+        if (donationItems.length === 0) {
+            alert('Please add at least one donation item.');
+            return;
+        }
+        
         const donationData = {
             items: donationItems,
             deliveryMethod: formData.deliveryMethod,
@@ -73,17 +197,17 @@ export default function DonorDonationForm() {
         };
         
         console.log('Donation submitted:', donationData);
-        
-        // would send the data to your backend
         alert('Donation submitted successfully!');
         
         // Reset form
         setDonationItems([]);
         setFormData({
-            itemName: '',
+            selectedCategory: '',
+            selectedItemType: '',
+            customItemName: '',
             brandName: '',
-            category: '',
             quantity: '',
+            weight: '',
             value: '',
             deliveryMethod: 'pickup',
             description: '',

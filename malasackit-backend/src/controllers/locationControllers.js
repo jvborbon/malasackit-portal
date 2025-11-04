@@ -45,3 +45,35 @@ export async function getBarangaysByMunicipality(req, res) {
     return res.status(500).json({ success: false, error: "Server error" });
   }
 }
+
+export async function getVicariates(req, res) {
+  try {
+    const vicariates = await locationServices.getAllVicariates();
+    return res.status(200).json({ success: true, data: vicariates });
+  } catch (err) {
+    console.error("getVicariates error:", err);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+}
+
+export async function getParishesByVicariate(req, res) {
+  try {
+    const { vicariate_id } = req.params;
+    if (!vicariate_id) return res.status(400).json({ success: false, error: "vicariate_id required" });
+    const parishes = await locationServices.getParishesByVicariate(vicariate_id);
+    return res.status(200).json({ success: true, data: parishes });
+  } catch (err) {
+    console.error("getParishesByVicariate error:", err);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+}
+
+export async function getAllParishes(req, res) {
+  try {
+    const parishes = await locationServices.getAllParishes();
+    return res.status(200).json({ success: true, data: parishes });
+  } catch (err) {
+    console.error("getAllParishes error:", err);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+}

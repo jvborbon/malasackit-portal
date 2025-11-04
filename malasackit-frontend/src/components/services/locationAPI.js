@@ -59,5 +59,50 @@ export const locationAPI = {
       console.error('Error fetching barangays:', error);
       throw error;
     }
+  },
+
+  // Fetch all vicariates
+  async getVicariates() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/vicariates`);
+      const data = await response.json();
+      if (data.success) {
+        return data.data;
+      }
+      throw new Error(data.error || 'Failed to fetch vicariates');
+    } catch (error) {
+      console.error('Error fetching vicariates:', error);
+      throw error;
+    }
+  },
+
+  // Fetch parishes by vicariate ID
+  async getParishesByVicariate(vicariateId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/vicariates/${vicariateId}/parishes`);
+      const data = await response.json();
+      if (data.success) {
+        return data.data;
+      }
+      throw new Error(data.error || 'Failed to fetch parishes');
+    } catch (error) {
+      console.error('Error fetching parishes:', error);
+      throw error;
+    }
+  },
+
+  // Fetch all parishes
+  async getAllParishes() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/parishes`);
+      const data = await response.json();
+      if (data.success) {
+        return data.data;
+      }
+      throw new Error(data.error || 'Failed to fetch parishes');
+    } catch (error) {
+      console.error('Error fetching parishes:', error);
+      throw error;
+    }
   }
 };

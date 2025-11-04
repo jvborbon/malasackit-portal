@@ -24,4 +24,16 @@ router.get(
   locationControllers.getBarangaysByMunicipality
 );
 
+// GET /api/vicariates
+router.get("/vicariates", locationControllers.getVicariates);
+
+// GET /api/vicariates/:vicariate_id/parishes
+router.get(
+  "/vicariates/:vicariate_id/parishes",
+  locationControllers.getParishesByVicariate
+);
+
+// GET /api/parishes
+router.get("/parishes", locationControllers.getAllParishes);
+
 export default router;

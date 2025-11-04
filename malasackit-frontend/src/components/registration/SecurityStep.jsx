@@ -6,17 +6,13 @@ const SecurityStep = ({
     onSubmit, 
     onBack, 
     onSwitchToLogin, 
-    isTransitioning 
+    isTransitioning,
+    validationErrors = {},
+    isSubmitting = false,
+    submitError = ''
 }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        // Validate passwords
-        if (formData.password !== formData.repeatPassword) {
-            alert('Passwords do not match!');
-            return;
-        }
-        
         onSubmit();
     };
 
@@ -40,6 +36,7 @@ const SecurityStep = ({
                         value={formData.password}
                         onChange={handleInputChange}
                         required
+                        error={validationErrors.password}
                     />
                     <FloatingInput
                         label="Repeat Password"
@@ -48,8 +45,16 @@ const SecurityStep = ({
                         value={formData.repeatPassword}
                         onChange={handleInputChange}
                         required
+                        error={validationErrors.repeatPassword}
                     />
                 </div>
+
+                {/* Error Message */}
+                {submitError && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4">
+                        {submitError}
+                    </div>
+                )}
 
                 {/* Navigation buttons */}
                 <div className="flex space-x-4 pt-4">
@@ -62,9 +67,14 @@ const SecurityStep = ({
                     </button>
                     <button
                         type="submit"
-                        className="w-full bg-white text-red-600 font-bold py-3 px-4 rounded hover:bg-red-50 transition duration-200"
+                        disabled={isSubmitting}
+                        className={`w-full font-bold py-3 px-4 rounded transition duration-200 ${
+                            isSubmitting 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-white text-red-600 hover:bg-red-50'
+                        }`}
                     >
-                        Register
+                        {isSubmitting ? 'Registering...' : 'Register'}
                     </button>
                 </div>
 
