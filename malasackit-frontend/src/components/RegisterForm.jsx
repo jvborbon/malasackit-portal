@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { locationAPI } from '../services/locationAPI';
+import { locationAPI } from './services/locationAPI';
 
 // Google-style Floating Input Component
 const FloatingInput = ({ label, type = "text", name, value, onChange, required = false }) => {

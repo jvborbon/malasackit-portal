@@ -5,8 +5,8 @@ import DonorDonationForm from '../components/DonorDonationForm';
 import Notifs from '../components/Notifs';
 import Calendar from '../components/Calendar';
 import UserProfileSettings from '../components/UserProfileSettings';
-import DonorKPICards from '../analytics/descriptivechart/donor/DonorKPICards';
-import DonationTrendsChart from '../analytics/descriptivechart/donor/DonationTrendsChart';
+import DonorKPICards from '../components/analytics/descriptivechart/donor/DonorKPICards';
+import DonationTrendsChart from '../components/analytics/descriptivechart/donor/DonationTrendsChart';
 
 export default function DonorDashboard() {
     // Function to render main content based on active navigation

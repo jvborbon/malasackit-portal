@@ -16,44 +16,15 @@ import {
     HiMenu,
     HiX
 } from 'react-icons/hi';
-import LogoutConfirm from '../dialogs/LogoutConfim';
+import { useAuth } from '../context/AuthContext';
+import LogoutConfirm from './dialogs/LogoutConfim';
 
 export default function DashboardLayout({ children, userRole }) {
     const navigate = useNavigate();
-    const [userInfo, setUserInfo] = useState(null);
+    const { user, logout } = useAuth();
     const [activeNav, setActiveNav] = useState('Dashboard');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    useEffect(() => {
-        // Fetch user info from the backend using the HTTP-only cookie
-        const fetchUserInfo = async () => {
-            try {
-                const response = await fetch('http://localhost:3000/api/auth/profile', {
-                    method: 'GET',
-                    credentials: 'include', // Include cookies
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        setUserInfo(data.data.user);
-                    } else {
-                        // If no valid session, redirect to login
-                        navigate('/login');
-                    }
-                } else {
-                    // If unauthorized, redirect to login
-                    navigate('/login');
-                }
-            } catch (error) {
-                console.error('Error fetching user profile:', error);
-                navigate('/login');
-            }
-        };
-
-        fetchUserInfo();
-    }, [navigate]);
 
     const handleLogoutClick = () => {
         setShowLogoutConfirm(true);
@@ -61,20 +32,15 @@ export default function DashboardLayout({ children, userRole }) {
 
     const handleLogoutConfirm = async () => {
         try {
-            // Call the backend logout endpoint
-            await fetch('http://localhost:3000/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include', // Include cookies
-            });
+            await logout();
+            setShowLogoutConfirm(false);
+            navigate('/login');
         } catch (error) {
             console.error('Logout error:', error);
+            // Still redirect to login even if logout API fails
+            setShowLogoutConfirm(false);
+            navigate('/login');
         }
-        
-        // Clear any remaining localStorage (if any) and redirect
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('userToken');
-        setShowLogoutConfirm(false);
-        navigate('/login');
     };
 
     const handleLogoutCancel = () => {
@@ -167,12 +133,13 @@ export default function DashboardLayout({ children, userRole }) {
         }
     };
 
-    if (!userInfo) {
+    // Loading state if user data is not available yet
+    if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
+                    <p className="mt-4 text-gray-600">Loading user data...</p>
                 </div>
             </div>
         );
@@ -264,7 +231,7 @@ export default function DashboardLayout({ children, userRole }) {
                         </div>
                         <div className="flex items-center space-x-2 lg:space-x-4">
                             <span className="text-gray-600 text-sm lg:text-base font-medium">
-                                Welcome, {userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
+                                Welcome, {user.full_name || user.first_name || userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
                             </span>
                             <div className="w-8 h-8 bg-gray-800 rounded-full"></div>
                         </div>
@@ -274,7 +241,7 @@ export default function DashboardLayout({ children, userRole }) {
                 {/* Dashboard Content */}
                 <main className="p-4 lg:p-6 overflow-x-auto">
                     <div className="min-w-0">
-                        {children({ activeNav, userInfo, setActiveNav })}
+                        {children({ activeNav, userInfo: user, setActiveNav })}
                     </div>
                 </main>
             </div>

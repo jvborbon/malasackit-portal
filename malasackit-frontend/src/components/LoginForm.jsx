@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { HiUser, HiLockClosed } from 'react-icons/hi';
+import { useAuth } from '../context/AuthContext';
 
 // Google-style Floating Input Component
 const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon: Icon, required = false, disabled = false }) => {
@@ -91,6 +92,9 @@ const getUserProfile = async () => {
 
 export default function LoginForm({ onSwitchToRegister }) {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { login } = useAuth();
+    
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -137,30 +141,33 @@ export default function LoginForm({ onSwitchToRegister }) {
 
             if (data.success) {
                 console.log('Login successful, user role:', data.data.user.role_name); // Debug log
-                // No need to store token - it's in HTTP-only cookie
-                // Just redirect based on user role
-                const userRole = data.data.user.role_name;
-                console.log('About to navigate, user role:', userRole); // Debug log
                 
-                if (userRole === 'Donor') {
-                    console.log('Navigating to /donor-dashboard'); // Debug log
-                    navigate('/donor-dashboard');
-                } else if (userRole === 'Resource Staff') {
-                    console.log('Navigating to /staff-dashboard'); // Debug log
-                    navigate('/staff-dashboard');
-                } else if (userRole === 'Executive Admin') {
-                    console.log('Navigating to /admin-dashboard'); // Debug log
-                    navigate('/admin-dashboard');
+                // Update authentication context
+                await login(data.data.user);
+                
+                // Get the intended destination or default based on role
+                const from = location.state?.from;
+                const userRole = data.data.user.role_name;
+                
+                let redirectPath;
+                if (from && from !== '/login') {
+                    // User was trying to access a specific page
+                    redirectPath = from;
                 } else {
-                    console.log('Unknown role, navigating to home'); // Debug log
-                    // Fallback for unknown roles
-                    navigate('/');
+                    // Default redirect based on role
+                    if (userRole === 'Donor') {
+                        redirectPath = '/donor-dashboard';
+                    } else if (userRole === 'Resource Staff') {
+                        redirectPath = '/staff-dashboard';
+                    } else if (userRole === 'Executive Admin') {
+                        redirectPath = '/admin-dashboard';
+                    } else {
+                        redirectPath = '/';
+                    }
                 }
                 
-                // Add a small delay to ensure navigation completes
-                setTimeout(() => {
-                    console.log('Current location after navigation:', window.location.pathname); // Debug log
-                }, 100);
+                console.log('Navigating to:', redirectPath);
+                navigate(redirectPath, { replace: true });
             } else {
                 console.log('Login failed:', data.message); // Debug log
                 throw new Error(data.message || 'Login failed');
