@@ -92,7 +92,7 @@ const getUserProfile = async () => {
 
 export default function LoginForm({ onSwitchToRegister }) {
     const navigate = useNavigate();
-    const { loginAuthentication } = useAuth();
+    const { loginAuthentication, getDefaultDashboard } = useAuth();
     
     const [formData, setFormData] = useState({
         email: '',
@@ -120,30 +120,21 @@ export default function LoginForm({ onSwitchToRegister }) {
                 throw new Error('Please fill in all fields');
             }
 
-            console.log('Attempting login with:', formData.email); // Debug log
+            console.log('Attempting login with:', formData.email);
 
-            // Use the new authentication system
-            const userRole = await loginAuthentication(formData.email, formData.password);
+            // Use the optimized loginAuthentication function
+            const result = await loginAuthentication(formData.email, formData.password);
             
-            console.log('Login successful, user role:', userRole); // Debug log
+            console.log('Login successful, user role:', result.role);
             
-            // Redirect based on role
-            let redirectPath;
-            if (userRole === 'Donor') {
-                redirectPath = '/donor-dashboard';
-            } else if (userRole === 'Resource Staff') {
-                redirectPath = '/staff-dashboard';
-            } else if (userRole === 'Executive Admin') {
-                redirectPath = '/admin-dashboard';
-            } else {
-                redirectPath = '/';
-            }
+            // Use React Router navigation with the returned redirect path
+            console.log('Navigating to:', result.redirectTo);
             
-            console.log('Navigating to:', redirectPath);
-            navigate(redirectPath, { replace: true });
+            // Navigate with replace to prevent back navigation to login
+            navigate(result.redirectTo, { replace: true });
             
         } catch (error) {
-            console.error('Login error:', error); // Debug log
+            console.error('Login error:', error);
             setError(error.message);
         } finally {
             setIsLoading(false);

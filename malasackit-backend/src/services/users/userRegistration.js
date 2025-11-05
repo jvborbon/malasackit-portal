@@ -1,5 +1,6 @@
 import { hashPassword } from '../services_utils/passwordHashing.js';
 import { query } from '../../db.js';
+import { notifyAdminOfNewRegistration, sendRegistrationConfirmation } from '../emailService.js';
 
 // Generate unique user ID
 const generateUserId = () => {
@@ -65,13 +66,13 @@ export const registerUser = async (userData) => {
         await query('BEGIN');
 
         try {
-            // Insert user record with automatic approval (is_approved = TRUE)
+            // Insert user record - require admin approval (is_approved = FALSE)
             const userInsertQuery = `
                 INSERT INTO Users (
                     user_id, full_name, email, contact_num, account_type, role_id,
                     region_id, province_id, municipality_id, barangay_id,
                     parish_id, vicariate_id, status, is_approved, email_verified
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', TRUE, TRUE)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', FALSE, FALSE)
                 RETURNING user_id, full_name, email, created_at
             `;
 
@@ -102,15 +103,31 @@ export const registerUser = async (userData) => {
 
             await query(credentialsInsertQuery, [userId, passwordHash]);
 
-            // Activity logging removed - UserActivityLogs table doesn't exist
-            // TODO: Create UserActivityLogs table if needed for future logging
-
-            // Commit transaction
+            // Commit transaction first
             await query('COMMIT');
+
+            // Send email notifications (after successful registration)
+            // Note: We don't wait for email results to avoid blocking the response
+            const emailData = {
+                fullName,
+                email,
+                phoneNumber,
+                donorType
+            };
+
+            // Send admin notification email
+            notifyAdminOfNewRegistration(emailData).catch(error => {
+                console.error('Failed to send admin notification email:', error);
+            });
+
+            // Send user confirmation email
+            sendRegistrationConfirmation(emailData).catch(error => {
+                console.error('Failed to send user confirmation email:', error);
+            });
 
             return {
                 success: true,
-                message: 'Registration successful! Your account has been activated and you can now log in.',
+                message: 'Registration successful! Your account is pending approval. You will receive an email notification once approved.',
                 data: {
                     user: userResult.rows[0]
                 }

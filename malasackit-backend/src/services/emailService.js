@@ -110,6 +110,54 @@ const emailTemplates = {
                 </div>
             </div>
         `
+    }),
+
+    userApprovalNotification: (userData) => ({
+        subject: '🎉 Account Approved - Welcome to Malasackit Portal!',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px;">🏥 Malasackit Portal</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Account Approved</p>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e5e5;">
+                    <h2 style="color: #dc2626; margin-top: 0;">Congratulations, ${userData.fullName}!</h2>
+                    
+                    <div style="background: #d1edff; border: 1px solid #0ea5e9; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #0369a1; margin: 0 0 10px 0;">✅ Account Status: Approved</h3>
+                        <p style="color: #0369a1; margin: 0;">Your account has been approved by our administrators. You can now log in and start using the Malasackit Portal!</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <p style="margin-bottom: 20px; color: #666;">Click the button below to log in to your account:</p>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" 
+                           style="background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                            Log In Now →
+                        </a>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">What you can do now:</h3>
+                        <ul style="color: #555; line-height: 1.6;">
+                            <li>Make donations to support our community</li>
+                            <li>Track your donation history</li>
+                            <li>View impact reports and analytics</li>
+                            <li>Participate in community events</li>
+                        </ul>
+                    </div>
+                    
+                    <p style="color: #666;">Thank you for joining our mission to help those in need. Together, we can make a difference!</p>
+                    
+                    <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                    
+                    <p style="color: #888; font-size: 12px; text-align: center; margin: 0;">
+                        This is an automated notification from Malasackit Portal.<br>
+                        Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        `
     })
 };
 
@@ -155,5 +203,10 @@ export const notifyAdminOfNewRegistration = async (userData) => {
 
 export const sendRegistrationConfirmation = async (userData) => {
     const template = emailTemplates.userConfirmation(userData);
+    return await sendEmail(userData.email, template);
+};
+
+export const sendUserApprovalNotification = async (userData) => {
+    const template = emailTemplates.userApprovalNotification(userData);
     return await sendEmail(userData.email, template);
 };

@@ -1,6 +1,7 @@
 // src/controllers/userControllers.js
 import { loginUser } from '../services/users/userAuth.js';
 import { registerUser } from '../services/users/userRegistration.js'; // Re-enabled but logic disabled
+import { getPendingUsers, approveUser, rejectUser, getAllUsers } from '../services/users/userManagement.js';
 import { generateToken, setTokenCookie, clearTokenCookie } from '../utilities/jwt.js';
 
 export const login = async (req, res) => {
@@ -177,6 +178,133 @@ export const register = async (req, res) => {
 
     } catch (error) {
         console.error('Registration controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+// Admin functions for user management
+export const getPendingUsersController = async (req, res) => {
+    try {
+        const result = await getPendingUsers();
+        
+        if (!result.success) {
+            console.error('getPendingUsers failed:', result.message);
+            return res.status(500).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Pending users retrieved successfully',
+            data: result.data
+        });
+
+    } catch (error) {
+        console.error('Get pending users controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const approveUserController = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const approvedBy = req.user?.user_id; // From auth middleware
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is required'
+            });
+        }
+
+        const result = await approveUser(userId, approvedBy);
+        
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+            data: result.data
+        });
+
+    } catch (error) {
+        console.error('Approve user controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const rejectUserController = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { reason } = req.body;
+        const rejectedBy = req.user?.user_id; // From auth middleware
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is required'
+            });
+        }
+
+        const result = await rejectUser(userId, rejectedBy, reason);
+        
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+            data: result.data
+        });
+
+    } catch (error) {
+        console.error('Reject user controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const getAllUsersController = async (req, res) => {
+    try {
+        const result = await getAllUsers();
+        
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Users retrieved successfully',
+            data: result.data
+        });
+
+    } catch (error) {
+        console.error('Get all users controller error:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
