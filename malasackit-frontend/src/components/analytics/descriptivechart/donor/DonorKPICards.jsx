@@ -16,12 +16,21 @@ import {
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function DonorKPICards() {
-    // Doughnut Chart for Success Rate
+    // Empty state - will be populated when donation API is implemented
+    const emptyState = {
+        totalWorth: 0,
+        successfulDonations: 0,
+        totalDonations: 0,
+        totalItems: 0,
+        categories: []
+    };
+
+    // Empty chart data
     const successRateData = {
         labels: ['Successful', 'Pending', 'Failed'],
         datasets: [
             {
-                data: [47, 8, 3],
+                data: [0, 0, 0],
                 backgroundColor: ['#DC2626', '#FCA5A5', '#FEE2E2'],
                 borderColor: ['#B91C1C', '#F87171', '#FECACA'],
                 borderWidth: 2,
@@ -52,9 +61,9 @@ export default function DonorKPICards() {
                         <h3 className="text-red-600 font-semibold mb-2">Total Worth of Response</h3>
                         <div className="flex items-center">
                             <HiCurrencyDollar className="text-3xl text-red-600 mr-2" />
-                            <span className="text-2xl font-bold text-gray-900">25,850.00</span>
+                            <span className="text-2xl font-bold text-gray-900">{emptyState.totalWorth.toLocaleString()}.00</span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">+12% from last month</p>
+                        <p className="text-sm text-gray-500 mt-1">No data available</p>
                     </div>
                     <div className="bg-red-100 p-3 rounded-full">
                         <HiTrendingUp className="w-6 h-6 text-red-600" />
@@ -68,8 +77,8 @@ export default function DonorKPICards() {
                     <div>
                         <h3 className="text-green-600 font-semibold mb-2">Total Successful Donations</h3>
                         <div className="flex items-center">
-                            <span className="text-2xl font-bold text-gray-900">47</span>
-                            <span className="text-sm text-gray-500 ml-2">/ 58 total</span>
+                            <span className="text-2xl font-bold text-gray-900">{emptyState.successfulDonations}</span>
+                            <span className="text-sm text-gray-500 ml-2">/ {emptyState.totalDonations} total</span>
                         </div>
                     </div>
                     <div className="bg-green-100 p-3 rounded-full">
@@ -87,37 +96,20 @@ export default function DonorKPICards() {
                     <div>
                         <h3 className="text-blue-600 font-semibold mb-2">Total Items Given</h3>
                         <div className="flex items-center">
-                            <span className="text-2xl font-bold text-gray-900">156</span>
+                            <span className="text-2xl font-bold text-gray-900">{emptyState.totalItems}</span>
                             <span className="text-sm text-gray-500 ml-2">items</span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">Across 12 categories</p>
+                        <p className="text-sm text-gray-500 mt-1">No categories yet</p>
                     </div>
                     <div className="bg-blue-100 p-3 rounded-full">
                         <HiGift className="w-6 h-6 text-blue-600" />
                     </div>
                 </div>
-                {/* Mini progress bars for categories */}
+                {/* Category breakdown - will show when data is available */}
                 <div className="mt-4 space-y-1">
-                    <div className="flex justify-between text-xs text-gray-500">
-                        <span>Food</span>
-                        <span>45%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div className="bg-blue-600 h-1 rounded-full" style={{width: '45%'}}></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500">
-                        <span>Clothing</span>
-                        <span>30%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div className="bg-blue-400 h-1 rounded-full" style={{width: '30%'}}></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500">
-                        <span>Others</span>
-                        <span>25%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div className="bg-blue-300 h-1 rounded-full" style={{width: '25%'}}></div>
+                    <div className="text-center text-sm text-gray-400 py-4">
+                        <p>Donation categories will appear here</p>
+                        <p className="text-xs">when you start making donations</p>
                     </div>
                 </div>
             </div>

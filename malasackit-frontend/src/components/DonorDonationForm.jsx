@@ -13,7 +13,7 @@ export default function DonorDonationForm() {
     const [activeCategory, setActiveCategory] = useState('Food Items');
     const [selectedItems, setSelectedItems] = useState([]);
 
-    // Categorized donation items based on DSWD guidelines
+    // Categorized donation items 
     const donationCategories = {
         'Food Items': {
             icon: '🍲',

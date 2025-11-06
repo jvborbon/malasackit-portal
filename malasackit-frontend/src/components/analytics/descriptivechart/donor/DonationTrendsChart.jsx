@@ -21,20 +21,20 @@ ChartJS.register(
 );
 
 export default function DonationTrendsChart() {
-    // Mock data for charts
+    // Empty data - will be populated when donation API is implemented
     const donationData = [
-        { month: 'Jan', amount: 520 },
-        { month: 'Feb', amount: 630 },
-        { month: 'Mar', amount: 540 },
-        { month: 'Apr', amount: 480 },
-        { month: 'May', amount: 720 },
-        { month: 'Jun', amount: 1050 },
-        { month: 'Jul', amount: 740 },
-        { month: 'Aug', amount: 860 },
-        { month: 'Sep', amount: 650 },
-        { month: 'Oct', amount: 580 },
-        { month: 'Nov', amount: 480 },
-        { month: 'Dec', amount: 120 }
+        { month: 'Jan', amount: 0 },
+        { month: 'Feb', amount: 0 },
+        { month: 'Mar', amount: 0 },
+        { month: 'Apr', amount: 0 },
+        { month: 'May', amount: 0 },
+        { month: 'Jun', amount: 0 },
+        { month: 'Jul', amount: 0 },
+        { month: 'Aug', amount: 0 },
+        { month: 'Sep', amount: 0 },
+        { month: 'Oct', amount: 0 },
+        { month: 'Nov', amount: 0 },
+        { month: 'Dec', amount: 0 }
     ];
 
     // Chart.js Bar Chart Configuration
@@ -79,9 +79,9 @@ export default function DonationTrendsChart() {
         scales: {
             y: {
                 beginAtZero: true,
-                max: 1200,
+                max: 100,
                 ticks: {
-                    stepSize: 200,
+                    stepSize: 20,
                     callback: function(value) {
                         return value;
                     }
@@ -118,24 +118,29 @@ export default function DonationTrendsChart() {
                 <Bar data={barChartData} options={barChartOptions} />
             </div>
             
-            {/* Chart Summary */}
+            {/* Chart Summary - Empty State */}
             <div className="mt-6 grid grid-cols-4 gap-4 pt-4 border-t border-gray-200">
                 <div className="text-center">
-                    <div className="text-lg font-semibold text-gray-900">₱7,380</div>
+                    <div className="text-lg font-semibold text-gray-900">₱0</div>
                     <div className="text-sm text-gray-500">Avg/Month</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600">₱1,050</div>
+                    <div className="text-lg font-semibold text-green-600">₱0</div>
                     <div className="text-sm text-gray-500">Highest</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg font-semibold text-red-600">₱120</div>
+                    <div className="text-lg font-semibold text-red-600">₱0</div>
                     <div className="text-sm text-gray-500">Lowest</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-600">12</div>
+                    <div className="text-lg font-semibold text-blue-600">0</div>
                     <div className="text-sm text-gray-500">Active Months</div>
                 </div>
+            </div>
+            
+            {/* Empty State Message */}
+            <div className="mt-4 text-center">
+                <p className="text-sm text-gray-400">Start making donations to see your trends and statistics</p>
             </div>
         </div>
     );

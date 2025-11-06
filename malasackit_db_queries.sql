@@ -51,11 +51,23 @@ CREATE TABLE UserActivityLogs (
 
 
 CREATE TABLE DonationRequests (
-	
+    donation_id SERIAL PRIMARY KEY,
+    user_id VARCHAR(25) NOT NULL REFERENCES Users(user_id), -- references Donors table (assuming you have one)
+    status VARCHAR(50) DEFAULT 'Pending', -- Pending, Approved, Rejected
+    notes TEXT, -- Purpose of the donation request
+	delivery_method VARCHAR(20),
+	appointment_id INT NOT NULL REFERENCES Appointments(appointment_id)
 );
 
-CREATE TABLE DonationItems (
 
+CREATE TABLE DonationItems (
+    item_id SERIAL PRIMARY KEY,
+    donation_id INT NOT NULL REFERENCES DonationRequests(donation_id) ON DELETE CASCADE,
+    item_name VARCHAR(150) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_value NUMERIC(12,2) DEFAULT 0.00, -- FMV or estimated value
+    category VARCHAR(50),
+    description TEXT
 );
 
 CREATE TABLE Beneficiaries (
@@ -79,7 +91,13 @@ CREATE TABLE DistributionLogs (
 );
 
 CREATE TABLE Appointments (
-
+    appointment_id SERIAL PRIMARY KEY,
+    appointment_date DATE NOT NULL,
+    appointment_time TIME,
+    description TEXT, -- description shown on calendar
+    status VARCHAR(20) DEFAULT 'Scheduled', -- Scheduled, Rescheduled, Completed, Cancelled
+    remarks TEXT, -- notes from admin or donor
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE ItemType (

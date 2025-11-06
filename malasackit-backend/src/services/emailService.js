@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 // Email configuration
 const createTransporter = () => {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
         service: 'gmail', // You can change this to your preferred email service
         auth: {
             user: process.env.EMAIL_USER, // Your email address
@@ -164,12 +164,19 @@ const emailTemplates = {
 // Send email function
 export const sendEmail = async (to, template) => {
     try {
+        console.log('Attempting to send email to:', to);
+        console.log('Email config check:');
+        console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Not set');
+        console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Set' : 'Not set');
+        
         // Skip email sending if email credentials are not configured
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.log('Email credentials not configured. Skipping email notification.');
+            console.log('❌ Email credentials not configured. Skipping email notification.');
+            console.log('Please check your .env file for EMAIL_USER and EMAIL_PASS variables.');
             return { success: true, message: 'Email skipped - credentials not configured' };
         }
 
+        console.log('✅ Email credentials found, creating transporter...');
         const transporter = createTransporter();
         
         const mailOptions = {
@@ -179,12 +186,18 @@ export const sendEmail = async (to, template) => {
             html: template.html
         };
 
+        console.log('Sending email with options:', {
+            from: mailOptions.from,
+            to: mailOptions.to,
+            subject: mailOptions.subject
+        });
+
         const result = await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully:', result.messageId);
+        console.log('✅ Email sent successfully:', result.messageId);
         return { success: true, messageId: result.messageId };
         
     } catch (error) {
-        console.error('Email sending failed:', error);
+        console.error('❌ Email sending failed:', error);
         return { success: false, error: error.message };
     }
 };

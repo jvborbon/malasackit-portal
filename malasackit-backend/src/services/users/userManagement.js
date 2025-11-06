@@ -83,9 +83,16 @@ export const approveUser = async (userId, approvedBy) => {
             donorType: userData.account_type
         };
 
-        sendUserApprovalNotification(emailData).catch(error => {
-            console.error('Failed to send approval notification email:', error);
-        });
+        console.log('Attempting to send approval email to:', userData.email);
+        console.log('Email data:', emailData);
+
+        sendUserApprovalNotification(emailData)
+            .then(result => {
+                console.log('Approval email sent successfully:', result);
+            })
+            .catch(error => {
+                console.error('Failed to send approval notification email:', error);
+            });
 
         return {
             success: true,
