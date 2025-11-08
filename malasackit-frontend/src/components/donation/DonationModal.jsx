@@ -1,5 +1,5 @@
-import { HiX, HiShoppingCart } from 'react-icons/hi';
-import { donationCategories } from './donationCategories';
+import { HiX, HiShoppingCart, HiExclamationCircle, HiRefresh } from 'react-icons/hi';
+import { useDonationCategories } from './useDonationCategories';
 
 export function DonationModal({ 
     isOpen, 
@@ -10,6 +10,8 @@ export function DonationModal({
     setSelectedItems,
     onConfirm
 }) {
+    const { categories, isLoading, error, usingFallback, refreshCategories } = useDonationCategories();
+
     if (!isOpen) return null;
 
     const toggleItemSelection = (category, itemType) => {
@@ -43,32 +45,61 @@ export function DonationModal({
                     <div>
                         <h2 className="text-xl font-bold">Select Donation Items</h2>
                         <p className="text-red-100 text-sm">Choose items from different categories and add them to your donation</p>
+                        {usingFallback && (
+                            <div className="flex items-center mt-1 text-yellow-200 text-xs">
+                                <HiExclamationCircle className="w-3 h-3 mr-1" />
+                                Using offline categories - Database connection failed
+                            </div>
+                        )}
                     </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-white hover:text-red-200 transition-colors"
-                    >
-                        <HiX className="w-6 h-6" />
-                    </button>
+                    <div className="flex items-center space-x-2">
+                        {error && (
+                            <button
+                                type="button"
+                                onClick={refreshCategories}
+                                className="text-white hover:text-red-200 transition-colors"
+                                title="Retry loading categories"
+                            >
+                                <HiRefresh className="w-5 h-5" />
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="text-white hover:text-red-200 transition-colors"
+                        >
+                            <HiX className="w-6 h-6" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col lg:flex-row h-[70vh]">
-                    {/* Category Tabs - Left Side */}
-                    <CategoryTabs 
-                        categories={donationCategories}
-                        activeCategory={activeCategory}
-                        setActiveCategory={setActiveCategory}
-                    />
+                    {isLoading ? (
+                        <div className="flex items-center justify-center w-full h-full">
+                            <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                                <p className="text-gray-600">Loading donation categories...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Category Tabs - Left Side */}
+                            <CategoryTabs 
+                                categories={categories}
+                                activeCategory={activeCategory}
+                                setActiveCategory={setActiveCategory}
+                            />
 
-                    {/* Item Selection - Right Side */}
-                    <ItemSelection
-                        activeCategory={activeCategory}
-                        categories={donationCategories}
-                        selectedItems={selectedItems}
-                        toggleItemSelection={toggleItemSelection}
-                        isItemSelected={isItemSelected}
-                    />
+                            {/* Item Selection - Right Side */}
+                            <ItemSelection
+                                activeCategory={activeCategory}
+                                categories={categories}
+                                selectedItems={selectedItems}
+                                toggleItemSelection={toggleItemSelection}
+                                isItemSelected={isItemSelected}
+                            />
+                        </>
+                    )}
                 </div>
 
                 {/* Modal Footer */}

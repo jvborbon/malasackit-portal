@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Import organized components
 import { FormHeader } from './donation/DonationFormHeader';
@@ -7,18 +7,33 @@ import { DonationItemsDisplay } from './donation/DonationItemsDisplay';
 import { ProhibitedDonations } from './donation/ProhibitedDonations';
 import { DonationDetails } from './donation/DonationDetails';
 import { SubmitSection } from './donation/SubmitSection';
+import { useDonationCategories } from './donation/useDonationCategories';
+import { submitDonationRequest } from '../services/donationService';
 
 export default function DonorDonationForm() {
+    const { categories, isLoading } = useDonationCategories();
+    
     const [formData, setFormData] = useState({
         deliveryMethod: 'pickup',
         description: '',
-        scheduleDate: ''
+        scheduleDate: '',
+        appointmentTime: ''
     });
 
     const [donationItems, setDonationItems] = useState([]);
     const [showDonationModal, setShowDonationModal] = useState(false);
-    const [activeCategory, setActiveCategory] = useState('Food Items');
+    const [activeCategory, setActiveCategory] = useState('');
     const [selectedItems, setSelectedItems] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
+
+    // Set the first available category as active when categories are loaded
+    useEffect(() => {
+        if (!isLoading && categories && Object.keys(categories).length > 0 && !activeCategory) {
+            setActiveCategory(Object.keys(categories)[0]);
+        }
+    }, [categories, isLoading, activeCategory]);
 
     // Event Handlers
     const handleInputChange = (e) => {
@@ -43,7 +58,10 @@ export default function DonorDonationForm() {
         setDonationItems(prev => [...prev, ...newDonationItems]);
         setSelectedItems([]);
         setShowDonationModal(false);
-        setActiveCategory('Food Items');
+        // Reset to first available category
+        if (categories && Object.keys(categories).length > 0) {
+            setActiveCategory(Object.keys(categories)[0]);
+        }
     };
 
     const updateDonationItem = (itemId, field, value) => {
@@ -56,44 +74,104 @@ export default function DonorDonationForm() {
         setDonationItems(prev => prev.filter(item => item.id !== itemId));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
+        // Reset previous states
+        setSubmitError(null);
+        setSubmitSuccess(false);
+        
+        // Validation
         if (donationItems.length === 0) {
-            alert('Please add at least one donation item.');
+            setSubmitError('Please add at least one donation item.');
             return;
         }
         
         // Check if all items have required fields
         const incompleteItems = donationItems.filter(item => !item.quantity || !item.value);
         if (incompleteItems.length > 0) {
-            alert('Please fill in quantity and value for all donation items.');
+            setSubmitError('Please fill in quantity and value for all donation items.');
             return;
         }
+
+        // Validate schedule date if provided
+        if (formData.scheduleDate) {
+            const selectedDate = new Date(formData.scheduleDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < today) {
+                setSubmitError('Please select a future date for your appointment.');
+                return;
+            }
+        }
         
-        const donationData = {
-            items: donationItems.map(item => ({
-                ...item,
-                quantity: parseInt(item.quantity),
-                value: parseFloat(item.value)
-            })),
-            deliveryMethod: formData.deliveryMethod,
-            description: formData.description,
-            scheduleDate: formData.scheduleDate,
-            submittedAt: new Date().toISOString()
-        };
-        
-        console.log('Donation submitted:', donationData);
-        alert('Donation submitted successfully!');
-        
-        // Reset form
-        setDonationItems([]);
-        setSelectedItems([]);
-        setFormData({
-            deliveryMethod: 'pickup',
-            description: '',
-            scheduleDate: ''
-        });
+        try {
+            setIsSubmitting(true);
+            
+            // Prepare donation data for API
+            const donationData = {
+                items: donationItems.map(item => ({
+                    itemType: item.itemType,
+                    quantity: parseInt(item.quantity),
+                    value: parseFloat(item.value),
+                    description: item.description || null
+                })),
+                deliveryMethod: formData.deliveryMethod,
+                description: formData.description || null,
+                scheduleDate: formData.scheduleDate || null,
+                appointmentTime: formData.appointmentTime || null
+            };
+            
+            console.log('Submitting donation:', donationData);
+            
+            // Submit to API
+            const response = await submitDonationRequest(donationData);
+            
+            console.log('Donation response:', response);
+            
+            if (response.success) {
+                setSubmitSuccess(true);
+                
+                // Reset form after successful submission
+                setTimeout(() => {
+                    setDonationItems([]);
+                    setSelectedItems([]);
+                    setFormData({
+                        deliveryMethod: 'pickup',
+                        description: '',
+                        scheduleDate: '',
+                        appointmentTime: ''
+                    });
+                    
+                    // Reset to first available category
+                    if (categories && Object.keys(categories).length > 0) {
+                        setActiveCategory(Object.keys(categories)[0]);
+                    }
+                    
+                    setSubmitSuccess(false);
+                }, 3000); // Hide success message after 3 seconds
+                
+            } else {
+                throw new Error(response.message || 'Failed to submit donation request');
+            }
+            
+        } catch (error) {
+            console.error('Error submitting donation:', error);
+            
+            // Handle different types of errors
+            if (error.response?.status === 401) {
+                setSubmitError('You must be logged in to submit a donation request.');
+            } else if (error.response?.status === 400) {
+                setSubmitError(error.response.data?.message || 'Invalid donation data provided.');
+            } else if (error.response?.data?.message) {
+                setSubmitError(error.response.data.message);
+            } else {
+                setSubmitError('Failed to submit donation request. Please try again.');
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -134,6 +212,9 @@ export default function DonorDonationForm() {
                 <SubmitSection
                     donationItems={donationItems}
                     onSubmit={handleSubmit}
+                    isSubmitting={isSubmitting}
+                    submitError={submitError}
+                    submitSuccess={submitSuccess}
                 />
             </form>
         </div>

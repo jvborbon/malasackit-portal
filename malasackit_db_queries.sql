@@ -49,7 +49,6 @@ CREATE TABLE UserActivityLogs (
 );
 
 
-
 CREATE TABLE DonationRequests (
     donation_id SERIAL PRIMARY KEY,
     user_id VARCHAR(25) NOT NULL REFERENCES Users(user_id), -- references Donors table (assuming you have one)
@@ -87,23 +86,60 @@ CREATE TABLE Inventory (
     total_fmv_value NUMERIC(12,2) DEFAULT 0.00,
     location VARCHAR(255),
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(30) DEFAULT 'Available' CHECK (status IN ('Available', 'Reserved', 'Distributed'))
+    status VARCHAR(20) DEFAULT 'Available'
+        CHECK (status IN ('Available', 'Low Stock', 'No Stock', 'Reserved', 'Bazaar'))
 );
+
+CREATE TABLE BazaarLogs (
+    bazaar_log_id SERIAL PRIMARY KEY,
+    inventory_id INT REFERENCES Inventory(inventory_id),
+    quantity_sold INT NOT NULL,
+    bazaar_date DATE NOT NULL,
+    recorded_by VARCHAR(25) REFERENCES Users(user_id),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 CREATE TABLE BeneficiaryRequests (
-
+    request_id SERIAL PRIMARY KEY,
+    beneficiary_id INT NOT NULL REFERENCES Beneficiaries(beneficiary_id) ON DELETE CASCADE,
+    request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending','Approved','Fulfilled','Rejected')),
+    purpose TEXT,     -- Reason for request or project
+    notes TEXT
 );
 
-CREATE TABLE DistributionPlans (
 
+CREATE TABLE DistributionPlans (
+    plan_id SERIAL PRIMARY KEY
+    request_id INT REFERENCES BeneficiaryRequests(request_id) ON DELETE CASCADE,
+    planned_date DATE,
+    status VARCHAR(50) DEFAULT 'Draft' CHECK (status IN ('Draft','Approved','Ongoing','Completed','Cancelled')),
+    created_by VARCHAR(25) REFERENCES Users(user_id),
+    approved_by VARCHAR(25) REFERENCES Users(user_id),
+    approved_at TIMESTAMP,
+    remarks TEXT
 );
 
 CREATE TABLE DistributionPlanItems (
-
+    plan_item_id SERIAL PRIMARY KEY,
+    plan_id INT REFERENCES DistributionPlans(plan_id) ON DELETE CASCADE,
+    inventory_id INT REFERENCES Inventory(inventory_id),
+    quantity INT NOT NULL,
+    allocated_value NUMERIC(12,2),
+    notes TEXT
 );
 
 CREATE TABLE DistributionLogs (
-
+    distribution_id SERIAL PRIMARY KEY,
+    plan_id INT REFERENCES DistributionPlans(plan_id) ON DELETE CASCADE,
+    beneficiary_id INT REFERENCES Beneficiaries(beneficiary_id),
+    itemtype_id INT REFERENCES ItemType(itemtype_id),
+    quantity_distributed INT NOT NULL,
+    distribution_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    distributed_by VARCHAR(25) REFERENCES Users(user_id),
+    remarks TEXT
 );
 
 CREATE TABLE Appointments (
@@ -113,7 +149,8 @@ CREATE TABLE Appointments (
     description TEXT, -- description shown on calendar
     status VARCHAR(20) DEFAULT 'Scheduled', -- Scheduled, Rescheduled, Completed, Cancelled
     remarks TEXT, -- notes from admin or donor
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -404,7 +441,123 @@ INSERT INTO RolePermissions (role_id, permission_id) VALUES
 (1, 30),  -- add_calendar_event
 (1, 31);  -- view_calendar_event
 
+INSERT INTO ItemCategory (category_name, description) VALUES
+('Food Items', 'Canned goods, rice, noodles, and other basic food supplies'),
+('Household Essentials/Personal Care', 'Personal care, hygiene, and household items'),
+('Clothing', 'New or gently used clothing and footwear'),
+('Shelter Materials', 'Emergency shelter and construction materials'),
+('Educational Materials', 'School supplies and learning materials'),
+('Kitchen Utensils', 'Cooking and eating utensils'),
+('Medical Supplies', 'Basic medicines, first aid items, and protective medical gear');
 
+
+INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
+('Canned Goods', 1),
+('Rice', 1),
+('Noodles', 1),
+('Cooking Oil', 1),
+('Sugar', 1),
+('Salt', 1),
+('Coffee', 1),
+('Milk Powder', 1),
+('Biscuits', 1),
+('Dried Fish', 1),
+('Bread', 1),
+('Pasta', 1),
+('Cereals', 1),
+('Other Food Items', 1);
+
+-- Household Essentials/Personal Care (category_id = 2)
+INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
+('Soap', 2),
+('Shampoo', 2),
+('Toothpaste', 2),
+('Toothbrush', 2),
+('Toilet Paper', 2),
+('Detergent', 2),
+('Sanitary Pads', 2),
+('Diapers', 2),
+('Face Masks', 2),
+('Alcohol', 2),
+('Hand Sanitizer', 2),
+('Tissues', 2),
+('Other Hygiene Items', 2);
+
+-- Clothing (category_id = 3)
+INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
+('T-Shirts', 3),
+('Pants', 3),
+('Dresses', 3),
+('Shorts', 3),
+('Underwear (New Only)', 3),
+('Socks', 3),
+('Shoes', 3),
+('Jackets', 3),
+('School Uniforms', 3),
+('Baby Clothes', 3),
+('Sleepwear', 3),
+('Other Clothing', 3);
+
+-- Shelter Materials (category_id = 4)
+INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
+('Blankets', 4),
+('Tents', 4),
+('Tarpaulins', 4),
+('Pillows', 4),
+('Bed Sheets', 4),
+('Mosquito Nets', 4),
+('Jerry Cans', 4),
+('Plastic Containers', 4),
+('Emergency Kits', 4),
+('Sleeping Bags', 4),
+('Mats', 4),
+('Other Shelter Items', 4);
+
+-- Educational Materials (category_id = 5)
+INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
+('Notebooks', 5),
+('Pens', 5),
+('Pencils', 5),
+('Erasers', 5),
+('Rulers', 5),
+('Crayons', 5),
+('Books', 5),
+('Backpacks', 5),
+('School Supplies', 5),
+('Paper', 5),
+('Calculators', 5),
+('Other Educational Items', 5);
+
+-- Kitchen Utensils (category_id = 6)
+INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
+('Plates', 6),
+('Cups', 6),
+('Spoons', 6),
+('Forks', 6),
+('Knives', 6),
+('Cooking Pots', 6),
+('Pans', 6),
+('Water Containers', 6),
+('Bowls', 6),
+('Cutting Boards', 6),
+('Other Kitchen Items', 6);
+
+-- Medical Supplies (category_id = 7)
+INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
+('First Aid Kits', 7),
+('Bandages', 7),
+('Gauze Pads', 7),
+('Medical Gloves', 7),
+('Thermometers', 7),
+('Face Masks (Medical)', 7),
+('Disinfectant', 7),
+('Paracetamol', 7),
+('Ibuprofen', 7),
+('Cough Syrup', 7),
+('Antibiotic Ointment', 7),
+('Alcohol Swabs', 7),
+('Medical Tape', 7),
+('Other Medical Supplies', 7);
 
 -- Run this query after downloading the CSV files (run in psql Shell)
 \copy table_region(region_id, region_name, region_description) FROM 'C:\Users\ASUS\Downloads\table_region.csv' DELIMITER ',' CSV HEADER;

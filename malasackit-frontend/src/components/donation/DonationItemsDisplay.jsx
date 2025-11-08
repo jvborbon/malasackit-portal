@@ -1,5 +1,5 @@
 import { HiPlus, HiX, HiShoppingCart } from 'react-icons/hi';
-import { donationCategories } from './donationCategories';
+import { useDonationCategories } from './useDonationCategories';
 
 export function DonationItemsDisplay({
     donationItems,
@@ -7,6 +7,7 @@ export function DonationItemsDisplay({
     updateDonationItem,
     removeDonationItem
 }) {
+    const { categories } = useDonationCategories();
     if (donationItems.length === 0) {
         return <EmptyItemsState setShowDonationModal={setShowDonationModal} />;
     }
@@ -22,6 +23,7 @@ export function DonationItemsDisplay({
                 donationItems={donationItems}
                 updateDonationItem={updateDonationItem}
                 removeDonationItem={removeDonationItem}
+                categories={categories}
             />
             
             <DonationSummary donationItems={donationItems} />
@@ -68,7 +70,7 @@ function DonationItemsHeader({ itemCount, setShowDonationModal }) {
 }
 
 // Items List Component
-function DonationItemsList({ donationItems, updateDonationItem, removeDonationItem }) {
+function DonationItemsList({ donationItems, updateDonationItem, removeDonationItem, categories }) {
     return (
         <div className="space-y-3">
             {donationItems.map((item) => (
@@ -77,6 +79,7 @@ function DonationItemsList({ donationItems, updateDonationItem, removeDonationIt
                     item={item}
                     updateDonationItem={updateDonationItem}
                     removeDonationItem={removeDonationItem}
+                    categories={categories}
                 />
             ))}
         </div>
@@ -84,8 +87,13 @@ function DonationItemsList({ donationItems, updateDonationItem, removeDonationIt
 }
 
 // Individual Item Card Component
-function DonationItemCard({ item, updateDonationItem, removeDonationItem }) {
-    const categoryInfo = donationCategories[item.category];
+function DonationItemCard({ item, updateDonationItem, removeDonationItem, categories }) {
+    const categoryInfo = categories[item.category] || {
+        icon: '📦',
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-50',
+        borderColor: 'border-gray-200'
+    };
 
     return (
         <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
