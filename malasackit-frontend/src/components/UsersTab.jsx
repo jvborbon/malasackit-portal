@@ -6,6 +6,22 @@ import {
     HiEye,
     HiUserAdd
 } from 'react-icons/hi';
+import { getTimeSinceActivity } from './utilities/userStatusService';
+
+// Helper function to calculate days since last login
+const getDaysSinceLogin = (lastLogin) => {
+    if (lastLogin === 'Never') return null;
+    
+    try {
+        const lastLoginDate = new Date(lastLogin);
+        const now = new Date();
+        const diffTime = Math.abs(now - lastLoginDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    } catch (error) {
+        return null;
+    }
+};
 
 // Users Tab Component
 export function UsersTab({ 
@@ -75,14 +91,45 @@ export function UsersTab({
         );
     };
 
-    const getStatusBadge = (status) => {
+    const getStatusBadge = (status, lastLogin) => {
+        const daysSinceLogin = getDaysSinceLogin(lastLogin);
+        
+        // Define status configurations
+        const statusConfig = {
+            online: {
+                text: 'Online',
+                bgColor: 'bg-green-100',
+                textColor: 'text-green-800',
+                icon: '●',
+                tooltip: 'User is currently active (logged in within 15 minutes)'
+            },
+            offline: {
+                text: 'Offline',
+                bgColor: 'bg-yellow-100',
+                textColor: 'text-yellow-800',
+                icon: '●',
+                tooltip: lastLogin === 'Never' ? 'User has never logged in' : `User was last active ${daysSinceLogin ? daysSinceLogin + ' days ago' : 'recently'}`
+            },
+            inactive: {
+                text: 'Inactive',
+                bgColor: 'bg-red-100',
+                textColor: 'text-red-800',
+                icon: '●',
+                tooltip: lastLogin === 'Never' 
+                    ? 'User has never logged in' 
+                    : `User has been inactive for ${daysSinceLogin ? daysSinceLogin + ' days' : 'more than 30 days'}`
+            }
+        };
+        
+        const config = statusConfig[status] || statusConfig.inactive;
+        
         return (
-            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                status === 'active' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-            }`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+            <span 
+                className={`px-2 py-1 text-xs font-medium rounded-full cursor-help flex items-center gap-1 ${config.bgColor} ${config.textColor}`}
+                title={config.tooltip}
+            >
+                <span className="text-xs">{config.icon}</span>
+                {config.text}
             </span>
         );
     };
@@ -119,8 +166,9 @@ export function UsersTab({
                     className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
                 >
                     <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="online">● Online</option>
+                    <option value="offline">● Offline</option>
+                    <option value="inactive">● Inactive</option>
                 </select>
                 <button
                     onClick={handleAddUser}
@@ -176,10 +224,23 @@ export function UsersTab({
                                         {getRoleBadge(user.role)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {getStatusBadge(user.status)}
+                                        {getStatusBadge(user.status, user.lastLogin)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {user.lastLogin}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <div className={`${
+                                            user.lastLogin === 'Never' 
+                                                ? 'text-red-500 font-medium' 
+                                                : user.status === 'online'
+                                                ? 'text-green-600 font-medium'
+                                                : 'text-gray-500'
+                                        }`}>
+                                            <div>{getTimeSinceActivity(user.lastLogin)}</div>
+                                            {user.lastLogin !== 'Never' && (
+                                                <div className="text-xs text-gray-400">
+                                                    {new Date(user.lastLogin).toLocaleDateString()}
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                                         <button

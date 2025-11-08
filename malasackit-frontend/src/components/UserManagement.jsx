@@ -18,6 +18,7 @@ import { UsersTab } from './UsersTab';
 import { ActivityLogsTab } from './ActivityLogsTab';
 import { PendingApprovalsTab } from './PendingApprovalsTab';
 import api from './utilities/api';
+import { useUserStatusUpdater } from './utilities/userStatusService';
 
 export default function UserManagement() {
     const [activeTab, setActiveTab] = useState('users');
@@ -35,6 +36,9 @@ export default function UserManagement() {
     const [currentPage, setCurrentPage] = useState(1);
     const [usersPerPage] = useState(10);
 
+    // Set up real-time status updates
+    const { updateNow } = useUserStatusUpdater(users, setUsers, 60000); // Update every minute
+
     // Fetch real data from API
     useEffect(() => {
         const fetchUsers = async () => {
@@ -49,7 +53,7 @@ export default function UserManagement() {
                         name: user.full_name,
                         email: user.email,
                         role: user.role_name?.toLowerCase() || 'donor',
-                        status: user.status || 'active',
+                        status: user.activity_status || 'inactive', // Use activity_status from backend
                         lastLogin: user.last_login ? new Date(user.last_login).toLocaleString() : 'Never',
                         dateCreated: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown',
                         permissions: getUserPermissions(user.role_name),
@@ -210,7 +214,22 @@ export default function UserManagement() {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">User Management & Activity</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">User Management & Activity</h1>
+                    <p className="text-sm text-gray-600 mt-1">Real-time user status monitoring</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <div className="flex items-center text-sm text-gray-500">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                        Live Status Updates
+                    </div>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                    >
+                        Refresh Data
+                    </button>
+                </div>
             </div>
 
             {/* Tab Navigation */}
