@@ -124,3 +124,17 @@
 .calendar-container .has-events:hover {
   background-color: #fee2e2;
 }
+
+/* Ensure proper grid structure */
+.calendar-container .react-calendar__month-view__days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 2px;
+}
+
+.calendar-container .react-calendar__month-view__weekdays__weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}

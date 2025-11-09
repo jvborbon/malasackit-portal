@@ -9,6 +9,7 @@ import {
     HiPlus,
     HiDotsVertical
 } from 'react-icons/hi';
+import { formatDate } from './utilities/donationHelpers';
 
 export default function CalendarComponent() {
     const [date, setDate] = useState(new Date());
@@ -97,15 +98,6 @@ export default function CalendarComponent() {
         return null;
     };
 
-    const formatDate = (date) => {
-        return date.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
     const getEventTypeColor = (type) => {
         const colors = {
             pickup: 'bg-green-100 text-green-800 border-green-200',
@@ -165,9 +157,15 @@ export default function CalendarComponent() {
                                 className="react-calendar-custom"
                                 locale="en-US"
                                 calendarType="gregory"
-                                showNeighboringMonth={false}
+                                showNeighboringMonth={true}
                                 next2Label={null}
                                 prev2Label={null}
+                                minDetail="month"
+                                formatShortWeekday={(locale, date) => {
+                                    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                                    return days[date.getDay()];
+                                }}
+                                showFixedNumberOfWeeks={true}
                             />
                         </div>
                     </div>
@@ -178,7 +176,7 @@ export default function CalendarComponent() {
                     {/* Selected Date Events */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                            {formatDate(date)}
+                            {formatDate(date, 'long')}
                         </h3>
                         
                         {selectedDateEvents.length > 0 ? (
