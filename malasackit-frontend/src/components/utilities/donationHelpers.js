@@ -39,3 +39,23 @@ export const formatDate = (date, format = 'short') => {
 export const formatCurrency = (value) => {
   return `₱${parseFloat(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
+
+export const formatTime = (timeString) => {
+  if (!timeString) return 'Not specified';
+  
+  // Handle both HH:MM:SS and HH:MM formats
+  const timeParts = timeString.split(':');
+  let hours = parseInt(timeParts[0]);
+  const minutes = timeParts[1] || '00';
+  
+  // Validate input
+  if (isNaN(hours) || hours < 0 || hours > 23) {
+    return timeString; // Return original if invalid
+  }
+  
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // 0 should be 12
+  
+  return `${hours}:${minutes} ${ampm}`;
+};

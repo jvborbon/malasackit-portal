@@ -9,7 +9,8 @@ import {
     getAllDonationRequests,
     updateDonationStatus,
     getDonationStatistics,
-    getDonationDetails
+    getDonationDetails,
+    getCalendarAppointments
 } from '../controllers/donationControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
@@ -46,5 +47,8 @@ router.put('/requests/:donationId/status', authenticateToken, requireRole(['Reso
 
 // GET /api/donations/statistics - Get donation statistics for dashboard
 router.get('/statistics', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getDonationStatistics);
+
+// GET /api/donations/calendar - Get calendar appointments for approved donations
+router.get('/calendar', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getCalendarAppointments);
 
 export default router;

@@ -75,13 +75,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   };
 
   // Inventory with thresholds and recommendations
-  const inventoryData = [
-    { name: 'Food Items', current: 450, threshold: 200, critical: 100, status: 'safe', safeToDistribute: 250 },
-    { name: 'Medical Supplies', current: 280, threshold: 150, critical: 75, status: 'safe', safeToDistribute: 130 },
-    { name: 'Clothing', current: 320, threshold: 250, critical: 125, status: 'safe', safeToDistribute: 70 },
-    { name: 'Educational Materials', current: 180, threshold: 200, critical: 100, status: 'low', safeToDistribute: 0 },
-    { name: 'Others', current: 90, threshold: 100, critical: 50, status: 'low', safeToDistribute: 0 }
-  ];
+  const inventoryData = [];
 
   // Ensure data is valid for charts
   const safeInventoryData = inventoryData.filter(item => 

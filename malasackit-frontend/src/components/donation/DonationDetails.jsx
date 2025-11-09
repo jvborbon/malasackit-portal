@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAvailableSlots } from '../../services/donationService';
+import { formatTime } from '../utilities/donationHelpers';
 
 export function DonationDetails({ formData, handleInputChange }) {
     const [availableSlots, setAvailableSlots] = useState([]);
@@ -159,7 +160,10 @@ function ScheduleDateSection({ formData, handleInputChange }) {
                 value={formData.scheduleDate}
                 onChange={handleInputChange}
                 min={today}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-gray-50 text-sm"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-white text-sm cursor-pointer"
+                style={{
+                    colorScheme: 'light'
+                }}
             />
             <p className="text-xs text-gray-500 mt-1">
                 Leave empty for immediate processing
@@ -223,8 +227,8 @@ function TimeSlotOption({ slot, selected, onChange }) {
         }
     };
 
-    // Format time for display (remove seconds)
-    const displayTime = slot.time.slice(0, 5);
+    // Format time for display in 12-hour format with AM/PM
+    const displayTime = formatTime(slot.time);
 
     return (
         <button

@@ -1,5 +1,6 @@
 import React from 'react';
 import { HiEye, HiCheck, HiX } from 'react-icons/hi';
+import { formatTime } from '../utilities/donationHelpers';
 
 function DonationTable({ 
   donations, 
@@ -58,7 +59,7 @@ function DonationTable({
                       ID: {donation.donation_id}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {donation.item_count} items • {formatCurrency(donation.total_value)}
+                      {donation.total_quantity} items • {formatCurrency(donation.total_value)}
                     </div>
                     <div className="text-sm text-gray-500">
                       {donation.delivery_method === 'pickup' ? '📦 Pickup' : '🚚 Drop-off'}
@@ -77,7 +78,7 @@ function DonationTable({
                         <div>{formatDate(donation.appointment_date)}</div>
                         {donation.appointment_time && (
                           <div className="text-xs text-gray-500">
-                            {donation.appointment_time.slice(0, 5)}
+                            {formatTime(donation.appointment_time)}
                           </div>
                         )}
                       </>

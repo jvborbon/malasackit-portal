@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { 
@@ -7,55 +7,65 @@ import {
     HiLocationMarker, 
     HiUserGroup,
     HiPlus,
-    HiDotsVertical
+    HiDotsVertical,
+    HiRefresh,
+    HiUser,
+    HiTruck,
+    HiX
 } from 'react-icons/hi';
-import { formatDate } from './utilities/donationHelpers';
+import { formatDate, formatTime } from './utilities/donationHelpers';
+import { getCalendarAppointments } from '../services/donationService';
 
 export default function CalendarComponent() {
     const [date, setDate] = useState(new Date());
     const [view, setView] = useState('month');
-    const [events, setEvents] = useState([
-        {
-            id: 1,
-            title: 'Food Donation Pickup',
-            date: new Date(2025, 0, 25), // January 25, 2025
-            time: '10:00 AM',
-            location: 'LASAC Main Office',
-            type: 'pickup',
-            participants: 5,
-            description: 'Regular monthly food donation pickup from major donors'
-        },
-        {
-            id: 2,
-            title: 'Clothing Drive Event',
-            date: new Date(2025, 1, 5), // February 5, 2025
-            time: '2:00 PM',
-            location: 'Community Center',
-            type: 'event',
-            participants: 15,
-            description: 'Community clothing donation drive and distribution'
-        },
-        {
-            id: 3,
-            title: 'Beneficiary Registration',
-            date: new Date(2025, 0, 15), // January 15, 2025
-            time: '9:00 AM',
-            location: 'Parish Office',
-            type: 'registration',
-            participants: 8,
-            description: 'New beneficiary registration and documentation'
-        },
-        {
-            id: 4,
-            title: 'Volunteer Training',
-            date: new Date(2025, 0, 30), // January 30, 2025
-            time: '1:00 PM',
-            location: 'Training Room',
-            type: 'training',
-            participants: 12,
-            description: 'Monthly volunteer orientation and training session'
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Load calendar appointments when component mounts or date changes
+    useEffect(() => {
+        loadCalendarAppointments();
+    }, [date]);
+
+    const loadCalendarAppointments = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Get start and end of current month
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+            const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+            
+            const response = await getCalendarAppointments(startDate, endDate);
+            
+            if (response.success) {
+                // Transform API response to calendar events
+                const calendarEvents = response.data.events.map(event => ({
+                    id: event.id,
+                    title: event.title,
+                    date: new Date(event.date),
+                    time: formatTime(event.time),
+                    location: event.location,
+                    type: event.type,
+                    participants: event.participants,
+                    description: event.description,
+                    donor: event.donor,
+                    donation: event.donation
+                }));
+                
+                setEvents(calendarEvents);
+            }
+        } catch (error) {
+            console.error('Error loading calendar appointments:', error);
+            setError('Failed to load appointments');
+            setEvents([]); // Fallback to empty events
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
 
     // Get events for selected date
     const getEventsForDate = (selectedDate) => {
@@ -101,8 +111,10 @@ export default function CalendarComponent() {
     const getEventTypeColor = (type) => {
         const colors = {
             pickup: 'bg-green-100 text-green-800 border-green-200',
-            event: 'bg-blue-100 text-blue-800 border-blue-200',
-            registration: 'bg-purple-100 text-purple-800 border-purple-200',
+            dropoff: 'bg-blue-100 text-blue-800 border-blue-200',
+            'drop-off': 'bg-blue-100 text-blue-800 border-blue-200',
+            event: 'bg-purple-100 text-purple-800 border-purple-200',
+            registration: 'bg-orange-100 text-orange-800 border-orange-200',
             training: 'bg-yellow-100 text-yellow-800 border-yellow-200'
         };
         return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
@@ -112,6 +124,9 @@ export default function CalendarComponent() {
         switch (type) {
             case 'pickup':
                 return <HiLocationMarker className="w-4 h-4" />;
+            case 'dropoff':
+            case 'drop-off':
+                return <HiUserGroup className="w-4 h-4" />;
             case 'event':
                 return <HiUserGroup className="w-4 h-4" />;
             case 'registration':
@@ -130,17 +145,42 @@ export default function CalendarComponent() {
         <div className="space-y-6">
             {/* Calendar Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900">Calendar</h2>
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Calendar</h2>
+                    <p className="text-gray-600">Donation appointments and events</p>
+                </div>
                 <div className="flex items-center space-x-2">
+                    <button 
+                        onClick={loadCalendarAppointments}
+                        disabled={loading}
+                        className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                        title="Refresh appointments"
+                    >
+                        <HiRefresh className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
                     <button className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700">
                         <HiPlus className="w-4 h-4 mr-2" />
                         Add Event
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-gray-600">
-                        <HiDotsVertical className="w-5 h-5" />
-                    </button>
                 </div>
             </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                        <HiX className="w-5 h-5 text-red-600 mr-2" />
+                        <span className="text-red-800">{error}</span>
+                        <button 
+                            onClick={() => setError(null)}
+                            className="ml-auto text-red-600 hover:text-red-800"
+                        >
+                            <HiX className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Calendar */}
@@ -191,25 +231,66 @@ export default function CalendarComponent() {
                                                 {getEventTypeIcon(event.type)}
                                                 <h4 className="font-medium">{event.title}</h4>
                                             </div>
+                                            {event.status && (
+                                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                                    event.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                    event.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                    {event.status}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="mt-2 space-y-1">
-                                            <div className="flex items-center text-sm">
+                                            <div className="flex items-center text-sm text-gray-600">
                                                 <HiClock className="w-4 h-4 mr-1" />
                                                 {event.time}
                                             </div>
-                                            <div className="flex items-center text-sm">
-                                                <HiLocationMarker className="w-4 h-4 mr-1" />
-                                                {event.location}
-                                            </div>
-                                            <div className="flex items-center text-sm">
-                                                <HiUserGroup className="w-4 h-4 mr-1" />
-                                                {event.participants} participants
-                                            </div>
+                                            {event.donor && (
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center text-sm text-gray-600">
+                                                        <HiUser className="w-4 h-4 mr-1" />
+                                                        Donor: {event.donor.name}
+                                                    </div>
+                                                    {event.donor.phone && (
+                                                        <div className="flex items-center text-sm text-gray-500 ml-5">
+                                                            📞 {event.donor.phone}
+                                                        </div>
+                                                    )}
+                                                    {event.donor.email && (
+                                                        <div className="flex items-center text-sm text-gray-500 ml-5">
+                                                            ✉️ {event.donor.email}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {event.deliveryMethod && (
+                                                <div className="flex items-center text-sm text-gray-600">
+                                                    <HiTruck className="w-4 h-4 mr-1" />
+                                                    {event.deliveryMethod === 'pickup' ? 'Pickup' : 'Drop-off'}
+                                                </div>
+                                            )}
+                                            {event.location && (
+                                                <div className="flex items-center text-sm text-gray-600">
+                                                    <HiLocationMarker className="w-4 h-4 mr-1" />
+                                                    {event.location}
+                                                </div>
+                                            )}
                                         </div>
                                         {event.description && (
-                                            <p className="mt-2 text-sm opacity-75">
+                                            <p className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
                                                 {event.description}
                                             </p>
+                                        )}
+                                        {event.donation && (
+                                            <div className="mt-2 text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                                                <div className="flex justify-between items-center">
+                                                    <span>Donation ID: #{event.donation.id}</span>
+                                                    {event.donation.totalValue && (
+                                                        <span className="font-medium">₱{parseFloat(event.donation.totalValue).toLocaleString()}</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 ))}

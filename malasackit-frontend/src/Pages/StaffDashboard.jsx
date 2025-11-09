@@ -89,10 +89,7 @@ export default function StaffDashboard() {
                                     <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-1.5 flex-shrink-0"></div>
                                     <span className="text-gray-700 truncate">Report generated</span>
                                 </div>
-                                <div className="flex items-center p-1.5 bg-gray-50 rounded text-xs">
-                                    <div className="w-1.5 h-1.5 bg-red-300 rounded-full mr-1.5 flex-shrink-0"></div>
-                                    <span className="text-gray-700 truncate">Inventory updated</span>
-                                </div>
+
                                 <div className="flex items-center p-1.5 bg-gray-50 rounded text-xs">
                                     <div className="w-1.5 h-1.5 bg-red-700 rounded-full mr-1.5 flex-shrink-0"></div>
                                     <span className="text-gray-700 truncate">Request approved</span>

@@ -2,23 +2,13 @@ import React, { useState } from "react";
 import DistributeDonationForm from "./DistributeDonationForm";
 
 const summary = [
-  { label: "Categories", value: "8", color: "text-blue-600" },
-  { label: "Total Products", value: "247", color: "text-orange-600" },
-  { label: "Top Donated Items", value: "Food Items", color: "text-purple-600" },
-  { label: "Total Stocks per Category", value: "1,850", color: "text-red-600" },
+  { label: "Categories", value: "0", color: "text-blue-600" },
+  { label: "Total Products", value: "0", color: "text-orange-600" },
+  { label: "Top Donated Items", value: "N/A", color: "text-purple-600" },
+  { label: "Total Stocks per Category", value: "0", color: "text-red-600" },
 ];
 
-const products = [
-  { name: "Rice Bags (10kg)", value: "₱2,500", quantity: 150, category: "Food", status: "Available" },
-  { name: "Canned Goods Set", value: "₱1,800", quantity: 85, category: "Food", status: "Available" },
-  { name: "Winter Clothing", value: "₱3,200", quantity: 45, category: "Clothes", status: "Low" },
-  { name: "Medical Supplies Kit", value: "₱5,500", quantity: 25, category: "Medicine", status: "Available" },
-  { name: "School Supplies", value: "₱1,200", quantity: 180, category: "Education", status: "Available" },
-  { name: "Hygiene Kits", value: "₱800", quantity: 220, category: "Personal Care", status: "Available" },
-  { name: "Emergency Blankets", value: "₱600", quantity: 35, category: "Shelter", status: "Low" },
-  { name: "Water Purification Tablets", value: "₱450", quantity: 300, category: "Medicine", status: "Available" },
-  { name: "Baby Formula", value: "₱1,100", quantity: 60, category: "Food", status: "Available" },
-];
+const products = [];
 
 function Inventory() {
   const [search, setSearch] = useState("");
@@ -136,7 +126,15 @@ function Inventory() {
                 ))}
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-6 text-center text-sm text-gray-500">No products found.</td>
+                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                      <div className="flex flex-col items-center">
+                        <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <p className="text-gray-500 font-medium">No inventory items available</p>
+                        <p className="text-gray-400 text-sm mt-1">Approved donations will appear here</p>
+                      </div>
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -146,7 +144,7 @@ function Inventory() {
         {/* Pagination */}
         <div className="flex items-center justify-between px-6 py-2 border-t border-gray-200">
           <div className="text-sm text-gray-700">
-            Showing {filteredProducts.length} products
+            Showing {filteredProducts.length} of {products.length} products
           </div>
           <div className="flex items-center space-x-2">
             <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">

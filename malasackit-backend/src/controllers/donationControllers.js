@@ -165,7 +165,8 @@ export const getDonorDonations = async (req, res) => {
                 a.appointment_time,
                 a.status as appointment_status,
                 COUNT(di.item_id) as item_count,
-                SUM(di.declared_value * di.quantity) as total_value
+                SUM(di.quantity) as total_quantity,
+                SUM(di.declared_value) as total_value
             FROM DonationRequests dr
             LEFT JOIN Appointments a ON dr.appointment_id = a.appointment_id
             LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
@@ -279,7 +280,7 @@ export const getDonationDetails = async (req, res) => {
                 summary: {
                     totalItems: itemsResult.rows.length,
                     totalQuantity: itemsResult.rows.reduce((sum, item) => sum + item.quantity, 0),
-                    totalValue: itemsResult.rows.reduce((sum, item) => sum + (item.declared_value * item.quantity), 0)
+                    totalValue: itemsResult.rows.reduce((sum, item) => sum + parseFloat(item.declared_value), 0)
                 }
             },
             message: 'Donation details retrieved successfully'
@@ -428,7 +429,8 @@ export const getAllDonationRequests = async (req, res) => {
                 a.appointment_time,
                 a.status as appointment_status,
                 COUNT(di.item_id) as item_count,
-                SUM(di.declared_value * di.quantity) as total_value,
+                SUM(di.quantity) as total_quantity,
+                SUM(di.declared_value) as total_value,
                 STRING_AGG(DISTINCT ic.category_name, ', ') as categories
             FROM DonationRequests dr
             JOIN Users u ON dr.user_id = u.user_id
@@ -581,7 +583,7 @@ export const getDonationStatistics = async (req, res) => {
                 SUM(
                     CASE WHEN status IN ('Approved', 'Completed') 
                     THEN (
-                        SELECT SUM(di.declared_value * di.quantity) 
+                        SELECT SUM(di.declared_value) 
                         FROM DonationItems di 
                         WHERE di.donation_id = dr.donation_id
                     ) 
@@ -601,7 +603,8 @@ export const getDonationStatistics = async (req, res) => {
                 dr.status,
                 dr.created_at,
                 u.full_name as donor_name,
-                COUNT(di.item_id) as item_count
+                COUNT(di.item_id) as item_count,
+                SUM(di.quantity) as total_quantity
             FROM DonationRequests dr
             JOIN Users u ON dr.user_id = u.user_id
             LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
@@ -918,6 +921,90 @@ export const deleteDonationCategory = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to delete donation category',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get calendar appointments for approved donations
+ */
+export const getCalendarAppointments = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        // Default to current month if no dates provided
+        const start = startDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+        const end = endDate || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
+        
+        const calendarQuery = `
+            SELECT 
+                dr.donation_id,
+                dr.delivery_method,
+                u.full_name as donor_name,
+                u.email as donor_email,
+                u.contact_num as donor_phone,
+                a.appointment_date,
+                a.appointment_time,
+                COUNT(di.item_id) as item_types,
+                SUM(di.quantity) as total_quantity,
+                SUM(di.declared_value) as total_value,
+                STRING_AGG(DISTINCT ic.category_name, ', ') as categories
+            FROM DonationRequests dr
+            JOIN Users u ON dr.user_id = u.user_id
+            JOIN Appointments a ON dr.appointment_id = a.appointment_id
+            LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
+            LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+            LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+            WHERE dr.status IN ('Approved', 'Completed')
+              AND a.appointment_date IS NOT NULL
+              AND a.appointment_date BETWEEN $1 AND $2
+            GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
+                     a.appointment_date, a.appointment_time
+            ORDER BY a.appointment_date, a.appointment_time
+        `;
+        
+        const result = await query(calendarQuery, [start, end]);
+        
+        // Transform to calendar event format
+        const events = result.rows.map(row => ({
+            id: `donation-${row.donation_id}`,
+            title: `${row.donor_name} - ${row.delivery_method}`,
+            date: row.appointment_date,
+            time: row.appointment_time,
+            type: row.delivery_method.toLowerCase(),
+            deliveryMethod: row.delivery_method.toLowerCase(),
+            location: row.delivery_method === 'pickup' ? 'LASAC Office' : 'Donor Location',
+            status: 'approved',
+            participants: 1,
+            description: `${row.total_quantity} items (${row.item_types} types) - ${row.categories}`,
+            donor: {
+                name: row.donor_name,
+                email: row.donor_email,
+                phone: row.donor_phone
+            },
+            donation: {
+                id: row.donation_id,
+                totalValue: row.total_value,
+                totalQuantity: row.total_quantity,
+                categories: row.categories
+            }
+        }));
+        
+        res.json({
+            success: true,
+            data: {
+                events,
+                count: events.length,
+                dateRange: { start, end }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching calendar appointments:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch calendar appointments',
             error: error.message
         });
     }

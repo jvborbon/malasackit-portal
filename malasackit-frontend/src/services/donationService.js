@@ -89,3 +89,26 @@ export const createAppointment = async (appointmentData) => {
         throw error;
     }
 };
+
+/**
+ * Get calendar appointments for approved donations
+ * @param {string} startDate - Start date for filtering (YYYY-MM-DD)
+ * @param {string} endDate - End date for filtering (YYYY-MM-DD)
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getCalendarAppointments = async (startDate = null, endDate = null) => {
+    try {
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        
+        const queryString = params.toString();
+        const url = `/api/donations/calendar${queryString ? `?${queryString}` : ''}`;
+        
+        const response = await api.get(url);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching calendar appointments:', error);
+        throw error;
+    }
+};

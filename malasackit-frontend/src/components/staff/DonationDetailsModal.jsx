@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatCurrency } from '../utilities/donationHelpers';
+import { formatCurrency, formatDate, formatTime } from '../utilities/donationHelpers';
 import Modal from '../common/Modal';
 import DataTable from '../common/DataTable';
 
@@ -15,7 +15,10 @@ function DonationDetailsModal({ donation, onClose }) {
                 <p><span className="font-medium">Email:</span> {donation.donation.donor_email}</p>
                 <p><span className="font-medium">Delivery:</span> {donation.donation.delivery_method}</p>
                 {donation.donation.appointment_date && (
-                  <p><span className="font-medium">Scheduled:</span> {new Date(donation.donation.appointment_date).toLocaleString()}</p>
+                  <p><span className="font-medium">Scheduled:</span> 
+                    {formatDate(donation.donation.appointment_date)}
+                    {donation.donation.appointment_time && ` at ${formatTime(donation.donation.appointment_time)}`}
+                  </p>
                 )}
               </div>
             </div>
@@ -39,11 +42,11 @@ function DonationDetailsModal({ donation, onClose }) {
               data={donation.items}
               renderRow={(item) => (
                 <>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.category_name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.itemtype_name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(item.declared_value * item.quantity)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.description || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{item.category_name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{item.itemtype_name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(item.declared_value)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{item.description || 'N/A'}</td>
                 </>
               )}
               emptyMessage="No donation items found"

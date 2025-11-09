@@ -142,18 +142,6 @@ export default function UserManagement() {
                 status: 'success'
             },
             {
-                id: 6,
-                userId: 2,
-                userName: 'Jane Smith',
-                userEmail: 'jane.smith@example.com',
-                action: 'inventory_update',
-                description: 'Updated inventory quantities for rice and canned goods',
-                timestamp: '2024-01-07 13:30:18',
-                ipAddress: '192.168.1.101',
-                userAgent: 'Firefox 121.0.0.0',
-                status: 'success'
-            },
-            {
                 id: 7,
                 userId: 4,
                 userName: 'Sarah Wilson',
