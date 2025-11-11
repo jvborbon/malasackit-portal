@@ -11,8 +11,8 @@ CREATE TABLE Users (
     province_id INTEGER REFERENCES table_province(province_id),
     municipality_id INTEGER REFERENCES table_municipality(municipality_id),
     barangay_id INTEGER REFERENCES table_barangay(barangay_id),
-    parish_id VARCHAR(255),
-    vicariate_id VARCHAR(255),
+    parish_id INT REFERENCES Parishes(parish_id),
+	vicariate_id INT REFERENCES Vicariates(vicariate_id),
     email_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -55,7 +55,11 @@ CREATE TABLE DonationRequests (
     status VARCHAR(50) DEFAULT 'Pending', -- Pending, Approved, Rejected
     notes TEXT, -- Purpose of the donation request
 	delivery_method VARCHAR(20),
-	appointment_id INT NOT NULL REFERENCES Appointments(appointment_id)
+	appointment_id INT NOT NULL REFERENCES Appointments(appointment_id),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ 	approved_by VARCHAR(25) REFERENCES Users(user_id),
+	approved_at TIMESTAMP;
 );
 
 CREATE TABLE DonationItems (
@@ -106,18 +110,22 @@ CREATE TABLE BeneficiaryRequests (
     beneficiary_id INT NOT NULL REFERENCES Beneficiaries(beneficiary_id) ON DELETE CASCADE,
     request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending','Approved','Fulfilled','Rejected')),
+	urgency VARCHAR(50) CHECK (urgency IN ('Low', 'Medium', 'High')),
     purpose TEXT,     -- Reason for request or project
     notes TEXT
 );
 
 
 CREATE TABLE DistributionPlans (
-    plan_id SERIAL PRIMARY KEY
+    plan_id SERIAL PRIMARY KEY,
     request_id INT REFERENCES BeneficiaryRequests(request_id) ON DELETE CASCADE,
     planned_date DATE,
     status VARCHAR(50) DEFAULT 'Draft' CHECK (status IN ('Draft','Approved','Ongoing','Completed','Cancelled')),
     created_by VARCHAR(25) REFERENCES Users(user_id),
     approved_by VARCHAR(25) REFERENCES Users(user_id),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	approved_at TIMESTAMP;
     approved_at TIMESTAMP,
     remarks TEXT
 );
@@ -149,17 +157,15 @@ CREATE TABLE Appointments (
     description TEXT, -- description shown on calendar
     status VARCHAR(20) DEFAULT 'Scheduled', -- Scheduled, Rescheduled, Completed, Cancelled
     remarks TEXT, -- notes from admin or donor
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
 CREATE TABLE ItemCategory (
    itemcategory_id SERIAL PRIMARY KEY,
-   category_name VARCHAR(25),
+   category_name VARCHAR(50),
    description TEXT
 ); 
-
 
 
 CREATE TABLE ItemType (
@@ -450,10 +456,10 @@ INSERT INTO ItemCategory (category_name, description) VALUES
 ('Kitchen Utensils', 'Cooking and eating utensils'),
 ('Medical Supplies', 'Basic medicines, first aid items, and protective medical gear');
 
-
 INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
 ('Canned Goods', 1),
-('Rice', 1),
+('Rice (10kg)', 1),
+('Rice (25kg)', 1),
 ('Noodles', 1),
 ('Cooking Oil', 1),
 ('Sugar', 1),
@@ -559,6 +565,8 @@ INSERT INTO ItemType (itemtype_name, itemcategory_id) VALUES
 ('Medical Tape', 7),
 ('Other Medical Supplies', 7);
 
+
+
 -- Run this query after downloading the CSV files (run in psql Shell)
 \copy table_region(region_id, region_name, region_description) FROM 'C:\Users\ASUS\Downloads\table_region.csv' DELIMITER ',' CSV HEADER;
 \copy table_province(province_id, region_id, province_name) FROM 'C:\Users\ASUS\Downloads\table_province.csv' DELIMITER ',' CSV HEADER;
@@ -585,6 +593,10 @@ SELECT * FROM Users;
 SELECT * FROM Login_Credentials;
 SELECT * FROM UserActivityLogs;
 SELECT * FROM Notifications
+SELECT * FROM DonationRequests;
+SELECT * FROM DonationItems;
+SELECT * FROM Appointments;
+SELECT * FROM ItemCategory;
 
 
 SELECT 
@@ -652,8 +664,9 @@ INSERT INTO Login_Credentials (user_id, password_hash, login_attempts) VALUES
 ('TEST_STAFF_001', '$2b$10$82.JxGkwCwW0HiuP7Fxhg.tv.bK.OLnnfkJmUHIOEo4r.1179pTcG', 0),
 ('TEST_DONOR_001', '$2b$10$QKvYn08WA8z5A8ixgXAumuu/48P4LaomzoVgxPlCEuXs.4/jEzpf6', 0);
 
-TRUNCATE TABLE Users, Login_Credentials RESTART IDENTITY;
+TRUNCATE TABLE DonationRequest, Login_Credentials RESTART IDENTITY;
 
+DROP TABLE Inventory;
 
 SELECT lc.user_id, lc.password_hash 
 FROM Login_Credentials lc 
@@ -666,4 +679,62 @@ INSERT INTO Users (
 ('TEST_DONOR_002', 'John Vincent Borbon', 'borbonjv@gmail.com', 'INDIVIDUAL', 
  (SELECT role_id FROM Roles WHERE role_name = 'Donor'), 'active', true, true);
 
- 
+ SELECT * FROM ItemType;
+
+
+-- Add to DonationRequests
+ALTER TABLE DonationRequests 
+ADD COLUMN created_by VARCHAR(25) REFERENCES Users(user_id),
+ADD COLUMN updated_by VARCHAR(25) REFERENCES Users(user_id),
+ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN approved_by VARCHAR(25) REFERENCES Users(user_id),
+ADD COLUMN approved_at TIMESTAMP;
+
+ALTER TABLE DonationRequests 
+ADD COLUMN created_by VARCHAR(25) REFERENCES Users(user_id),
+ADD COLUMN updated_by VARCHAR(25) REFERENCES Users(user_id),
+
+
+ALTER TABLE Appointments
+ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+
+
+ TRUNCATE TABLE 
+    UserActivityLogs,
+    DonationItems,
+    DonationRequests,
+    Appointments,
+    Inventory
+RESTART IDENTITY CASCADE;
+
+
+UPDATE DonationRequests
+SET status = 'Approved'
+WHERE status = 'Completed'
+
+ALTER TABLE Users
+ADD COLUMN new_parish_id INT,
+ADD COLUMN new_vicariate_id INT;
+
+
+UPDATE Users u
+SET new_parish_id = p.parish_id
+FROM Parishes p
+WHERE u.parish_id = p.parish_name;
+
+UPDATE Users u
+SET new_vicariate_id = v.vicariate_id
+FROM Vicariates v
+WHERE u.vicariate_id = v.vicariate_name;
+
+ALTER TABLE Users
+DROP COLUMN parish_id,
+DROP COLUMN vicariate_id;
+
+ALTER TABLE Users
+RENAME COLUMN new_parish_id TO parish_id;
+
+ALTER TABLE Users
+RENAME COLUMN new_vicariate_id TO vicariate_id;

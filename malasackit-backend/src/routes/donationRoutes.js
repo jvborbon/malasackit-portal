@@ -49,6 +49,6 @@ router.put('/requests/:donationId/status', authenticateToken, requireRole(['Reso
 router.get('/statistics', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getDonationStatistics);
 
 // GET /api/donations/calendar - Get calendar appointments for approved donations
-router.get('/calendar', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getCalendarAppointments);
+router.get('/calendar', authenticateToken, getCalendarAppointments);
 
 export default router;

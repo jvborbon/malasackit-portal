@@ -7,7 +7,7 @@ import TopMunicipalitySection from '../components/analytics/descriptivechart/sta
 import DonatedItemsChart from '../components/analytics/descriptivechart/staff/DonatedItemsChart';
 import Inventory from '../components/Inventory';
 import DonationRequests from '../components/DonationRequests';
-import BeneficiaryLogs from '../components/BeneficiaryLogs';
+import BeneficiaryLogs from '../components/DistributionLogs';
 import UserProfileSettings from '../components/UserProfileSettings';
 import Calendar from '../components/Calendar';
 

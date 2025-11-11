@@ -1,4 +1,5 @@
 import { query } from '../db.js';
+import { addToInventoryFromDonation, updateInventoryStatusFromDonation } from './inventoryControllers.js';
 
 /**
  * Submit a new donation request
@@ -536,6 +537,24 @@ export const updateDonationStatus = async (req, res) => {
         
         const updateResult = await query(updateQuery, [status, remarks, donationId]);
 
+        // Handle inventory updates based on status change
+        if (status === 'Approved') {
+            try {
+                await addToInventoryFromDonation(donationId, 'Reserved'); // Items expected but not received yet
+                console.log(`Items from donation ${donationId} added to inventory with 'Reserved' status`);
+            } catch (inventoryError) {
+                console.error('Error adding items to inventory:', inventoryError);
+            }
+        } else if (status === 'Completed' && donation.status !== 'Completed') {
+            try {
+                // Update existing inventory items from Reserved to Available
+                await updateInventoryStatusFromDonation(donationId, 'Available');
+                console.log(`Items from donation ${donationId} status updated to 'Available' in inventory`);
+            } catch (inventoryError) {
+                console.error('Error updating inventory availability:', inventoryError);
+            }
+        }
+
         // Log the action
         const activityQuery = `
             INSERT INTO UserActivityLogs (user_id, action, description)
@@ -543,7 +562,10 @@ export const updateDonationStatus = async (req, res) => {
         `;
         await query(activityQuery, [
             staffUserId,
-            `Updated donation ${donationId} status to "${status}" for donor ${donation.donor_name}`
+            `Updated donation ${donationId} status to "${status}" for donor ${donation.donor_name}${
+                status === 'Approved' ? ' - Items reserved in inventory' : 
+                (status === 'Completed' && donation.status !== 'Completed') ? ' - Items available in inventory' : ''
+            }`
         ]);
 
         // TODO: Send notification to donor about status change
@@ -928,43 +950,85 @@ export const deleteDonationCategory = async (req, res) => {
 
 /**
  * Get calendar appointments for approved donations
+ * - Donors: See only their own appointments
+ * - Staff/Admin: See all appointments
  */
 export const getCalendarAppointments = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
+        const userId = req.user.userId;
+        const userRole = req.user.role;
         
         // Default to current month if no dates provided
         const start = startDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
         const end = endDate || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
         
-        const calendarQuery = `
-            SELECT 
-                dr.donation_id,
-                dr.delivery_method,
-                u.full_name as donor_name,
-                u.email as donor_email,
-                u.contact_num as donor_phone,
-                a.appointment_date,
-                a.appointment_time,
-                COUNT(di.item_id) as item_types,
-                SUM(di.quantity) as total_quantity,
-                SUM(di.declared_value) as total_value,
-                STRING_AGG(DISTINCT ic.category_name, ', ') as categories
-            FROM DonationRequests dr
-            JOIN Users u ON dr.user_id = u.user_id
-            JOIN Appointments a ON dr.appointment_id = a.appointment_id
-            LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
-            LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
-            LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
-            WHERE dr.status IN ('Approved', 'Completed')
-              AND a.appointment_date IS NOT NULL
-              AND a.appointment_date BETWEEN $1 AND $2
-            GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
-                     a.appointment_date, a.appointment_time
-            ORDER BY a.appointment_date, a.appointment_time
-        `;
+        // Build query with conditional WHERE clause based on user role
+        let calendarQuery;
+        let queryParams;
         
-        const result = await query(calendarQuery, [start, end]);
+        if (userRole === 'Donor') {
+            // Donors only see their own appointments
+            calendarQuery = `
+                SELECT 
+                    dr.donation_id,
+                    dr.delivery_method,
+                    u.full_name as donor_name,
+                    u.email as donor_email,
+                    u.contact_num as donor_phone,
+                    a.appointment_date,
+                    a.appointment_time,
+                    COUNT(di.item_id) as item_types,
+                    SUM(di.quantity) as total_quantity,
+                    SUM(di.declared_value) as total_value,
+                    STRING_AGG(DISTINCT ic.category_name, ', ') as categories
+                FROM DonationRequests dr
+                JOIN Users u ON dr.user_id = u.user_id
+                JOIN Appointments a ON dr.appointment_id = a.appointment_id
+                LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
+                LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+                LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+                WHERE dr.status IN ('Approved', 'Completed')
+                  AND a.appointment_date IS NOT NULL
+                  AND a.appointment_date BETWEEN $1 AND $2
+                  AND dr.user_id = $3
+                GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
+                         a.appointment_date, a.appointment_time
+                ORDER BY a.appointment_date, a.appointment_time
+            `;
+            queryParams = [start, end, userId];
+        } else {
+            // Staff and Admin see all appointments
+            calendarQuery = `
+                SELECT 
+                    dr.donation_id,
+                    dr.delivery_method,
+                    u.full_name as donor_name,
+                    u.email as donor_email,
+                    u.contact_num as donor_phone,
+                    a.appointment_date,
+                    a.appointment_time,
+                    COUNT(di.item_id) as item_types,
+                    SUM(di.quantity) as total_quantity,
+                    SUM(di.declared_value) as total_value,
+                    STRING_AGG(DISTINCT ic.category_name, ', ') as categories
+                FROM DonationRequests dr
+                JOIN Users u ON dr.user_id = u.user_id
+                JOIN Appointments a ON dr.appointment_id = a.appointment_id
+                LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
+                LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+                LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+                WHERE dr.status IN ('Approved', 'Completed')
+                  AND a.appointment_date IS NOT NULL
+                  AND a.appointment_date BETWEEN $1 AND $2
+                GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
+                         a.appointment_date, a.appointment_time
+                ORDER BY a.appointment_date, a.appointment_time
+            `;
+            queryParams = [start, end];
+        }
+        
+        const result = await query(calendarQuery, queryParams);
         
         // Transform to calendar event format
         const events = result.rows.map(row => ({

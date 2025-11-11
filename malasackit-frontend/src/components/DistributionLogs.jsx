@@ -1,16 +1,7 @@
 import React, { useState } from "react";
 import BeneficiaryRequestForm from "./BeneficiaryRequestForm";
 
-const beneficiaryLogs = [
-  { id: "BEN001", fullName: "Maria Santos", beneficiaryId: "BID001", details: "Rice, Canned Goods", status: "Completed" },
-  { id: "BEN002", fullName: "Juan Dela Cruz", beneficiaryId: "BID002", details: "Medical Supplies", status: "Completed" },
-  { id: "BEN003", fullName: "Ana Rodriguez", beneficiaryId: "BID003", details: "School Supplies", status: "Pending" },
-  { id: "BEN004", fullName: "Carlos Mendoza", beneficiaryId: "BID004", details: "Winter Clothing", status: "Completed" },
-  { id: "BEN005", fullName: "Isabella Garcia", beneficiaryId: "BID005", details: "Hygiene Kits", status: "Completed" },
-  { id: "BEN006", fullName: "Miguel Torres", beneficiaryId: "BID006", details: "Emergency Blankets", status: "Pending" },
-  { id: "BEN007", fullName: "Sofia Reyes", beneficiaryId: "BID007", details: "Baby Formula", status: "Completed" },
-  { id: "BEN008", fullName: "Diego Morales", beneficiaryId: "BID008", details: "Food Package", status: "Completed" },
-];
+const beneficiaryLogs = [];
 
 function BeneficiaryLogs() {
   const [search, setSearch] = useState("");

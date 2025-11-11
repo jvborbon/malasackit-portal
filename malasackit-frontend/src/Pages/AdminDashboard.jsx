@@ -8,7 +8,7 @@ import DonatedItemsChart from '../components/analytics/descriptivechart/staff/Do
 import UserKPICards from '../components/analytics/descriptivechart/admin/UserKPICards';
 import UserProfileSettings from '../components/UserProfileSettings';
 import DonationRequests from '../components/DonationRequests';
-import BeneficiaryLogs from '../components/BeneficiaryLogs';
+import BeneficiaryLogs from '../components/DistributionLogs';
 import UserManagement from '../components/UserManagement';
 import Calendar from '../components/Calendar';
 

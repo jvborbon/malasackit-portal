@@ -1,0 +1,107 @@
+import api from '../components/utilities/api';
+
+/**
+ * Get all inventory items with filtering and pagination
+ * @param {Object} params - Query parameters (category, status, search, page, limit)
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getInventory = async (params = {}) => {
+    try {
+        const response = await api.get('/api/inventory', { params });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching inventory:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get inventory statistics for dashboard
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getInventoryStats = async () => {
+    try {
+        const response = await api.get('/api/inventory/stats');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching inventory statistics:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get specific inventory item details
+ * @param {number} inventoryId - The inventory item ID
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getInventoryItem = async (inventoryId) => {
+    try {
+        const response = await api.get(`/api/inventory/${inventoryId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching inventory item:', error);
+        throw error;
+    }
+};
+
+/**
+ * Update inventory item
+ * @param {number} inventoryId - The inventory item ID
+ * @param {Object} updateData - The update data (quantity_available, location, status, notes)
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const updateInventoryItem = async (inventoryId, updateData) => {
+    try {
+        const response = await api.put(`/api/inventory/${inventoryId}`, updateData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating inventory item:', error);
+        throw error;
+    }
+};
+
+/**
+ * Distribute items (remove from inventory)
+ * @param {Array} items - Array of {itemtype_id, quantity} objects
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const distributeItems = async (items) => {
+    try {
+        const response = await api.post('/api/inventory/distribute', { items });
+        return response.data;
+    } catch (error) {
+        console.error('Error distributing items:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get items with low stock
+ * @param {number} threshold - Stock threshold (default: 10)
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getLowStockItems = async (threshold = 10) => {
+    try {
+        const response = await api.get('/api/inventory/low-stock', {
+            params: { threshold }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching low stock items:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get available categories for filtering
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getCategories = async () => {
+    try {
+        const response = await api.get('/api/donations/categories');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+    }
+};
