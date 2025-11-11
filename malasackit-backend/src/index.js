@@ -8,6 +8,8 @@ import donationRoutes from './routes/donationRoutes.js';
 import donationRequestRoutes from './routes/donationRequestRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
+import beneficiaryRoutes from './routes/beneficiaryRoutes.js';
+import distributionRoutes from './routes/distributionRoutes.js';
 
 const app = express();
 const port = 3000;
@@ -31,6 +33,8 @@ app.use('/api/donations', donationRoutes);
 app.use('/api/donation-requests', donationRequestRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/beneficiaries', beneficiaryRoutes);
+app.use('/api/distribution', distributionRoutes);
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

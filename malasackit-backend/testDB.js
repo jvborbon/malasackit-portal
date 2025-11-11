@@ -1,4 +1,4 @@
-import { query } from '../src/db.js';
+import { query } from './src/db.js';
 
 const testDatabaseConnection = async () => {
     try {
@@ -21,6 +21,34 @@ const testDatabaseConnection = async () => {
             console.log('✅ Users table exists');
         } else {
             console.log('❌ Users table not found');
+        }
+        
+        // Test if Beneficiaries table exists
+        const beneficiaryTableCheck = await query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'beneficiaries'
+        `);
+        
+        if (beneficiaryTableCheck.rows.length > 0) {
+            console.log('✅ Beneficiaries table exists');
+        } else {
+            console.log('❌ Beneficiaries table not found - this is likely causing the 500 errors');
+        }
+        
+        // Test if BeneficiaryRequests table exists
+        const beneficiaryRequestsCheck = await query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'beneficiaryrequests'
+        `);
+        
+        if (beneficiaryRequestsCheck.rows.length > 0) {
+            console.log('✅ BeneficiaryRequests table exists');
+        } else {
+            console.log('❌ BeneficiaryRequests table not found');
         }
         
         // Test if Roles table exists and has Donor role
