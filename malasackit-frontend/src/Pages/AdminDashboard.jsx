@@ -10,6 +10,7 @@ import UserProfileSettings from '../components/UserProfileSettings';
 import DonationRequests from '../components/DonationRequests';
 import BeneficiaryLogs from '../components/DistributionLogs';
 import UserManagement from '../components/UserManagement';
+import BeneficiaryManagement from '../components/BeneficiaryManagement';
 import Calendar from '../components/Calendar';
 
 
@@ -19,6 +20,9 @@ export default function AdminDashboard() {
         switch (activeNav) {
             case 'User Management':
                 return <UserManagement />;
+            
+            case 'Beneficiary Management':
+                return <BeneficiaryManagement />;
             
             case 'Distribution Logs':
                return <BeneficiaryLogs />;

@@ -2,11 +2,12 @@ import { query } from '../../db.js';
 
 /**
  * Distribution Planning Service
- * Handles the business logic for creating optimal distribution plans
+ * Handles the business logic for creating optimal distribution plans using smart algorithms
  */
 
 /**
- * Generate automatic distribution recommendations based on beneficiary requests and inventory
+ * Generate intelligent distribution recommendations based on beneficiary requests and inventory
+ * Uses rule-based algorithms to optimize resource allocation
  */
 export const generateDistributionRecommendations = async (requestIds) => {
     try {

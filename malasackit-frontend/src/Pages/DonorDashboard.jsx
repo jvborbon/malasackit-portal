@@ -7,6 +7,7 @@ import Calendar from '../components/Calendar';
 import UserProfileSettings from '../components/UserProfileSettings';
 import DonorKPICards from '../components/analytics/descriptivechart/donor/DonorKPICards';
 import DonationTrendsChart from '../components/analytics/descriptivechart/donor/DonationTrendsChart';
+import DonorDonationHistory from '../components/DonorDonationHistory';
 
 export default function DonorDashboard() {
     // Function to render main content based on active navigation
@@ -16,12 +17,7 @@ export default function DonorDashboard() {
                 return <DonorDonationForm />;
 
             case 'Donation History':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h2 className="text-lg font-semibold mb-4">You don't have any request at the moment.</h2>
-                        {/* Render donation history content here */}
-                    </div>
-                );
+                return <DonorDonationHistory />;
 
             case 'Notifications':
                 return <Notifs />;

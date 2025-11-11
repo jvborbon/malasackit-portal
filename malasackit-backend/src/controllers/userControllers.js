@@ -1,7 +1,7 @@
 // src/controllers/userControllers.js
 import { loginUser } from '../services/users/userAuth.js';
 import { registerUser } from '../services/users/userRegistration.js'; // Re-enabled but logic disabled
-import { getPendingUsers, approveUser, rejectUser, getAllUsers } from '../services/users/userManagement.js';
+import { getPendingUsers, approveUser, rejectUser, getAllUsers, getUserActivityLogs } from '../services/users/userManagement.js';
 import { generateToken, setTokenCookie, clearTokenCookie } from '../utilities/jwt.js';
 
 export const login = async (req, res) => {
@@ -288,7 +288,15 @@ export const rejectUserController = async (req, res) => {
 
 export const getAllUsersController = async (req, res) => {
     try {
-        const result = await getAllUsers();
+        const { page = 1, limit = 20, search, role, status } = req.query;
+        
+        const result = await getAllUsers({
+            page: parseInt(page),
+            limit: parseInt(limit),
+            search,
+            role,
+            status
+        });
         
         if (!result.success) {
             return res.status(500).json({
@@ -300,11 +308,47 @@ export const getAllUsersController = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Users retrieved successfully',
-            data: result.data
+            data: result.data,
+            pagination: result.pagination
         });
 
     } catch (error) {
         console.error('Get all users controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const getActivityLogsController = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, action, userId, search } = req.query;
+        
+        const result = await getUserActivityLogs({
+            page: parseInt(page),
+            limit: parseInt(limit),
+            action,
+            userId,
+            search
+        });
+        
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Activity logs retrieved successfully',
+            data: result.data,
+            pagination: result.pagination
+        });
+
+    } catch (error) {
+        console.error('Get activity logs controller error:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'

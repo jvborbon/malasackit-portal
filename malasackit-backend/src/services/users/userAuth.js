@@ -32,11 +32,22 @@ export const loginUser = async (email, password) => {
         const isValidPassword = await comparePassword(password, user.password_hash);
         
         if (!isValidPassword) {
+            // Log failed login attempt
+            await query(
+                'INSERT INTO UserActivityLogs (user_id, action, description) VALUES ($1, $2, $3)',
+                [user.user_id, 'LOGIN_FAILED', `Failed login attempt for ${user.full_name} - incorrect password`]
+            );
             return { success: false, message: 'Incorrect password. Please try again.' };
         }
         
         // Update last login
         await query('UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = $1', [user.user_id]);
+        
+        // Log login activity
+        await query(
+            'INSERT INTO UserActivityLogs (user_id, action, description) VALUES ($1, $2, $3)',
+            [user.user_id, 'USER_LOGIN', `User ${user.full_name} logged into the system`]
+        );
         
         const { password_hash, ...userWithoutPassword } = user;
         return { success: true, user: userWithoutPassword };

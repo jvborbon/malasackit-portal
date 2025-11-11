@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 
 // Import organized components
-import { FormHeader } from './donation/DonationFormHeader';
-import { DonationModal } from './donation/DonationModal';
-import { DonationItemsDisplay } from './donation/DonationItemsDisplay';
-import { ProhibitedDonations } from './donation/ProhibitedDonations';
-import { DonationDetails } from './donation/DonationDetails';
-import { SubmitSection } from './donation/SubmitSection';
+import { FormHeader } from './donation/donor/DonationFormHeader';
+import { DonationModal } from './donation/donor/DonationModal';
+import { DonationItemsDisplay } from './donation/donor/DonationItemsDisplay';
+import { ProhibitedDonations } from './donation/donor/ProhibitedDonations';
+import { DonationDetails } from './donation/donor/DonationDetails';
+import { SubmitSection } from './donation/donor/SubmitSection';
 import { useDonationCategories } from './donation/useDonationCategories';
 import { submitDonationRequest } from '../services/donationService';
 

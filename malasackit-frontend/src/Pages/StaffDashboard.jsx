@@ -8,6 +8,7 @@ import DonatedItemsChart from '../components/analytics/descriptivechart/staff/Do
 import Inventory from '../components/Inventory';
 import DonationRequests from '../components/DonationRequests';
 import BeneficiaryLogs from '../components/DistributionLogs';
+import BeneficiaryManagement from '../components/BeneficiaryManagement';
 import UserProfileSettings from '../components/UserProfileSettings';
 import Calendar from '../components/Calendar';
 
@@ -20,6 +21,9 @@ export default function StaffDashboard() {
             
             case 'Inventory':
                 return <Inventory />;
+
+            case 'Beneficiary Management':
+                return <BeneficiaryManagement />;
 
             case 'Distribution Logs':
                 return <BeneficiaryLogs />;

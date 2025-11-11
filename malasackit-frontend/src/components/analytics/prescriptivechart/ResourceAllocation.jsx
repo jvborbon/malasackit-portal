@@ -208,7 +208,7 @@ const ResourceAllocation = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Resource Allocation Optimization</h2>
-            <p className="text-gray-600 mt-1">AI-powered recommendations for optimal resource distribution</p>
+            <p className="text-gray-600 mt-1">Smart algorithmic recommendations for optimal resource distribution</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 mt-4 lg:mt-0">
             <select
@@ -312,10 +312,10 @@ const ResourceAllocation = () => {
         </div>
       </div>
 
-      {/* AI Recommendations */}
+      {/* Smart Distribution Recommendations */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">AI-Powered Recommendations</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Smart Distribution Recommendations</h3>
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
             4 Actions Recommended
           </span>

@@ -4,9 +4,11 @@ import {
     HiPencil, 
     HiTrash, 
     HiEye,
-    HiUserAdd
+    HiUserAdd,
+    HiRefresh
 } from 'react-icons/hi';
 import { getTimeSinceActivity } from './utilities/userStatusService';
+import PaginationComponent from './common/PaginationComponent';
 
 // Helper function to calculate days since last login
 const getDaysSinceLogin = (lastLogin) => {
@@ -26,6 +28,7 @@ const getDaysSinceLogin = (lastLogin) => {
 // Users Tab Component
 export function UsersTab({ 
     users, 
+    loading = false,
     searchTerm, 
     setSearchTerm, 
     filterRole, 
@@ -37,25 +40,11 @@ export function UsersTab({
     setShowDeleteModal, 
     setShowUserDetails, 
     setSelectedUser, 
-    currentPage, 
-    setCurrentPage, 
-    usersPerPage 
+    pagination,
+    onPageChange,
+    onRefresh
 }) {
-    // Filter and search logic
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = filterRole === 'all' || user.role === filterRole;
-        const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-        
-        return matchesSearch && matchesRole && matchesStatus;
-    });
-
-    // Pagination
-    const indexOfLastUser = currentPage * usersPerPage;
-    const indexOfFirstUser = indexOfLastUser - usersPerPage;
-    const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+    // Note: Filtering is now handled server-side, users array contains current page data
 
     const handleAddUser = () => {
         setSelectedUser(null);
@@ -78,14 +67,23 @@ export function UsersTab({
     };
 
     const getRoleBadge = (role) => {
-        const colors = {
-            admin: 'bg-purple-100 text-purple-800',
-            staff: 'bg-blue-100 text-blue-800',
-            donor: 'bg-green-100 text-green-800'
+        const getRoleColor = (roleKey) => {
+            switch (roleKey.toLowerCase()) {
+                case 'executive admin':
+                case 'admin':
+                    return 'bg-purple-100 text-purple-800';
+                case 'resource staff':
+                case 'staff':
+                    return 'bg-blue-100 text-blue-800';
+                case 'donor':
+                    return 'bg-green-100 text-green-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
         };
         
         return (
-            <span className={`px-2 py-1 text-xs font-medium rounded-full ${colors[role]}`}>
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(role)}`}>
                 {role.charAt(0).toUpperCase() + role.slice(1)}
             </span>
         );
@@ -156,8 +154,8 @@ export function UsersTab({
                     className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
                 >
                     <option value="all">All Roles</option>
-                    <option value="admin">Admin</option>
-                    <option value="staff">Staff</option>
+                    <option value="executive admin">Executive Admin</option>
+                    <option value="resource staff">Resource Staff</option>
                     <option value="donor">Donor</option>
                 </select>
                 <select
@@ -170,6 +168,14 @@ export function UsersTab({
                     <option value="offline">● Offline</option>
                     <option value="inactive">● Inactive</option>
                 </select>
+                <button
+                    onClick={onRefresh}
+                    disabled={loading}
+                    className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                    <HiRefresh className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                </button>
                 <button
                     onClick={handleAddUser}
                     className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
@@ -203,7 +209,7 @@ export function UsersTab({
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {currentUsers.map((user) => (
+                            {users.map((user) => (
                                 <tr key={user.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
@@ -267,7 +273,7 @@ export function UsersTab({
                                     </td>
                                 </tr>
                             ))}
-                            {currentUsers.length === 0 && (
+                            {users.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">No users found.</td>
                                 </tr>
@@ -278,28 +284,13 @@ export function UsersTab({
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                    Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} users
-                </div>
-                <div className="flex items-center space-x-2">
-                    <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        Previous
-                    </button>
-                    <span className="text-sm text-gray-700">Page {currentPage} of {Math.max(1, totalPages)}</span>
-                    <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages || totalPages <= 1}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        Next
-                    </button>
-                </div>
-            </div>
+            {pagination && pagination.pages > 1 && (
+                <PaginationComponent 
+                    pagination={pagination} 
+                    onPageChange={onPageChange}
+                    itemName="users"
+                />
+            )}
         </div>
     );
 }

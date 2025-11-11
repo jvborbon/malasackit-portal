@@ -7,6 +7,7 @@ import {
     HiClock,
     HiCheck,
     HiX,
+    HiRefresh
 } from 'react-icons/hi';
 import api from './utilities/api';
 
@@ -102,8 +103,10 @@ export function PendingApprovalsTab() {
                     </h2>
                     <button
                         onClick={fetchPendingUsers}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
+                        disabled={loading}
+                        className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
+                        <HiRefresh className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </button>
                 </div>

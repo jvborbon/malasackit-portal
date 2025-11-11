@@ -65,7 +65,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     { id: 5, name: 'Taguig City', population: 886722, priority: 'low', demand: 42 }
   ];
 
-  // AI-generated optimal distribution recommendations
+  // Smart algorithm-generated optimal distribution recommendations
   const distributionRecommendations = {
     'Quezon City': { food: 40, medical: 30, clothing: 15, education: 10, others: 5 },
     'Manila City': { food: 35, medical: 35, clothing: 15, education: 10, others: 5 },

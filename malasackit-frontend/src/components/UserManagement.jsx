@@ -25,6 +25,7 @@ export default function UserManagement() {
     const [users, setUsers] = useState([]);
     const [activityLogs, setActivityLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [logsLoading, setLogsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
@@ -33,144 +34,129 @@ export default function UserManagement() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showUserDetails, setShowUserDetails] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [usersPerPage] = useState(10);
+    const [usersPagination, setUsersPagination] = useState({
+        currentPage: 1,
+        pages: 1,
+        total: 0,
+        limit: 20
+    });
+    const [logsPagination, setLogsPagination] = useState({
+        currentPage: 1,
+        pages: 1,
+        total: 0,
+        limit: 20
+    });
 
     // Set up real-time status updates
     const { updateNow } = useUserStatusUpdater(users, setUsers, 60000); // Update every minute
 
-    // Fetch real data from API
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setLoading(true);
-                const response = await api.get('/api/auth/all');
+    // Fetch users with pagination
+    const fetchUsers = async (page = 1, search = '', role = '', status = '') => {
+        try {
+            setLoading(true);
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: usersPagination.limit.toString()
+            });
+            
+            if (search) params.append('search', search);
+            if (role && role !== 'all') params.append('role', role);
+            if (status && status !== 'all') params.append('status', status);
+            
+            const response = await api.get(`/api/auth/all?${params}`);
+            
+            if (response.data.success) {
+                // Transform API data to match expected format
+                const transformedUsers = response.data.data.map(user => ({
+                    id: user.user_id,
+                    name: user.full_name,
+                    email: user.email,
+                    role: user.role_name?.toLowerCase() || 'donor',
+                    status: user.activity_status || 'inactive',
+                    lastLogin: user.last_login ? new Date(user.last_login).toLocaleString() : 'Never',
+                    dateCreated: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown',
+                    permissions: getUserPermissions(user.role_name),
+                    phone: user.contact_num || 'Not provided',
+                    streetAddress: 'Not provided',
+                    brgysubdivision: user.barangay_name || 'Not provided',
+                    city: user.municipality_name || 'Not provided',
+                    state: user.province_name || 'Not provided',
+                    zipCode: 'Not provided',
+                    parish: user.parish_id || 'Not provided',
+                    vicariate: user.vicariate_id || 'Not provided',
+                    region: user.region_name || 'Not provided'
+                }));
                 
-                if (response.data.success) {
-                    // Transform API data to match expected format
-                    const transformedUsers = response.data.data.map(user => ({
-                        id: user.user_id,
-                        name: user.full_name,
-                        email: user.email,
-                        role: user.role_name?.toLowerCase() || 'donor',
-                        status: user.activity_status || 'inactive', // Use activity_status from backend
-                        lastLogin: user.last_login ? new Date(user.last_login).toLocaleString() : 'Never',
-                        dateCreated: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown',
-                        permissions: getUserPermissions(user.role_name),
-                        phone: user.contact_num || 'Not provided',
-                        streetAddress: 'Not provided', // This would need to be added to the query
-                        brgysubdivision: user.barangay_name || 'Not provided',
-                        city: user.municipality_name || 'Not provided',
-                        state: user.province_name || 'Not provided',
-                        zipCode: 'Not provided',
-                        parish: user.parish_id || 'Not provided',
-                        vicariate: user.vicariate_id || 'Not provided',
-                        region: user.region_name || 'Not provided'
-                    }));
-                    
-                    setUsers(transformedUsers);
-                } else {
-                    console.error('Failed to fetch users:', response.data.message);
-                }
-            } catch (error) {
-                console.error('Error fetching users:', error);
-            } finally {
-                setLoading(false);
+                setUsers(transformedUsers);
+                setUsersPagination(response.data.pagination);
+            } else {
+                console.error('Failed to fetch users:', response.data.message);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        // Mock activity logs for now (you can replace this with real API call later)
-        const mockActivityLogs = [
-            {
-                id: 1,
-                userId: 1,
-                userName: 'John Doe',
-                userEmail: 'john.doe@example.com',
-                action: 'login',
-                description: 'User logged into the system',
-                timestamp: '2024-01-15 10:30:15',
-                ipAddress: '192.168.1.100',
-                userAgent: 'Chrome 120.0.0.0',
-                status: 'success'
-            },
-            {
-                id: 2,
-                userId: 2,
-                userName: 'Jane Smith',
-                userEmail: 'jane.smith@example.com',
-                action: 'donation_request',
-                description: 'Created new donation request for food items',
-                timestamp: '2024-01-14 14:45:22',
-                ipAddress: '192.168.1.101',
-                userAgent: 'Firefox 121.0.0.0',
-                status: 'success'
-            },
-            {
-                id: 3,
-                userId: 5,
-                userName: 'David Brown',
-                userEmail: 'david.brown@example.com',
-                action: 'registration',
-                description: 'New user account created',
-                timestamp: '2024-01-12 11:15:30',
-                ipAddress: '192.168.1.102',
-                userAgent: 'Safari 17.2.1',
-                status: 'success'
-            },
-            {
-                id: 4,
-                userId: 3,
-                userName: 'Mike Johnson',
-                userEmail: 'mike.johnson@example.com',
-                action: 'login_failed',
-                description: 'Failed login attempt - incorrect password',
-                timestamp: '2024-01-10 09:45:12',
-                ipAddress: '192.168.1.103',
-                userAgent: 'Chrome 120.0.0.0',
-                status: 'failed'
-            },
-            {
-                id: 5,
-                userId: 1,
-                userName: 'John Doe',
-                userEmail: 'john.doe@example.com',
-                action: 'user_management',
-                description: 'Updated user permissions for Sarah Wilson',
-                timestamp: '2024-01-08 16:20:45',
-                ipAddress: '192.168.1.100',
-                userAgent: 'Chrome 120.0.0.0',
-                status: 'success'
-            },
-            {
-                id: 7,
-                userId: 4,
-                userName: 'Sarah Wilson',
-                userEmail: 'sarah.wilson@example.com',
-                action: 'distribution',
-                description: 'Distributed food packages to 25 beneficiaries',
-                timestamp: '2024-01-06 10:15:33',
-                ipAddress: '192.168.1.104',
-                userAgent: 'Edge 120.0.0.0',
-                status: 'success'
-            },
-            {
-                id: 8,
-                userId: 5,
-                userName: 'David Brown',
-                userEmail: 'david.brown@example.com',
-                action: 'donation',
-                description: 'Made donation of ₱5,000',
-                timestamp: '2024-01-05 15:22:41',
-                ipAddress: '192.168.1.102',
-                userAgent: 'Safari 17.2.1',
-                status: 'success'
+    // Fetch activity logs with pagination
+    const fetchActivityLogs = async (page = 1, search = '', action = '', userId = '') => {
+        try {
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: logsPagination.limit.toString()
+            });
+            
+            if (search) params.append('search', search);
+            if (action && action !== 'all') params.append('action', action);
+            if (userId && userId !== 'all') params.append('userId', userId);
+            
+            const response = await api.get(`/api/auth/activity-logs?${params}`);
+            
+            if (response.data.success) {
+                setActivityLogs(response.data.data);
+                setLogsPagination(response.data.pagination);
+            } else {
+                console.error('Failed to fetch activity logs:', response.data.message);
             }
-        ];
-        
-        // Fetch users and set activity logs
+        } catch (error) {
+            console.error('Error fetching activity logs:', error);
+            setActivityLogs([]);
+        }
+    };
+    
+    // Initial data loading
+    useEffect(() => {
         fetchUsers();
-        setActivityLogs(mockActivityLogs);
+        fetchActivityLogs();
     }, []);
+
+    // Refresh functions
+    const refreshUsers = () => {
+        fetchUsers(usersPagination.currentPage, searchTerm, filterRole, filterStatus);
+    };
+
+    const refreshActivityLogs = () => {
+        fetchActivityLogs(logsPagination.currentPage);
+    };
+    
+    // Pagination handlers
+    const handleUsersPageChange = (page) => {
+        setUsersPagination(prev => ({ ...prev, currentPage: page }));
+        fetchUsers(page, searchTerm, filterRole, filterStatus);
+    };
+    
+    const handleLogsPageChange = (page) => {
+        setLogsPagination(prev => ({ ...prev, currentPage: page }));
+        fetchActivityLogs(page);
+    };
+
+    // Fetch activity logs when activity tab is opened
+    useEffect(() => {
+        if (activeTab === 'activity') {
+            refreshActivityLogs();
+        }
+    }, [activeTab]);
 
     // Helper function to get user permissions based on role
     const getUserPermissions = (roleName) => {
@@ -200,23 +186,12 @@ export default function UserManagement() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            {/* Action Header */}
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">User Management & Activity</h1>
-                    <p className="text-sm text-gray-600 mt-1">Real-time user status monitoring</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className="flex items-center text-sm text-gray-500">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
-                        Live Status Updates
-                    </div>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-                    >
-                        Refresh Data
-                    </button>
+                <p className="text-sm text-gray-600 mt-1">Real-time user status monitoring</p>
+                <div className="flex items-center text-sm text-gray-500">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                    Live Status Updates
                 </div>
             </div>
 
@@ -265,6 +240,7 @@ export default function UserManagement() {
                     {activeTab === 'users' && (
                         <UsersTab 
                             users={users}
+                            loading={loading}
                             searchTerm={searchTerm}
                             setSearchTerm={setSearchTerm}
                             filterRole={filterRole}
@@ -276,13 +252,19 @@ export default function UserManagement() {
                             setShowDeleteModal={setShowDeleteModal}
                             setShowUserDetails={setShowUserDetails}
                             setSelectedUser={setSelectedUser}
-                            currentPage={currentPage}
-                            setCurrentPage={setCurrentPage}
-                            usersPerPage={usersPerPage}
+                            pagination={usersPagination}
+                            onPageChange={handleUsersPageChange}
+                            onRefresh={refreshUsers}
                         />
                     )}
                     {activeTab === 'activity' && (
-                        <ActivityLogsTab activityLogs={activityLogs} />
+                        <ActivityLogsTab 
+                            activityLogs={activityLogs} 
+                            loading={logsLoading}
+                            pagination={logsPagination}
+                            onPageChange={handleLogsPageChange}
+                            onRefresh={refreshActivityLogs}
+                        />
                     )}
                     {activeTab === 'pending' && (
                         <PendingApprovalsTab />

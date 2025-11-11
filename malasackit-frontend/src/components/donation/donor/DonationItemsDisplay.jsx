@@ -1,5 +1,5 @@
 import { HiPlus, HiX, HiShoppingCart } from 'react-icons/hi';
-import { useDonationCategories } from './useDonationCategories';
+import { useDonationCategories } from '../useDonationCategories';
 
 export function DonationItemsDisplay({
     donationItems,

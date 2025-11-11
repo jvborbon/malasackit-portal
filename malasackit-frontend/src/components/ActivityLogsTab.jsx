@@ -4,32 +4,18 @@ import {
     HiExclamation,
     HiCheckCircle,
     HiClipboardList,
-    HiUserAdd as HiUserAddIcon
+    HiUserAdd as HiUserAddIcon,
+    HiRefresh
 } from 'react-icons/hi';
+import PaginationComponent from './common/PaginationComponent';
 
 // Activity Logs Tab Component
-export function ActivityLogsTab({ activityLogs }) {
+export function ActivityLogsTab({ activityLogs, loading = false, pagination, onPageChange, onRefresh }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterAction, setFilterAction] = useState('all');
     const [filterUser, setFilterUser] = useState('all');
-    const [currentPage, setCurrentPage] = useState(1);
-    const logsPerPage = 10;
 
-    // Filter activity logs
-    const filteredLogs = activityLogs.filter(log => {
-        const matchesSearch = log.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            log.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesAction = filterAction === 'all' || log.action === filterAction;
-        const matchesUser = filterUser === 'all' || log.userName === filterUser;
-        
-        return matchesSearch && matchesAction && matchesUser;
-    });
-
-    // Pagination
-    const indexOfLastLog = currentPage * logsPerPage;
-    const indexOfFirstLog = indexOfLastLog - logsPerPage;
-    const currentLogs = filteredLogs.slice(indexOfFirstLog, indexOfLastLog);
-    const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+    // Note: Filtering is now handled server-side, activityLogs array contains current page data
 
     // Get unique users for filter
     const uniqueUsers = [...new Set(activityLogs.map(log => log.userName))];
@@ -92,111 +78,125 @@ export function ActivityLogsTab({ activityLogs }) {
         return date.toLocaleString();
     };
 
+    const handleRefresh = () => {
+        if (onRefresh) {
+            onRefresh();
+        }
+    };
+
     return (
         <div className="space-y-4">
             {/* Search and Filter Bar */}
-            <div className="flex items-center space-x-4">
-                <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <HiSearch className="h-5 w-5 text-gray-400" />
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 flex-1">
+                    <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <HiSearch className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search activity logs..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                            disabled={loading}
+                        />
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Search activity logs..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
-                    />
+                    <select
+                        value={filterAction}
+                        onChange={(e) => setFilterAction(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                        disabled={loading}
+                    >
+                        <option value="all">All Actions</option>
+                        <option value="login">Login</option>
+                        <option value="registration">Registration</option>
+                        <option value="donation_request">Donation Request</option>
+                        <option value="distribution">Distribution</option>
+                        <option value="user_management">User Management</option>
+                        <option value="inventory_update">Inventory Update</option>
+                        <option value="donation">Donation</option>
+                    </select>
+                    <select
+                        value={filterUser}
+                        onChange={(e) => setFilterUser(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                        disabled={loading}
+                    >
+                        <option value="all">All Users</option>
+                        {uniqueUsers.map(user => (
+                            <option key={user} value={user}>{user}</option>
+                        ))}
+                    </select>
                 </div>
-                <select
-                    value={filterAction}
-                    onChange={(e) => setFilterAction(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                {/* Refresh Button */}
+                <button
+                    onClick={handleRefresh}
+                    disabled={loading}
+                    className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                    <option value="all">All Actions</option>
-                    <option value="login">Login</option>
-                    <option value="registration">Registration</option>
-                    <option value="donation_request">Donation Request</option>
-                    <option value="distribution">Distribution</option>
-                    <option value="user_management">User Management</option>
-                    <option value="inventory_update">Inventory Update</option>
-                    <option value="donation">Donation</option>
-                </select>
-                <select
-                    value={filterUser}
-                    onChange={(e) => setFilterUser(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
-                >
-                    <option value="all">All Users</option>
-                    {uniqueUsers.map(user => (
-                        <option key={user} value={user}>{user}</option>
-                    ))}
-                </select>
+                    <HiRefresh className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                </button>
             </div>
 
             {/* Activity Logs List */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-y-auto max-h-96">
-                    <div className="divide-y divide-gray-200">
-                        {currentLogs.map((log) => (
-                            <div key={log.id} className="p-4 hover:bg-gray-50">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-start space-x-3 flex-1">
-                                        <div className="flex-shrink-0 mt-1">
-                                            {getActionIcon(log.action, log.status)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center space-x-2 mb-1">
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {log.userName}
-                                                </p>
-                                                {getActionBadge(log.action, log.status)}
+                    {loading ? (
+                        <div className="p-8 text-center">
+                            <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm text-gray-600">
+                                <div className="animate-spin -ml-1 mr-3 h-5 w-5 text-red-500">
+                                    <div className="h-5 w-5 border-4 border-red-200 border-t-red-500 rounded-full"></div>
+                                </div>
+                                Loading activity logs...
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-gray-200">
+                            {activityLogs.map((log) => (
+                                <div key={log.id} className="p-4 hover:bg-gray-50">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-start space-x-3 flex-1">
+                                            <div className="flex-shrink-0 mt-1">
+                                                {getActionIcon(log.action, log.status)}
                                             </div>
-                                            <p className="text-sm text-gray-600">
-                                                {log.description}
-                                            </p>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {log.userName}
+                                                    </p>
+                                                    {getActionBadge(log.action, log.status)}
+                                                </div>
+                                                <p className="text-sm text-gray-600">
+                                                    {log.description}
+                                                </p>
                                             <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
                                                 <span>{formatTimestamp(log.timestamp)}</span>
-                                                <span>IP: {log.ipAddress}</span>
-                                                <span>{log.userAgent}</span>
+                                            </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                        {currentLogs.length === 0 && (
-                            <div className="p-8 text-center text-sm text-gray-500">
-                                No activity logs found.
-                            </div>
-                        )}
-                    </div>
+                            ))}
+                            {activityLogs.length === 0 && !loading && (
+                                <div className="p-8 text-center text-sm text-gray-500">
+                                    No activity logs found.
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                    Showing {indexOfFirstLog + 1} to {Math.min(indexOfLastLog, filteredLogs.length)} of {filteredLogs.length} logs
-                </div>
-                <div className="flex items-center space-x-2">
-                    <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        Previous
-                    </button>
-                    <span className="text-sm text-gray-700">Page {currentPage} of {Math.max(1, totalPages)}</span>
-                    <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages || totalPages <= 1}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        Next
-                    </button>
-                </div>
-            </div>
+            {pagination && pagination.pages > 1 && (
+                <PaginationComponent 
+                    pagination={pagination} 
+                    onPageChange={onPageChange}
+                    itemName="logs"
+                />
+            )}
         </div>
     );
 }

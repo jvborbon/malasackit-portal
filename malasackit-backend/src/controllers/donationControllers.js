@@ -145,19 +145,39 @@ export const submitDonationRequest = async (req, res) => {
 export const getDonorDonations = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { status, limit = 10, offset = 0 } = req.query;
+        const { status, page = 1, limit = 10, search } = req.query;
+        const offset = (page - 1) * limit;
 
-        let whereClause = 'WHERE dr.user_id = $1';
+        // Build dynamic WHERE conditions
+        let whereConditions = ['dr.user_id = $1'];
         let params = [userId];
+        let paramCount = 1;
 
-        if (status) {
-            whereClause += ' AND dr.status = $2';
+        // Filter by status
+        if (status && status !== 'all') {
+            paramCount++;
+            whereConditions.push(`LOWER(dr.status) = LOWER($${paramCount})`);
             params.push(status);
         }
 
+        // Search functionality
+        if (search && search.trim() !== '') {
+            paramCount++;
+            whereConditions.push(`(
+                LOWER(dr.notes) LIKE LOWER($${paramCount}) OR 
+                LOWER(dr.delivery_method) LIKE LOWER($${paramCount + 1}) OR
+                dr.donation_id::text LIKE $${paramCount + 2}
+            )`);
+            params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+            paramCount += 2;
+        }
+
+        const whereClause = 'WHERE ' + whereConditions.join(' AND ');
+
+        // Main query with pagination
         const donationsQuery = `
             SELECT 
-                dr.donation_id,
+                dr.donation_id as id,
                 dr.status,
                 dr.notes,
                 dr.delivery_method,
@@ -167,27 +187,58 @@ export const getDonorDonations = async (req, res) => {
                 a.status as appointment_status,
                 COUNT(di.item_id) as item_count,
                 SUM(di.quantity) as total_quantity,
-                SUM(di.declared_value) as total_value
+                SUM(di.declared_value) as total_value,
+                STRING_AGG(DISTINCT it.itemtype_name, ', ' ORDER BY it.itemtype_name) as items_summary,
+                CASE 
+                    WHEN a.appointment_date IS NOT NULL THEN 
+                        CONCAT(u.full_name, '''s residence')
+                    ELSE 'LASAC Office'
+                END as pickup_location
             FROM DonationRequests dr
             LEFT JOIN Appointments a ON dr.appointment_id = a.appointment_id
             LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
+            LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+            LEFT JOIN Users u ON dr.user_id = u.user_id
             ${whereClause}
             GROUP BY dr.donation_id, dr.status, dr.notes, dr.delivery_method, dr.created_at,
-                     a.appointment_date, a.appointment_time, a.status
+                     a.appointment_date, a.appointment_time, a.status, u.full_name
             ORDER BY dr.created_at DESC
-            LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+            LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
         `;
         
         params.push(limit, offset);
-        const result = await query(donationsQuery, params);
+
+        // Count query for pagination
+        const countQuery = `
+            SELECT COUNT(DISTINCT dr.donation_id) as total
+            FROM DonationRequests dr
+            LEFT JOIN Appointments a ON dr.appointment_id = a.appointment_id
+            LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
+            LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+            LEFT JOIN Users u ON dr.user_id = u.user_id
+            ${whereClause}
+        `;
+
+        const countParams = params.slice(0, -2); // Remove limit and offset
+
+        const [donationsResult, countResult] = await Promise.all([
+            query(donationsQuery, params),
+            query(countQuery, countParams)
+        ]);
+
+        const totalCount = parseInt(countResult.rows[0].total);
+        const totalPages = Math.ceil(totalCount / limit);
 
         res.json({
             success: true,
-            data: result.rows,
+            data: donationsResult.rows,
             pagination: {
+                currentPage: parseInt(page),
+                pages: totalPages,
+                total: totalCount,
                 limit: parseInt(limit),
-                offset: parseInt(offset),
-                total: result.rows.length
+                hasNext: page < totalPages,
+                hasPrev: page > 1
             },
             message: 'Donation requests retrieved successfully'
         });

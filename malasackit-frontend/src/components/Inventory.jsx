@@ -9,6 +9,7 @@ import {
   HiRefresh
 } from "react-icons/hi";
 import DistributeDonationForm from "./DistributeDonationForm";
+import PaginationComponent from "./common/PaginationComponent";
 import { 
   getInventory, 
   getInventoryStats, 
@@ -46,6 +47,20 @@ function Inventory() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 20;
+  
+  // Create pagination object for PaginationComponent
+  const pagination = {
+    currentPage,
+    pages: totalPages,
+    total: totalItems,
+    limit: itemsPerPage
+  };
+  
+  // Page change handler
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+  
   // Load data functions
   const loadInventoryData = async () => {
     try {
@@ -89,20 +104,42 @@ function Inventory() {
   
   // Effects
   useEffect(() => {
-    loadCategories();
-  }, []);
+    // Initial load on mount - load categories and data
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        await loadCategories();
+        await loadInventoryData();
+      } catch (err) {
+        console.error('Error initializing inventory data:', err);
+        setError('Failed to load inventory data');
+      }
+    };
+    
+    initializeData();
+  }, []); // Empty dependency array - only run on mount
   
+  // Debounced effect for search and filters
   useEffect(() => {
+    // Skip if this is the initial render (no search/filter values set yet)
+    if (search === '' && selectedCategory === '' && selectedStatus === '') {
+      return;
+    }
+    
     const timeoutId = setTimeout(() => {
-      setCurrentPage(1); // Reset to first page when filters change
-      loadInventoryData();
+      setCurrentPage(1); // Reset to page 1
+      loadInventoryData(); // Load new data
     }, 500); // Debounce search
     
     return () => clearTimeout(timeoutId);
   }, [search, selectedCategory, selectedStatus]);
   
+  // Effect for page changes (pagination only)
   useEffect(() => {
-    loadInventoryData();
+    // Only load if currentPage > 1 (user clicked pagination)
+    if (currentPage > 1) {
+      loadInventoryData();
+    }
   }, [currentPage]);
   
   // Helper functions
@@ -150,8 +187,41 @@ function Inventory() {
     });
   };
 
+  // Show loading spinner on initial load
+  if (loading && inventory.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="text-gray-500 mt-4">Loading inventory...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && inventory.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <HiExclamation className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 font-medium mb-2">{error}</p>
+          <button 
+            onClick={() => {
+              setError(null);
+              loadInventoryData();
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative">
       {/* Search Bar with Action Icons */}
       <div className="flex items-center space-x-4">
         <div className="relative flex-1">
@@ -417,30 +487,13 @@ function Inventory() {
         </div>
 
         {/* Pagination */}
-        {!loading && inventory.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-2 border-t border-gray-200">
-            <div className="text-sm text-gray-700">
-              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
-            </div>
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-700">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
+        {!loading && inventory.length > 0 && pagination.pages > 1 && (
+          <div className="px-6 py-2 border-t border-gray-200">
+            <PaginationComponent 
+              pagination={pagination} 
+              onPageChange={handlePageChange}
+              itemName="items"
+            />
           </div>
         )}
       </div>
@@ -451,6 +504,16 @@ function Inventory() {
         onClose={() => setIsDistributeModalOpen(false)}
         selectedItems={selectedItems}
       />
+      
+      {/* Loading overlay for refresh operations */}
+      {loading && inventory.length > 0 && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+          <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg shadow-lg">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+            <span className="text-sm text-gray-600">Refreshing...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,7 +7,8 @@ import {
     getPendingUsersController, 
     approveUserController, 
     rejectUserController, 
-    getAllUsersController 
+    getAllUsersController,
+    getActivityLogsController
 } from '../controllers/userControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
@@ -21,6 +22,7 @@ router.get('/profile', authenticateToken, getProfile);
 // Admin user management routes
 router.get('/pending', authenticateToken, requireRole(['Executive Admin']), getPendingUsersController);
 router.get('/all', authenticateToken, requireRole(['Executive Admin', 'Resource Staff']), getAllUsersController);
+router.get('/activity-logs', authenticateToken, requireRole(['Executive Admin', 'Resource Staff']), getActivityLogsController);
 router.post('/approve/:userId', authenticateToken, requireRole(['Executive Admin']), approveUserController);
 router.delete('/reject/:userId', authenticateToken, requireRole(['Executive Admin']), rejectUserController);
 

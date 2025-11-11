@@ -160,8 +160,8 @@ export default function UserModalForm({ isOpen, onClose, user, onSave }) {
                                         disabled={isSubmitting}
                                     >
                                         <option value="donor">Donor</option>
-                                        <option value="staff">Staff</option>
-                                        <option value="admin">Admin</option>
+                                        <option value="resource staff">Resource Staff</option>
+                                        <option value="executive admin">Executive Admin</option>
                                     </select>
                                 </div>
 

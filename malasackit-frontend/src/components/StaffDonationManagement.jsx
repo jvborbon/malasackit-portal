@@ -2,12 +2,12 @@ import React from "react";
 import { HiX, HiRefresh } from "react-icons/hi";
 import { useDonationManagement } from "../hooks/useDonationManagement";
 import { getStatusColor, formatDate, formatCurrency } from "./utilities/donationHelpers";
-import SearchAndFilters from "./staff/SearchAndFilters";
-import DonationStatistics from "./staff/DonationStatistics";
-import DonationTable from "./staff/DonationTable";
-import PaginationComponent from "./staff/PaginationComponent";
-import DonationDetailsModal from "./staff/DonationDetailsModal";
-import StatusChangeModal from "./staff/StatusChangeModal";
+import SearchAndFilters from "./donation/staff-admin/SearchAndFilters";
+import DonationStatistics from "./donation/staff-admin/DonationStatistics";
+import DonationTable from "./donation/staff-admin/DonationTable";
+import PaginationComponent from "./common/PaginationComponent";
+import DonationDetailsModal from "./donation/staff-admin/DonationDetailsModal";
+import StatusChangeModal from "./donation/staff-admin/StatusChangeModal";
 
 function StaffDonationManagement() {
   const {
@@ -47,12 +47,9 @@ function StaffDonationManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Action Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Donation Management</h1>
-          <p className="text-gray-600">Review and manage donation requests</p>
-        </div>
+        <p className="text-gray-600">Review and manage donation requests</p>
         <div className="flex items-center space-x-2">
           <button 
             onClick={loadDonations}
@@ -113,6 +110,7 @@ function StaffDonationManagement() {
         <PaginationComponent 
           pagination={pagination} 
           onPageChange={handlePageChange} 
+          itemName="requests"
         />
       )}
 

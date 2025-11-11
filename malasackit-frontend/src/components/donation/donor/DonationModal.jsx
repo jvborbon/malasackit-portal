@@ -1,5 +1,5 @@
 import { HiX, HiShoppingCart, HiExclamationCircle, HiRefresh } from 'react-icons/hi';
-import { useDonationCategories } from './useDonationCategories';
+import { useDonationCategories } from '../useDonationCategories';
 
 export function DonationModal({ 
     isOpen, 

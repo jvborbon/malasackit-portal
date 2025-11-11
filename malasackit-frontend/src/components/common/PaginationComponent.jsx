@@ -1,6 +1,6 @@
 import React from 'react';
 
-function PaginationComponent({ pagination, onPageChange }) {
+export default function PaginationComponent({ pagination, onPageChange, itemName = "items" }) {
   const { currentPage, pages, total, limit } = pagination;
   
   const startItem = ((currentPage - 1) * limit) + 1;
@@ -9,7 +9,7 @@ function PaginationComponent({ pagination, onPageChange }) {
   return (
     <div className="flex items-center justify-between">
       <div className="text-sm text-gray-700">
-        Showing {startItem} to {endItem} of {total} requests
+        Showing {startItem} to {endItem} of {total} {itemName}
       </div>
       <div className="flex items-center space-x-2">
         <button
@@ -35,5 +35,3 @@ function PaginationComponent({ pagination, onPageChange }) {
     </div>
   );
 }
-
-export default PaginationComponent;

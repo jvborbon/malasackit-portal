@@ -14,7 +14,8 @@ import {
     HiDatabase,
     HiClipboardList,
     HiMenu,
-    HiX
+    HiX,
+    HiUserGroup
 } from 'react-icons/hi';
 import { useAuth } from '../auth/Authentication';
 import LogoutConfirm from './dialogs/LogoutConfim';
@@ -71,18 +72,20 @@ export default function DashboardLayout({ children, userRole }) {
             ],
             admin: [
                 { name: 'User Management', icon: HiUsers, position: 1 },
-                { name: 'Distribution Logs', icon: HiClipboardCheck, position: 2 },
-                { name: 'Donation Requests', icon: HiDatabase, position: 3 },
-                { name: 'Notifications', icon: HiBell, position: 4 },
-                { name: 'Calendar', icon: HiCalendar, position: 5 },
-                { name: 'Settings', icon: HiCog, position: 6 }
+                { name: 'Beneficiary Management', icon: HiUserGroup, position: 2 },
+                { name: 'Distribution Logs', icon: HiClipboardCheck, position: 3 },
+                { name: 'Donation Requests', icon: HiDatabase, position: 4 },
+                { name: 'Notifications', icon: HiBell, position: 5 },
+                { name: 'Calendar', icon: HiCalendar, position: 6 },
+                { name: 'Settings', icon: HiCog, position: 7 }
             ],
             staff: [
                 { name: 'Inventory', icon: HiDatabase, position: 1 },
-                { name: 'Donation Requests', icon: HiClipboardCheck, position: 2 },
-                { name: 'Distribution Logs', icon: HiUsers, position: 3 },
-                { name: 'Calendar', icon: HiCalendar, position: 4 },
-                { name: 'Settings', icon: HiCog, position: 5 }
+                { name: 'Beneficiary Management', icon: HiUserGroup, position: 2 },
+                { name: 'Donation Requests', icon: HiClipboardCheck, position: 3 },
+                { name: 'Distribution Logs', icon: HiUsers, position: 4 },
+                { name: 'Calendar', icon: HiCalendar, position: 5 },
+                { name: 'Settings', icon: HiCog, position: 6 }
             ]
         };
 
@@ -119,6 +122,7 @@ export default function DashboardLayout({ children, userRole }) {
             'Donation Requests': 'Donation Request Management',
             'Distribution Logs': 'Distribution Management',
             'User Management': 'User Administration',
+            'Beneficiary Management': 'Beneficiary Management',
             'Donate Now': 'Make a Donation',
             'Donation History': 'My Donation History',
             'Notifications': 'Notifications Center',

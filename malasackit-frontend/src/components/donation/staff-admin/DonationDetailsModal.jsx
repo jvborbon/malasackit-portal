@@ -1,7 +1,7 @@
 import React from 'react';
-import { formatCurrency, formatDate, formatTime } from '../utilities/donationHelpers';
-import Modal from '../common/Modal';
-import DataTable from '../common/DataTable';
+import { formatCurrency, formatDate, formatTime } from '../../utilities/donationHelpers';
+import Modal from '../../common/Modal';
+import DataTable from '../../common/DataTable';
 
 function DonationDetailsModal({ donation, onClose }) {
   return (

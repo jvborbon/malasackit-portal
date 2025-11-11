@@ -32,8 +32,10 @@ export default function UserDetails({ isOpen, onClose, user, onEdit, onDelete })
 
     const getRoleColor = (role) => {
         switch (role.toLowerCase()) {
+            case 'executive admin':
             case 'admin':
                 return 'bg-purple-100 text-purple-800';
+            case 'resource staff':
             case 'staff':
                 return 'bg-blue-100 text-blue-800';
             case 'donor':

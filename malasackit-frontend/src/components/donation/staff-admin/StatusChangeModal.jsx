@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from '../common/Modal';
+import Modal from '../../common/Modal';
 
 function StatusChangeModal({ donation, newStatus, onConfirm, onClose }) {
   const [remarks, setRemarks] = useState('');

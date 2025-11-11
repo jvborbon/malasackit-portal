@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getAvailableSlots } from '../../services/donationService';
-import { formatTime } from '../utilities/donationHelpers';
+import { getAvailableSlots } from '../../../services/donationService';
+import { formatTime } from '../../utilities/donationHelpers';
 
 export function DonationDetails({ formData, handleInputChange }) {
     const [availableSlots, setAvailableSlots] = useState([]);
