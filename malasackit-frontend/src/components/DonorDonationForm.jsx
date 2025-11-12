@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { HiCheckCircle, HiX, HiCalendar, HiTruck, HiHome } from 'react-icons/hi';
 
 // Import organized components
 import { FormHeader } from './donation/donor/DonationFormHeader';
@@ -26,7 +27,8 @@ export default function DonorDonationForm() {
     const [selectedItems, setSelectedItems] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
-    const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successDetails, setSuccessDetails] = useState(null);
 
     // Set the first available category as active when categories are loaded
     useEffect(() => {
@@ -74,12 +76,31 @@ export default function DonorDonationForm() {
         setDonationItems(prev => prev.filter(item => item.id !== itemId));
     };
 
+    const handleSuccessModalClose = () => {
+        setShowSuccessModal(false);
+        setSuccessDetails(null);
+        
+        // Reset form after successful submission
+        setDonationItems([]);
+        setSelectedItems([]);
+        setFormData({
+            deliveryMethod: 'pickup',
+            description: '',
+            scheduleDate: '',
+            appointmentTime: ''
+        });
+        
+        // Reset to first available category
+        if (categories && Object.keys(categories).length > 0) {
+            setActiveCategory(Object.keys(categories)[0]);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
         // Reset previous states
         setSubmitError(null);
-        setSubmitSuccess(false);
         
         // Validation
         if (donationItems.length === 0) {
@@ -131,26 +152,19 @@ export default function DonorDonationForm() {
             console.log('Donation response:', response);
             
             if (response.success) {
-                setSubmitSuccess(true);
+                // Set success details for the modal
+                setSuccessDetails({
+                    donationId: response.data?.donationId,
+                    appointmentId: response.data?.appointmentId,
+                    itemCount: donationItems.length,
+                    totalItems: donationItems.reduce((sum, item) => sum + parseInt(item.quantity), 0),
+                    totalValue: donationItems.reduce((sum, item) => sum + parseFloat(item.value), 0),
+                    deliveryMethod: formData.deliveryMethod,
+                    hasAppointment: !!formData.scheduleDate
+                });
                 
-                // Reset form after successful submission
-                setTimeout(() => {
-                    setDonationItems([]);
-                    setSelectedItems([]);
-                    setFormData({
-                        deliveryMethod: 'pickup',
-                        description: '',
-                        scheduleDate: '',
-                        appointmentTime: ''
-                    });
-                    
-                    // Reset to first available category
-                    if (categories && Object.keys(categories).length > 0) {
-                        setActiveCategory(Object.keys(categories)[0]);
-                    }
-                    
-                    setSubmitSuccess(false);
-                }, 3000); // Hide success message after 3 seconds
+                // Show success modal
+                setShowSuccessModal(true);
                 
             } else {
                 throw new Error(response.message || 'Failed to submit donation request');
@@ -174,6 +188,118 @@ export default function DonorDonationForm() {
         }
     };
 
+    // Success Modal Component
+    const SuccessModal = ({ isOpen, onClose, details }) => {
+        if (!isOpen || !details) return null;
+
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                            <div className="bg-green-100 p-2 rounded-full mr-3">
+                                <HiCheckCircle className="w-6 h-6 text-green-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Donation Submitted!</h3>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-600 p-1"
+                        >
+                            <HiX className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-4">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h4 className="text-sm font-medium text-green-800 mb-2">
+                                Success! Your donation request has been submitted.
+                            </h4>
+                            <p className="text-sm text-green-700">
+                                Your request is now pending approval. You'll receive a notification when it's reviewed.
+                            </p>
+                        </div>
+
+                        {/* Donation Details */}
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                            <h4 className="font-medium text-gray-900">Donation Summary</h4>
+                            
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span className="text-gray-600">Request ID:</span>
+                                    <p className="font-medium text-gray-900">#{details.donationId}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Delivery Method:</span>
+                                    <div className="flex items-center">
+                                        {details.deliveryMethod === 'pickup' ? (
+                                            <HiTruck className="w-4 h-4 text-gray-600 mr-1" />
+                                        ) : (
+                                            <HiHome className="w-4 h-4 text-gray-600 mr-1" />
+                                        )}
+                                        <span className="font-medium text-gray-900 capitalize">{details.deliveryMethod}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Item Types:</span>
+                                    <p className="font-medium text-gray-900">{details.itemCount}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Total Items:</span>
+                                    <p className="font-medium text-gray-900">{details.totalItems}</p>
+                                </div>
+                                <div className="col-span-2">
+                                    <span className="text-gray-600">Total Value:</span>
+                                    <p className="font-medium text-gray-900">₱{details.totalValue.toLocaleString()}</p>
+                                </div>
+                            </div>
+
+                            {details.hasAppointment && (
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                    <div className="flex items-center text-sm text-blue-600">
+                                        <HiCalendar className="w-4 h-4 mr-1" />
+                                        <span>Appointment scheduled - you'll receive confirmation details soon.</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Next Steps */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 className="text-sm font-medium text-blue-800 mb-2">What's Next?</h4>
+                            <ul className="text-sm text-blue-700 space-y-1">
+                                <li>• Staff will review your donation request</li>
+                                <li>• You'll receive an email notification with the decision</li>
+                                <li>• Check your donation history for updates</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-6 flex justify-end space-x-3">
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm font-medium transition-colors"
+                        >
+                            Submit Another
+                        </button>
+                        <button
+                            onClick={() => {
+                                onClose();
+                                // You could add navigation to donation history here
+                            }}
+                            className="px-4 py-2 bg-theme-primary hover:bg-theme-primary-dark text-white rounded-md text-sm font-medium transition-colors"
+                        >
+                            View History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 lg:p-8">
             {/* Form Header */}
@@ -188,6 +314,13 @@ export default function DonorDonationForm() {
                 selectedItems={selectedItems}
                 setSelectedItems={setSelectedItems}
                 onConfirm={confirmSelectedItems}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={handleSuccessModalClose}
+                details={successDetails}
             />
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -214,7 +347,6 @@ export default function DonorDonationForm() {
                     onSubmit={handleSubmit}
                     isSubmitting={isSubmitting}
                     submitError={submitError}
-                    submitSuccess={submitSuccess}
                 />
             </form>
         </div>

@@ -11,7 +11,9 @@ import {
     HiFilter,
     HiPencil,
     HiTrash,
-    HiExclamation
+    HiExclamation,
+    HiTruck,
+    HiHome
 } from 'react-icons/hi';
 import { getUserDonations, getDonationDetails, cancelDonationRequest } from '../services/donationService';
 import PaginationComponent from './common/PaginationComponent';
@@ -299,7 +301,7 @@ export default function DonorDonationHistory() {
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-theme-primary mx-auto mb-4"></div>
                         <p className="text-gray-600">Loading donation history...</p>
                     </div>
                 </div>
@@ -333,13 +335,13 @@ export default function DonorDonationHistory() {
                         placeholder="Search donations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-theme-primary focus:border-theme-primary"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary"
                 >
                     <option value="all">All Status</option>
                     <option value="pending">Pending</option>
@@ -356,7 +358,7 @@ export default function DonorDonationHistory() {
                 </div>
             )}
 
-            {/* Donations List */}
+            {/* Donations Table */}
             {donations.length === 0 ? (
                 <div className="text-center py-12">
                     <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
@@ -372,129 +374,150 @@ export default function DonorDonationHistory() {
                 </div>
             ) : (
                 <>
-                    <div className="overflow-hidden">
-                        <div className="space-y-4">
-                            {donations.map((donation) => {
-                                // Debug log for each donation
-                                console.log('🔄 Rendering donation:', donation, 'Status:', donation?.status);
-                                
-                                return (
-                                <div key={donation.id} className="border border-gray-200 rounded-lg p-5 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <h4 className="text-base font-semibold text-gray-900">
-                                                    Request #{donation.id}
-                                                </h4>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Request ID
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Items
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Method
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Date
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Value
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {donations.map((donation) => {
+                                    // Debug log for each donation
+                                    console.log('🔄 Rendering donation:', donation, 'Status:', donation?.status);
+                                    
+                                    return (
+                                        <tr key={donation.id} className="hover:bg-gray-50 transition-colors">
+                                            {/* Request ID */}
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center">
+                                                    <span className="text-sm font-medium text-gray-900">#{donation.id}</span>
+                                                </div>
+                                            </td>
+
+                                            {/* Status */}
+                                            <td className="px-4 py-3">
                                                 {getStatusBadge(donation?.status)}
-                                                <span className="text-xs text-gray-500 ml-auto">
-                                                    {donation.delivery_method === 'pickup' ? '📦 Pickup' : '🚚 Drop-off'}
-                                                </span>
-                                            </div>
-                                            
-                                            <div className="space-y-2 mb-3">
-                                                <div className="flex items-center text-sm text-gray-600">
-                                                    <HiCalendar className="w-4 h-4 mr-2 text-gray-400" />
-                                                    <span>Submitted: {formatDate(donation.created_at)}</span>
-                                                    {donation.total_value && (
-                                                        <span className="ml-auto font-medium text-green-600">
-                                                            ₱{parseFloat(donation.total_value).toLocaleString()}
-                                                        </span>
+                                            </td>
+
+                                            {/* Items */}
+                                            <td className="px-4 py-3">
+                                                <div className="text-sm text-gray-900">
+                                                    <div className="font-medium">{donation.item_count} type{donation.item_count !== 1 ? 's' : ''}</div>
+                                                    {donation.total_quantity && (
+                                                        <div className="text-xs text-gray-500">({donation.total_quantity} total)</div>
                                                     )}
                                                 </div>
-                                                
-                                                {donation.appointment_date && (
-                                                    <div className="flex items-center text-sm text-gray-600">
-                                                        <HiClock className="w-4 h-4 mr-2 text-gray-400" />
-                                                        <span>Scheduled: {formatDate(donation.appointment_date)}</span>
-                                                        {donation.appointment_time && (
-                                                            <span className="text-gray-500"> at {donation.appointment_time}</span>
-                                                        )}
+                                                {donation.items_summary && (
+                                                    <div className="text-xs text-gray-600 truncate max-w-48" title={donation.items_summary}>
+                                                        {donation.items_summary}
                                                     </div>
                                                 )}
-                                                
-                                                {donation.pickup_location && (
-                                                    <div className="flex items-center text-sm text-gray-600">
-                                                        <HiLocationMarker className="w-4 h-4 mr-2 text-gray-400" />
-                                                        <span className="truncate">{donation.pickup_location}</span>
+                                            </td>
+
+                                            {/* Delivery Method */}
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center text-sm">
+                                                    {donation.delivery_method === 'pickup' ? (
+                                                        <>
+                                                            <HiTruck className="w-4 h-4 text-gray-400 mr-2" />
+                                                            <span className="text-gray-900">Pickup</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <HiHome className="w-4 h-4 text-gray-400 mr-2" />
+                                                            <span className="text-gray-900">Drop-off</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            {/* Date */}
+                                            <td className="px-4 py-3">
+                                                <div className="text-sm text-gray-900">
+                                                    <div className="flex items-center">
+                                                        <HiCalendar className="w-4 h-4 text-gray-400 mr-1" />
+                                                        {formatDate(donation.created_at)}
                                                     </div>
+                                                    {donation.appointment_date && (
+                                                        <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                                            <HiClock className="w-3 h-3 text-gray-400 mr-1" />
+                                                            {formatDate(donation.appointment_date)}
+                                                            {donation.appointment_time && ` ${donation.appointment_time}`}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            {/* Value */}
+                                            <td className="px-4 py-3">
+                                                {donation.total_value && (
+                                                    <span className="text-sm font-medium text-green-600">
+                                                        ₱{parseFloat(donation.total_value).toLocaleString()}
+                                                    </span>
                                                 )}
+                                            </td>
 
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <div className="flex items-center text-gray-600">
-                                                        <span>{donation.item_count} item type{donation.item_count !== 1 ? 's' : ''}</span>
-                                                        {donation.total_quantity && (
-                                                            <span className="ml-1">({donation.total_quantity} total)</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            {donation.items_summary && (
-                                                <div className="bg-gray-50 rounded-md p-2 text-sm mb-2">
-                                                    <span className="font-medium text-gray-700">Items: </span>
-                                                    <span className="text-gray-600">{donation.items_summary}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Status Message */}
-                                            <div className="text-xs text-gray-500 italic">
-                                                {getStatusMessage(donation)}
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-center space-x-1 ml-4">
-                                            {/* View Details Button */}
-                                            <button
-                                                onClick={() => handleViewDetails(donation)}
-                                                className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                                title="View Details"
-                                            >
-                                                <HiEye className="w-4 h-4" />
-                                            </button>
-                                            
-                                            {/* Edit Button - Only for pending donations */}
-                                            {donation.status && donation.status.toLowerCase() === 'pending' && (
-                                                <button
-                                                    onClick={() => handleEditRequest(donation)}
-                                                    className="p-2 text-green-500 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
-                                                    title="Edit Request"
-                                                >
-                                                    <HiPencil className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            
-                                            {/* Cancel Button - Only for pending donations */}
-                                            {donation.status && donation.status.toLowerCase() === 'pending' && (
-                                                <button
-                                                    onClick={() => handleCancelRequest(donation)}
-                                                    className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                                    title="Cancel Request"
-                                                >
-                                                    <HiX className="w-4 h-4" />
-                                                </button>
-                                            )}
-
-                                            {/* Status Badge for non-pending */}
-                                            {donation.status && donation.status.toLowerCase() !== 'pending' && (
-                                                <div className="flex items-center text-sm text-gray-500">
-                                                    {donation.status && donation.status.toLowerCase() === 'approved' && (
-                                                        <HiCheck className="w-4 h-4 text-green-500 mr-1" />
+                                            {/* Actions */}
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end space-x-1">
+                                                    {/* View Details Button */}
+                                                    <button
+                                                        onClick={() => handleViewDetails(donation)}
+                                                        className="p-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        title="View Details"
+                                                    >
+                                                        <HiEye className="w-4 h-4" />
+                                                    </button>
+                                                    
+                                                    {/* Edit Button - Only for pending donations */}
+                                                    {donation.status && donation.status.toLowerCase() === 'pending' && (
+                                                        <button
+                                                            onClick={() => handleEditRequest(donation)}
+                                                            className="p-1.5 text-green-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                            title="Edit Request"
+                                                        >
+                                                            <HiPencil className="w-4 h-4" />
+                                                        </button>
                                                     )}
-                                                    {donation.status && donation.status.toLowerCase() === 'rejected' && (
-                                                        <HiX className="w-4 h-4 text-red-500 mr-1" />
-                                                    )}
-                                                    {donation.status && donation.status.toLowerCase() === 'completed' && (
-                                                        <HiCheck className="w-4 h-4 text-blue-500 mr-1" />
+                                                    
+                                                    {/* Cancel Button - Only for pending donations */}
+                                                    {donation.status && donation.status.toLowerCase() === 'pending' && (
+                                                        <button
+                                                            onClick={() => handleCancelRequest(donation)}
+                                                            className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                            title="Cancel Request"
+                                                        >
+                                                            <HiX className="w-4 h-4" />
+                                                        </button>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                );
-                            })}
-                        </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
 
                     {/* Pagination */}
@@ -653,7 +676,7 @@ export default function DonorDonationHistory() {
                                             setShowDetailsModal(false);
                                             handleCancelRequest(selectedDonation);
                                         }}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                                        className="px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-dark rounded-md transition-colors"
                                     >
                                         Cancel Request
                                     </button>
@@ -741,7 +764,7 @@ export default function DonorDonationHistory() {
                                     value={cancelReason}
                                     onChange={(e) => setCancelReason(e.target.value)}
                                     placeholder="Please provide a reason for cancelling this request..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-theme-primary"
                                     rows={3}
                                 />
                             </div>

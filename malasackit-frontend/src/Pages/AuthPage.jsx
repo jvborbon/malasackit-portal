@@ -5,6 +5,7 @@ import lasacLogo from '../assets/images/lasac-logo.png';
 import kasaloImage from '../assets/images/kasalo.jpg';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
+import ForgotPasswordForm from '../components/ForgotPasswordForm';
 
 // Welcome Message
 const WELCOME_MESSAGES = [
@@ -96,6 +97,12 @@ export default function AuthPage() {
                         >
                             Register
                         </button>
+                        <button
+                            onClick={() => setCurrentView('forgot-password')}
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                        >
+                            Reset Password
+                        </button>
                         <Link
                             to="/about"
                             className="block px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
@@ -161,7 +168,9 @@ export default function AuthPage() {
                             </svg>
                         </div>
                         <h2 className="text-xl lg:text-2xl font-bold text-white">
-                            {currentView === 'login' ? 'Login' : 'Create an account'}
+                            {currentView === 'login' ? 'Login' : 
+                             currentView === 'register' ? 'Create an account' : 
+                             'Reset Password'}
                         </h2>
                     </div>
 
@@ -170,9 +179,14 @@ export default function AuthPage() {
                         isTransitioning ? 'opacity-0 transform translate-y-8' : 'opacity-100 transform translate-y-0'
                     }`}>
                         {currentView === 'login' ? (
-                            <LoginForm onSwitchToRegister={() => handleViewSwitch('register')} />
-                        ) : (
+                            <LoginForm 
+                                onSwitchToRegister={() => handleViewSwitch('register')}
+                                onSwitchToForgotPassword={() => handleViewSwitch('forgot-password')}
+                            />
+                        ) : currentView === 'register' ? (
                             <RegisterForm onSwitchToLogin={() => handleViewSwitch('login')} />
+                        ) : (
+                            <ForgotPasswordForm onBackToLogin={() => handleViewSwitch('login')} />
                         )}
                     </div>
                         </div>

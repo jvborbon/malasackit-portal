@@ -8,7 +8,10 @@ import {
     approveUserController, 
     rejectUserController, 
     getAllUsersController,
-    getActivityLogsController
+    getActivityLogsController,
+    forgotPasswordController,
+    verifyResetTokenController,
+    resetPasswordController
 } from '../controllers/userControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
@@ -18,6 +21,11 @@ router.post('/register', register); // Registration endpoint enabled but logic d
 router.post('/login', login);
 router.post('/logout', logout);
 router.get('/profile', authenticateToken, getProfile);
+
+// Password reset routes (public - no authentication required)
+router.post('/forgot-password', forgotPasswordController);
+router.get('/verify-reset-token/:token', verifyResetTokenController);
+router.post('/reset-password/:token', resetPasswordController);
 
 // Admin user management routes
 router.get('/pending', authenticateToken, requireRole(['Executive Admin']), getPendingUsersController);

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Authentication from './auth/Authentication'
 import RouteProtection from './components/utilities/RouteProtection'
 import Login from './auth/login'
+import ResetPasswordForm from './components/ResetPasswordForm'
 import DonorDashboard from './Pages/DonorDashboard'
 import StaffDashboard from './Pages/StaffDashboard'
 import AdminDashboard from './Pages/AdminDashboard'
@@ -16,6 +17,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPasswordForm />} />
             
             <Route 
               path="/donor-dashboard" 

@@ -1,8 +1,11 @@
 import { hashPassword, comparePassword } from '../services_utils/passwordHashing.js';
 import { query } from '../../db.js';
 
-export const loginUser = async (email, password) => {
+export const loginUser = async (emailOrName, password) => {
     try {
+        // Check if the input is an email (contains @) or a full name
+        const isEmail = emailOrName.includes('@');
+        
         const userQuery = `
             SELECT 
                 u.user_id, u.full_name, u.email, u.status, u.is_approved,
@@ -10,13 +13,13 @@ export const loginUser = async (email, password) => {
             FROM Users u
             LEFT JOIN Login_Credentials lc ON u.user_id = lc.user_id
             LEFT JOIN Roles r ON u.role_id = r.role_id
-            WHERE u.email = $1
+            WHERE ${isEmail ? 'u.email = $1' : 'LOWER(u.full_name) = LOWER($1)'}
         `;
         
-        const result = await query(userQuery, [email]);
+        const result = await query(userQuery, [emailOrName]);
         
         if (result.rows.length === 0) {
-            return { success: false, message: 'No account found with this email address' };
+            return { success: false, message: isEmail ? 'No account found with this email address' : 'No account found with this name' };
         }
         
         const user = result.rows[0];

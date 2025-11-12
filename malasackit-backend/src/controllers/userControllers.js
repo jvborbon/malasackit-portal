@@ -2,6 +2,8 @@
 import { loginUser } from '../services/users/userAuth.js';
 import { registerUser } from '../services/users/userRegistration.js'; // Re-enabled but logic disabled
 import { getPendingUsers, approveUser, rejectUser, getAllUsers, getUserActivityLogs } from '../services/users/userManagement.js';
+import { requestPasswordReset, verifyResetToken, resetPassword } from '../services/users/passwordReset.js';
+import { sendPasswordResetEmail, sendPasswordResetConfirmation } from '../services/emailService.js';
 import { generateToken, setTokenCookie, clearTokenCookie } from '../utilities/jwt.js';
 
 export const login = async (req, res) => {
@@ -11,7 +13,7 @@ export const login = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Email and password are required'
+                message: 'Email or full name and password are required'
             });
         }
         
@@ -349,6 +351,156 @@ export const getActivityLogsController = async (req, res) => {
 
     } catch (error) {
         console.error('Get activity logs controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+// Password Reset Controllers
+export const forgotPasswordController = async (req, res) => {
+    try {
+        const { emailOrName } = req.body;
+        
+        if (!emailOrName) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email address or full name is required'
+            });
+        }
+
+        const result = await requestPasswordReset(emailOrName);
+        
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        // Send password reset email
+        try {
+            await sendPasswordResetEmail(result.user, result.resetToken);
+        } catch (emailError) {
+            console.error('Failed to send password reset email:', emailError);
+            // Still return success as the token was generated successfully
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'If an account with that information exists, a password reset email has been sent.'
+        });
+
+    } catch (error) {
+        console.error('Forgot password controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const verifyResetTokenController = async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: 'Reset token is required'
+            });
+        }
+
+        const result = await verifyResetToken(token);
+        
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Token is valid',
+            data: {
+                user: {
+                    full_name: result.user.full_name,
+                    email: result.user.email
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Verify reset token controller error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const resetPasswordController = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password, confirmPassword } = req.body;
+        
+        if (!token || !password || !confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token, password, and confirmation password are required'
+            });
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Passwords do not match'
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters long'
+            });
+        }
+
+        // Verify token and get user info first
+        const tokenVerification = await verifyResetToken(token);
+        
+        if (!tokenVerification.success) {
+            return res.status(400).json({
+                success: false,
+                message: tokenVerification.message
+            });
+        }
+
+        const result = await resetPassword(token, password);
+        
+        if (!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        // Send confirmation email
+        try {
+            await sendPasswordResetConfirmation(tokenVerification.user);
+        } catch (emailError) {
+            console.error('Failed to send password reset confirmation email:', emailError);
+            // Still return success as the password was reset successfully
+        }
+
+        res.status(200).json({
+            success: true,
+            message: result.message
+        });
+
+    } catch (error) {
+        console.error('Reset password controller error:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'

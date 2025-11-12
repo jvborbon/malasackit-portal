@@ -124,7 +124,7 @@ export default function DashboardLayout({ children, userRole }) {
             'User Management': 'User Administration',
             'Beneficiary Management': 'Beneficiary Management',
             'Donate Now': 'Make a Donation',
-            'Donation History': 'My Donation History',
+            'Donation History': 'Donation Dashboard',
             'Notifications': 'Notifications Center',
             'Calendar': 'Event Calendar',
             'Settings': 'Account Settings'
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children, userRole }) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-theme-primary mx-auto"></div>
                     <p className="mt-4 text-gray-600">Loading...</p>
                 </div>
             </div>
@@ -168,21 +168,21 @@ export default function DashboardLayout({ children, userRole }) {
             )}
 
             {/* Sidebar */}
-            <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-red-600 text-white transform transition-transform duration-300 ease-in-out ${
+            <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-theme-primary text-white transform transition-transform duration-300 ease-in-out ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             }`}>
                 {/* Logo Section */}
-                <div className="flex items-center justify-between p-6 border-b border-red-500">
+                <div className="flex items-center justify-between p-6 border-b border-theme-primary-dark">
                     <div className="flex items-center">
                         <div className="w-8 h-8 bg-white rounded flex items-center justify-center mr-3">
-                            <HiHome className="w-5 h-5 text-red-600" />
+                            <HiHome className="w-5 h-5 text-theme-primary" />
                         </div>
                         <span className="text-lg font-bold">{getPortalName(userRole)}</span>
                     </div>
                     {/* Close button for mobile */}
                     <button
                         onClick={() => setIsSidebarOpen(false)}
-                        className="lg:hidden p-1 rounded-md hover:bg-red-500"
+                        className="lg:hidden p-1 rounded-md hover:bg-theme-primary-dark"
                     >
                         <HiX className="w-5 h-5" />
                     </button>
@@ -200,8 +200,8 @@ export default function DashboardLayout({ children, userRole }) {
                                     }}
                                     className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
                                         activeNav === item.name
-                                            ? 'bg-red-700 text-white'
-                                            : 'text-red-100 hover:bg-red-500 hover:text-white'
+                                            ? 'bg-theme-primary-dark text-white'
+                                            : 'text-red-100 hover:bg-theme-primary-dark hover:text-white'
                                     }`}
                                 >
                                     <item.icon className="w-5 h-5 mr-3" />
@@ -213,10 +213,10 @@ export default function DashboardLayout({ children, userRole }) {
                 </nav>
 
                 {/* Logout Button */}
-                <div className="p-4 border-t border-red-500">
+                <div className="p-4 border-t border-theme-primary-dark">
                     <button
                         onClick={handleLogoutClick}
-                        className="w-full flex items-center px-4 py-3 text-red-100 hover:bg-red-500 hover:text-white rounded-lg transition-colors"
+                        className="w-full flex items-center px-4 py-3 text-red-100 hover:bg-theme-primary-dark hover:text-white rounded-lg transition-colors"
                     >
                         <HiLogout className="w-5 h-5 mr-3" />
                         Logout

@@ -1,11 +1,10 @@
-import { HiCalendar, HiExclamationCircle, HiCheckCircle } from 'react-icons/hi';
+import { HiCalendar, HiExclamationCircle } from 'react-icons/hi';
 
 export function SubmitSection({ 
     donationItems, 
     onSubmit, 
     isSubmitting, 
-    submitError, 
-    submitSuccess 
+    submitError
 }) {
     return (
         <div className="space-y-4">
@@ -14,18 +13,13 @@ export function SubmitSection({
                 <ErrorMessage message={submitError} />
             )}
             
-            {/* Success Message */}
-            {submitSuccess && (
-                <SuccessMessage />
-            )}
-            
             {/* Submit Button */}
             <div className="flex justify-end">
                 <SubmitButton 
                     donationItems={donationItems}
                     onSubmit={onSubmit}
                     isSubmitting={isSubmitting}
-                    disabled={isSubmitting || submitSuccess}
+                    disabled={isSubmitting}
                 />
             </div>
         </div>
@@ -49,23 +43,7 @@ function ErrorMessage({ message }) {
     );
 }
 
-// Success Message Component
-function SuccessMessage() {
-    return (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start">
-            <HiCheckCircle className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-            <div>
-                <h4 className="text-sm font-medium text-green-800 mb-1">
-                    Donation Submitted Successfully!
-                </h4>
-                <p className="text-sm text-green-700">
-                    Your donation request has been submitted and is pending approval. 
-                    You will receive a notification when it's reviewed.
-                </p>
-            </div>
-        </div>
-    );
-}
+
 
 // Submit Button Component
 function SubmitButton({ donationItems, onSubmit, isSubmitting, disabled }) {
@@ -76,7 +54,7 @@ function SubmitButton({ donationItems, onSubmit, isSubmitting, disabled }) {
             type="submit"
             onClick={onSubmit}
             disabled={isDisabled}
-            className="bg-red-600 text-white py-3 px-8 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center min-w-[200px] justify-center"
+            className="bg-theme-primary text-white py-3 px-8 rounded-lg hover:bg-theme-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center min-w-[200px] justify-center"
         >
             {isSubmitting ? (
                 <>

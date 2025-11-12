@@ -90,12 +90,12 @@ const getUserProfile = async () => {
     }
 };
 
-export default function LoginForm({ onSwitchToRegister }) {
+export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword }) {
     const navigate = useNavigate();
     const { loginAuthentication, getDefaultDashboard } = useAuth();
     
     const [formData, setFormData] = useState({
-        email: '',
+        email: '', // This field now accepts either email or full name
         password: '',
         keepLoggedIn: false
     });
@@ -151,8 +151,8 @@ export default function LoginForm({ onSwitchToRegister }) {
             )}
 
             <FloatingLoginInput
-                label="Email Address"
-                type="email"
+                label="Email or Full Name"
+                type="text"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
@@ -183,9 +183,13 @@ export default function LoginForm({ onSwitchToRegister }) {
                     />
                     <span className="text-sm">Keep me logged in</span>
                 </label>
-                <a href="#" className="text-sm hover:underline hover:text-red-200 transition-colors">
+                <button
+                    type="button"
+                    onClick={onSwitchToForgotPassword}
+                    className="text-sm hover:underline hover:text-red-200 transition-colors"
+                >
                     Forgot password?
-                </a>
+                </button>
             </div>
 
             <button
