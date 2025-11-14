@@ -49,7 +49,7 @@ export const getAllInventory = async (req, res) => {
                 i.status,
                 i.last_updated,
                 it.itemtype_name,
-                it.fmv_value as unit_fmv,
+                it.avg_retail_price as unit_fmv,
                 ic.category_name,
                 ic.description as category_description
             FROM Inventory i
@@ -261,7 +261,7 @@ export const getInventoryItem = async (req, res) => {
                 i.last_updated,
                 it.itemtype_id,
                 it.itemtype_name,
-                it.fmv_value as unit_fmv,
+                it.avg_retail_price as unit_fmv,
                 ic.itemcategory_id,
                 ic.category_name,
                 ic.description as category_description
@@ -316,9 +316,9 @@ export const updateInventoryItem = async (req, res) => {
         const itemTypeId = existsResult.rows[0].itemtype_id;
         
         // Get unit FMV value for calculations
-        const fmvQuery = 'SELECT fmv_value FROM ItemType WHERE itemtype_id = $1';
+        const fmvQuery = 'SELECT avg_retail_price FROM ItemType WHERE itemtype_id = $1';
         const fmvResult = await query(fmvQuery, [itemTypeId]);
-        const unitFmv = parseFloat(fmvResult.rows[0].fmv_value || 0);
+        const unitFmv = parseFloat(fmvResult.rows[0].avg_retail_price || 0);
         
         // Calculate new total FMV value
         const newTotalValue = quantity_available * unitFmv;
@@ -401,7 +401,7 @@ export const addToInventoryFromDonation = async (donationId, inventoryStatus = '
                 di.itemtype_id,
                 di.quantity,
                 di.declared_value,
-                it.fmv_value,
+                it.avg_retail_price as fmv_value,
                 it.itemtype_name
             FROM DonationItems di
             JOIN ItemType it ON di.itemtype_id = it.itemtype_id
@@ -424,7 +424,7 @@ export const addToInventoryFromDonation = async (donationId, inventoryStatus = '
             // Use declared value if available, otherwise use FMV
             let valueToUse;
             if (declared_value && parseFloat(declared_value) > 0) {
-                valueToUse = parseFloat(declared_value);
+                valueToUse = parseFloat(declared_value) * quantity;
             } else if (fmv_value && parseFloat(fmv_value) > 0) {
                 valueToUse = parseFloat(fmv_value) * quantity;
             } else {
@@ -609,7 +609,7 @@ export const removeFromInventory = async (req, res) => {
                     i.inventory_id,
                     i.quantity_available,
                     i.total_fmv_value,
-                    it.fmv_value
+                    it.avg_retail_price as fmv_value
                 FROM Inventory i
                 JOIN ItemType it ON i.itemtype_id = it.itemtype_id
                 WHERE i.itemtype_id = $1

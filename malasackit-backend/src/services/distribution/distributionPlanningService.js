@@ -27,7 +27,7 @@ export const generateDistributionRecommendations = async (requestIds) => {
 
         // Get current inventory with available quantities
         const inventoryQuery = `
-            SELECT i.*, it.itemtype_name, ic.category_name, it.fmv_value
+            SELECT i.*, it.itemtype_name, ic.category_name, it.avg_retail_price as fmv_value
             FROM Inventory i
             JOIN ItemType it ON i.itemtype_id = it.itemtype_id
             JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
@@ -347,7 +347,7 @@ export const optimizeInventoryAllocation = async (planItems) => {
     try {
         // Get current inventory levels
         const inventoryQuery = `
-            SELECT i.*, it.itemtype_name, it.fmv_value
+            SELECT i.*, it.itemtype_name, it.avg_retail_price as fmv_value
             FROM Inventory i
             JOIN ItemType it ON i.itemtype_id = it.itemtype_id
             WHERE i.inventory_id = ANY($1)

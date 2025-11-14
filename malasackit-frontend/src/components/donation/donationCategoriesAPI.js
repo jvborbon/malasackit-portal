@@ -69,7 +69,8 @@ export const fetchDonationCategories = async () => {
                     color: theme.color,
                     bgColor: theme.bgColor,
                     borderColor: theme.borderColor,
-                    items: category.item_types || [] // Array of item type names
+                    items: category.item_types || [], // Array of item type objects with id and name
+                    itemsData: category.item_types || [] // Keep full item data for FMV calculations
                 };
             });
             

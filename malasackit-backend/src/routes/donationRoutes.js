@@ -9,6 +9,7 @@ import {
     getAllDonationRequests,
     updateDonationStatus,
     getDonationStatistics,
+    getDonorStatistics,
     getDonationDetails,
     getCalendarAppointments
 } from '../controllers/donationControllers.js';
@@ -47,6 +48,9 @@ router.put('/requests/:donationId/status', authenticateToken, requireRole(['Reso
 
 // GET /api/donations/statistics - Get donation statistics for dashboard
 router.get('/statistics', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getDonationStatistics);
+
+// GET /api/donations/donor-statistics - Get donor-specific statistics for donor dashboard
+router.get('/donor-statistics', authenticateToken, getDonorStatistics);
 
 // GET /api/donations/calendar - Get calendar appointments for approved donations
 router.get('/calendar', authenticateToken, getCalendarAppointments);

@@ -48,14 +48,45 @@ export default function DonorDonationForm() {
 
     const confirmSelectedItems = () => {
         // Add selected items to donation items with unique IDs and default values
-        const newDonationItems = selectedItems.map(item => ({
-            id: Date.now() + Math.random(),
-            category: item.category,
-            itemType: item.itemType,
-            quantity: '',
-            value: '',
-            description: ''
-        }));
+        const newDonationItems = selectedItems.map(item => {
+            // Determine appropriate initial condition
+            let initialCondition = 'good';
+            let conditionFactor = 0.75;
+            
+            if (item.itemData) {
+                // Check if this is a fixed condition item
+                if (item.itemData.has_fixed_condition && item.itemData.fixed_condition) {
+                    initialCondition = item.itemData.fixed_condition;
+                    // Get condition factor based on fixed condition
+                    switch (item.itemData.fixed_condition) {
+                        case 'new': conditionFactor = item.itemData.condition_factor_new || 1.00; break;
+                        case 'good': conditionFactor = item.itemData.condition_factor_good || 0.75; break;
+                        case 'fair': conditionFactor = item.itemData.condition_factor_fair || 0.50; break;
+                        case 'poor': conditionFactor = item.itemData.condition_factor_poor || 0.25; break;
+                    }
+                } else {
+                    conditionFactor = item.itemData.condition_factor_good || 0.75;
+                }
+            }
+            
+            // Auto-calculate initial FMV
+            let initialValue = '';
+            if (item.itemData && item.itemData.avg_retail_price) {
+                initialValue = (item.itemData.avg_retail_price * conditionFactor).toFixed(2);
+            }
+            
+            return {
+                id: Date.now() + Math.random(),
+                category: item.category,
+                itemType: item.itemType,
+                itemTypeId: item.itemTypeId,
+                itemData: item.itemData,
+                quantity: '',
+                value: initialValue,
+                condition: initialCondition,
+                description: ''
+            };
+        });
         
         setDonationItems(prev => [...prev, ...newDonationItems]);
         setSelectedItems([]);
@@ -136,6 +167,7 @@ export default function DonorDonationForm() {
                     itemType: item.itemType,
                     quantity: parseInt(item.quantity),
                     value: parseFloat(item.value),
+                    condition: item.condition || 'good',
                     description: item.description || null
                 })),
                 deliveryMethod: formData.deliveryMethod,
@@ -158,7 +190,7 @@ export default function DonorDonationForm() {
                     appointmentId: response.data?.appointmentId,
                     itemCount: donationItems.length,
                     totalItems: donationItems.reduce((sum, item) => sum + parseInt(item.quantity), 0),
-                    totalValue: donationItems.reduce((sum, item) => sum + parseFloat(item.value), 0),
+                    totalValue: donationItems.reduce((sum, item) => sum + (parseFloat(item.value) * parseInt(item.quantity)), 0),
                     deliveryMethod: formData.deliveryMethod,
                     hasAppointment: !!formData.scheduleDate
                 });

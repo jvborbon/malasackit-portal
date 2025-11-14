@@ -6,8 +6,8 @@ function DonationStatistics({ donations, pagination, formatCurrency }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <StatCard 
-        title="Total Requests" 
-        value={pagination.total} 
+        title="Completed" 
+        value={donations.filter(d => d.status === 'Completed').length} 
         icon={HiUser} 
         color="bg-blue-500" 
       />

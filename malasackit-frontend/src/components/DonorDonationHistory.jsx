@@ -52,22 +52,9 @@ export default function DonorDonationHistory() {
             if (search) params.search = search;
             
             const response = await getUserDonations(params);
-            console.log('🔍 Full API response:', response);
             
             if (response.success) {
                 const donations = response.data || [];
-                console.log('📋 Donations received:', donations);
-                console.log('🔍 First donation object structure:', donations[0]);
-                
-                // Log ID fields to understand the data structure
-                if (donations.length > 0) {
-                    console.log('🆔 ID fields in first donation:', {
-                        id: donations[0].id,
-                        request_id: donations[0].request_id,
-                        donation_id: donations[0].donation_id,
-                        donation_request_id: donations[0].donation_request_id
-                    });
-                }
                 
                 setDonations(donations);
                 setPagination(response.pagination || pagination);
@@ -75,7 +62,6 @@ export default function DonorDonationHistory() {
                 setError(response.message || 'Failed to load donations');
             }
         } catch (err) {
-            console.error('Error loading donations:', err);
             setError('Failed to load donation history');
         } finally {
             setLoading(false);
@@ -109,32 +95,18 @@ export default function DonorDonationHistory() {
 
     // View donation details
     const handleViewDetails = async (donation) => {
-        console.log('🔍 handleViewDetails called with:', donation);
-        console.log('🆔 Available ID fields:', {
-            id: donation?.id,
-            request_id: donation?.request_id,
-            donation_id: donation?.donation_id,
-            donation_request_id: donation?.donation_request_id
-        });
         
         // Try different ID field names
         const donationId = donation?.id || donation?.request_id || donation?.donation_id || donation?.donation_request_id;
         
         if (!donation || !donationId) {
-            console.error('❌ Invalid donation object or missing ID:', donation);
             return;
         }
         
         try {
-            console.log('📡 Making API call with ID:', donationId);
             const response = await getDonationDetails(donationId);
-            console.log('📦 API Response for details:', response);
             
             if (response.success) {
-                console.log('📊 Response data structure:', response.data);
-                console.log('📊 Donation details:', response.data.donation);
-                console.log('📊 Items:', response.data.items);
-                console.log('📊 Summary:', response.data.summary);
                 
                 // Merge the donation data with items and summary for easier access
                 const completeData = {
@@ -146,24 +118,19 @@ export default function DonorDonationHistory() {
                     total_value: response.data.summary?.totalValue || 0
                 };
                 
-                console.log('📊 Complete merged data:', completeData);
                 setSelectedDonation(completeData);
                 setShowDetailsModal(true);
             } else {
-                console.error('❌ API returned error:', response.message);
             }
         } catch (err) {
-            console.error('❌ Error loading donation details:', err);
         }
     };
 
     // Handle edit donation request
     const handleEditRequest = (donation) => {
-        console.log('✏️ handleEditRequest called with:', donation);
         const donationId = donation?.id || donation?.request_id || donation?.donation_id || donation?.donation_request_id;
         
         if (!donation || !donationId) {
-            console.error('❌ Invalid donation object for edit:', donation);
             return;
         }
         setSelectedDonation(donation);
@@ -172,11 +139,9 @@ export default function DonorDonationHistory() {
 
     // Handle cancel donation request
     const handleCancelRequest = (donation) => {
-        console.log('❌ handleCancelRequest called with:', donation);
         const donationId = donation?.id || donation?.request_id || donation?.donation_id || donation?.donation_request_id;
         
         if (!donation || !donationId) {
-            console.error('❌ Invalid donation object for cancel:', donation);
             return;
         }
         setSelectedDonation(donation);
@@ -191,14 +156,12 @@ export default function DonorDonationHistory() {
         const donationId = selectedDonation?.id || selectedDonation?.request_id || selectedDonation?.donation_id || selectedDonation?.donation_request_id;
         
         if (!donationId) {
-            console.error('❌ No valid ID found in selectedDonation:', selectedDonation);
             alert('Error: Unable to identify donation to cancel');
             return;
         }
 
         try {
             setActionLoading(true);
-            console.log('🔄 Cancelling donation with ID:', donationId);
             const response = await cancelDonationRequest(donationId);
             if (response.success) {
                 setShowCancelModal(false);
@@ -210,7 +173,6 @@ export default function DonorDonationHistory() {
                 alert(response.message || 'Failed to cancel donation request');
             }
         } catch (err) {
-            console.error('Error cancelling donation:', err);
             alert('Failed to cancel donation request');
         } finally {
             setActionLoading(false);
@@ -291,23 +253,11 @@ export default function DonorDonationHistory() {
                 day: 'numeric'
             });
         } catch (error) {
-            console.error('Error formatting date:', dateString, error);
             return 'Invalid Date';
         }
     };
 
-    if (loading && donations.length === 0) {
-        return (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-theme-primary mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading donation history...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    // Render loading state within table area instead of separate container
 
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -359,7 +309,12 @@ export default function DonorDonationHistory() {
             )}
 
             {/* Donations Table */}
-            {donations.length === 0 ? (
+            {loading && donations.length === 0 ? (
+                <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading donation history...</p>
+                </div>
+            ) : donations.length === 0 ? (
                 <div className="text-center py-12">
                     <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
                         <HiCalendar className="h-6 w-6 text-gray-400" />
@@ -403,8 +358,6 @@ export default function DonorDonationHistory() {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {donations.map((donation) => {
-                                    // Debug log for each donation
-                                    console.log('🔄 Rendering donation:', donation, 'Status:', donation?.status);
                                     
                                     return (
                                         <tr key={donation.id} className="hover:bg-gray-50 transition-colors">
@@ -612,7 +565,8 @@ export default function DonorDonationHistory() {
                                                         </div>
                                                         <div className="text-right">
                                                             <div className="text-sm font-medium text-gray-800">Qty: {item.quantity}</div>
-                                                            <div className="text-xs text-gray-600">₱{parseFloat(item.declared_value).toLocaleString()}</div>
+                                                            <div className="text-xs text-gray-600">₱{parseFloat(item.declared_value).toLocaleString()} each</div>
+                                                            <div className="text-sm font-medium text-green-600">₱{(parseFloat(item.declared_value) * parseInt(item.quantity)).toLocaleString()} total</div>
                                                         </div>
                                                     </div>
                                                 ))}

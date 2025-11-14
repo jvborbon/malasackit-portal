@@ -14,8 +14,11 @@ export function DonationModal({
 
     if (!isOpen) return null;
 
-    const toggleItemSelection = (category, itemType) => {
+    const toggleItemSelection = (category, itemData) => {
+        const itemType = typeof itemData === 'string' ? itemData : itemData.itemtype_name;
+        const itemTypeId = typeof itemData === 'object' ? itemData.itemtype_id : null;
         const itemKey = `${category}-${itemType}`;
+        
         setSelectedItems(prev => {
             if (prev.some(item => item.key === itemKey)) {
                 return prev.filter(item => item.key !== itemKey);
@@ -24,6 +27,8 @@ export function DonationModal({
                     key: itemKey,
                     category,
                     itemType,
+                    itemTypeId,
+                    itemData: typeof itemData === 'object' ? itemData : null,
                     quantity: '',
                     value: '',
                     description: ''
@@ -32,7 +37,8 @@ export function DonationModal({
         });
     };
 
-    const isItemSelected = (category, itemType) => {
+    const isItemSelected = (category, itemTypeOrName) => {
+        const itemType = typeof itemTypeOrName === 'string' ? itemTypeOrName : itemTypeOrName.itemtype_name;
         const itemKey = `${category}-${itemType}`;
         return selectedItems.some(item => item.key === itemKey);
     };
@@ -163,27 +169,49 @@ function ItemSelection({ activeCategory, categories, selectedItems, toggleItemSe
 
                 {/* Item Type Selection Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-                    {categoryInfo?.items.map((item, index) => (
-                        <button
-                            key={index}
-                            type="button"
-                            onClick={() => toggleItemSelection(activeCategory, item)}
-                            className={`p-3 text-sm border rounded-lg transition-all duration-200 ${
-                                isItemSelected(activeCategory, item)
-                                    ? 'border-red-500 bg-red-50 text-red-700'
-                                    : 'border-gray-200 hover:border-red-200 hover:bg-red-50'
-                            }`}
-                        >
-                            {isItemSelected(activeCategory, item) && (
-                                <div className="flex justify-center mb-1">
-                                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                                        <span className="text-white text-xs">✓</span>
+                    {categoryInfo?.items.map((item, index) => {
+                        const itemName = typeof item === 'string' ? item : item.itemtype_name;
+                        const itemPrice = typeof item === 'object' ? item.avg_retail_price : null;
+                        
+                        // Check if this is a fixed condition item
+                        const isFixedCondition = typeof item === 'object' && item.has_fixed_condition;
+                        const conditionLabel = isFixedCondition ? 
+                            item.fixed_condition.charAt(0).toUpperCase() + item.fixed_condition.slice(1) : 
+                            null;
+                        
+                        return (
+                            <button
+                                key={index}
+                                type="button"
+                                onClick={() => toggleItemSelection(activeCategory, item)}
+                                className={`p-3 text-sm border rounded-lg transition-all duration-200 relative ${
+                                    isItemSelected(activeCategory, itemName)
+                                        ? 'border-red-500 bg-red-50 text-red-700'
+                                        : 'border-gray-200 hover:border-red-200 hover:bg-red-50'
+                                }`}
+                            >
+                                {isItemSelected(activeCategory, itemName) && (
+                                    <div className="flex justify-center mb-1">
+                                        <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                            <span className="text-white text-xs">✓</span>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                            {item}
-                        </button>
-                    ))}
+                                )}
+                                
+                                <div className="font-medium">{itemName}</div>
+                                {itemPrice && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        Base: ₱{itemPrice.toLocaleString()}
+                                    </div>
+                                )}
+                                {isFixedCondition && (
+                                    <div className="text-xs text-blue-600 mt-1 font-medium">
+                                        {conditionLabel}
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Selected Items in Current Category */}

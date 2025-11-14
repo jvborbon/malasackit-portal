@@ -136,10 +136,62 @@ function ItemHeader({ item, categoryInfo, removeDonationItem }) {
     );
 }
 
+// Helper function to get available conditions for an item
+function getAvailableConditions(item) {
+    if (!item.itemData) {
+        // Fallback if no item data available
+        return [
+            { value: 'new', label: 'New' },
+            { value: 'good', label: 'Good' },
+            { value: 'fair', label: 'Fair' },
+            { value: 'poor', label: 'Poor' }
+        ];
+    }
+    
+    // Check if item has fixed condition from backend
+    if (item.itemData.has_fixed_condition && item.itemData.fixed_condition) {
+        return [{ 
+            value: item.itemData.fixed_condition, 
+            label: item.itemData.fixed_condition.charAt(0).toUpperCase() + item.itemData.fixed_condition.slice(1)
+        }];
+    }
+    
+    // Return all conditions for variable condition items
+    return [
+        { value: 'new', label: 'New' },
+        { value: 'good', label: 'Good' },
+        { value: 'fair', label: 'Fair' },
+        { value: 'poor', label: 'Poor' }
+    ];
+}
+
 // Item Input Fields Component
 function ItemFields({ item, updateDonationItem }) {
+    const handleConditionChange = async (newCondition) => {
+        updateDonationItem(item.id, 'condition', newCondition);
+        
+        // Auto-calculate FMV based on condition if itemData is available
+        if (item.itemData && item.itemData.avg_retail_price) {
+            try {
+                // Calculate FMV based on condition using the stored item data
+                let conditionFactor = 0.75; // default for 'good'
+                switch (newCondition) {
+                    case 'new': conditionFactor = item.itemData.condition_factor_new || 1.00; break;
+                    case 'good': conditionFactor = item.itemData.condition_factor_good || 0.75; break;
+                    case 'fair': conditionFactor = item.itemData.condition_factor_fair || 0.50; break;
+                    case 'poor': conditionFactor = item.itemData.condition_factor_poor || 0.25; break;
+                }
+                
+                const calculatedValue = (item.itemData.avg_retail_price * conditionFactor).toFixed(2);
+                updateDonationItem(item.id, 'value', calculatedValue);
+            } catch (error) {
+                console.error('Error calculating FMV:', error);
+            }
+        }
+    };
+
     return (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2">
             <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
                     Quantity <span className="text-red-500">*</span>
@@ -150,26 +202,59 @@ function ItemFields({ item, updateDonationItem }) {
                     onChange={(e) => updateDonationItem(item.id, 'quantity', e.target.value)}
                     placeholder="Not set"
                     min="1"
-                    className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-red-400 focus:border-red-400 ${
-                        !item.quantity ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
+                    className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Condition <span className="text-red-500">*</span>
+                </label>
+                {item.itemData?.has_fixed_condition ? (
+                    <div className="flex items-center">
+                        <input
+                            type="text"
+                            value={item.itemData.fixed_condition.charAt(0).toUpperCase() + item.itemData.fixed_condition.slice(1)}
+                            disabled
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100 text-gray-700"
+                        />
+                        <span className="ml-2 text-xs text-blue-600" title={item.itemData?.condition_definition || "This item type only accepts this condition for safety/hygiene reasons"}>
+                            🔒
+                        </span>
+                    </div>
+                ) : (
+                    <select
+                        value={item.condition || 'good'}
+                        onChange={(e) => handleConditionChange(e.target.value)}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        {getAvailableConditions(item).map(condition => (
+                            <option key={condition.value} value={condition.value}>
+                                {condition.label}
+                            </option>
+                        ))}
+                    </select>
+                )}
             </div>
             <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
                     Value (₱) <span className="text-red-500">*</span>
                 </label>
-                <input
-                    type="number"
-                    value={item.value}
-                    onChange={(e) => updateDonationItem(item.id, 'value', e.target.value)}
-                    placeholder="Not set"
-                    step="0.01"
-                    min="0"
-                    className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-red-400 focus:border-red-400 ${
-                        !item.value ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
-                />
+                <div className="relative">
+                    <input
+                        type="number"
+                        value={item.value}
+                        onChange={(e) => updateDonationItem(item.id, 'value', e.target.value)}
+                        placeholder="Auto-calculated"
+                        step="0.01"
+                        min="0"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {item.value && item.quantity && (
+                        <div className="text-xs text-green-600 mt-1">
+                            Total: ₱{(parseFloat(item.value) * parseInt(item.quantity) || 0).toFixed(2)}
+                        </div>
+                    )}
+                </div>
             </div>
             <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -180,7 +265,7 @@ function ItemFields({ item, updateDonationItem }) {
                     value={item.description}
                     onChange={(e) => updateDonationItem(item.id, 'description', e.target.value)}
                     placeholder="None"
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-red-400 focus:border-red-400"
+                    className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
             </div>
         </div>
@@ -191,12 +276,23 @@ function ItemFields({ item, updateDonationItem }) {
 function DonationSummary({ donationItems }) {
     const totalItems = donationItems.length;
     const totalQuantity = donationItems.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
-    const totalValue = donationItems.reduce((sum, item) => sum + (parseFloat(item.value) || 0), 0);
+    const totalValue = donationItems.reduce((sum, item) => {
+        const itemValue = parseFloat(item.value) || 0;
+        const itemQuantity = parseInt(item.quantity) || 0;
+        return sum + (itemValue * itemQuantity);
+    }, 0);
     const totalCategories = new Set(donationItems.map(item => item.category)).size;
+    
+    // Count items by condition
+    const conditionCounts = donationItems.reduce((acc, item) => {
+        const condition = item.condition || 'good';
+        acc[condition] = (acc[condition] || 0) + 1;
+        return acc;
+    }, {});
 
     return (
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mt-3">
-            <div className="grid grid-cols-4 gap-4 text-center text-sm">
+            <div className="grid grid-cols-4 gap-4 text-center text-sm mb-3">
                 <div>
                     <div className="font-bold text-blue-900 text-lg">{totalItems}</div>
                     <div className="text-blue-700 text-xs">Total Items</div>
@@ -216,6 +312,23 @@ function DonationSummary({ donationItems }) {
                     <div className="text-blue-700 text-xs">Categories</div>
                 </div>
             </div>
+            
+            {/* Condition breakdown */}
+            {Object.keys(conditionCounts).length > 0 && (
+                <div className="border-t border-blue-200 pt-2">
+                    <div className="text-xs text-blue-700 mb-1">Condition Breakdown:</div>
+                    <div className="flex flex-wrap gap-2">
+                        {Object.entries(conditionCounts).map(([condition, count]) => (
+                            <span 
+                                key={condition}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                                {condition.charAt(0).toUpperCase() + condition.slice(1)}: {count}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

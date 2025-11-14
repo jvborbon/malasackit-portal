@@ -112,3 +112,24 @@ export const getCalendarAppointments = async (startDate = null, endDate = null) 
         throw error;
     }
 };
+
+/**
+ * Get donor-specific statistics for donor dashboard
+ * @param {number} year - Year for filtering trends (optional)
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getDonorStatistics = async (year = null) => {
+    try {
+        const params = new URLSearchParams();
+        if (year) params.append('year', year);
+        
+        const queryString = params.toString();
+        const url = `/api/donations/donor-statistics${queryString ? `?${queryString}` : ''}`;
+        
+        const response = await api.get(url);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching donor statistics:', error);
+        throw error;
+    }
+};

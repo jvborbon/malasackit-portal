@@ -1,5 +1,7 @@
 import { query } from '../db.js';
 import { addToInventoryFromDonation, updateInventoryStatusFromDonation } from './inventoryControllers.js';
+import { getFixedCondition, isConditionAllowed } from '../config/fixedConditionItems.js';
+import { getConditionDefinition, getItemCategory } from '../config/conditionDefinitions.js';
 
 /**
  * Submit a new donation request
@@ -36,6 +38,15 @@ export const submitDonationRequest = async (req, res) => {
                 return res.status(400).json({
                     success: false,
                     message: 'All items must have itemType, quantity, and value'
+                });
+            }
+            
+            // Validate condition for fixed condition items
+            if (item.condition && !isConditionAllowed(item.itemType, item.condition)) {
+                const fixedCondition = getFixedCondition(item.itemType);
+                return res.status(400).json({
+                    success: false,
+                    message: `${item.itemType} can only be donated in '${fixedCondition}' condition for safety/hygiene reasons`
                 });
             }
         }
@@ -88,15 +99,16 @@ export const submitDonationRequest = async (req, res) => {
                 const itemTypeId = itemTypeResult.rows[0].itemtype_id;
 
                 const itemQuery = `
-                    INSERT INTO DonationItems (donation_id, itemtype_id, quantity, declared_value, description)
-                    VALUES ($1, $2, $3, $4, $5)
+                    INSERT INTO DonationItems (donation_id, itemtype_id, quantity, declared_value, description, selected_condition)
+                    VALUES ($1, $2, $3, $4, $5, $6)
                 `;
                 await query(itemQuery, [
                     donationId,
                     itemTypeId,
                     item.quantity,
                     item.value,
-                    item.description || null
+                    item.description || null,
+                    item.condition || 'good'
                 ]);
             }
 
@@ -187,7 +199,7 @@ export const getDonorDonations = async (req, res) => {
                 a.status as appointment_status,
                 COUNT(di.item_id) as item_count,
                 SUM(di.quantity) as total_quantity,
-                SUM(di.declared_value) as total_value,
+                SUM(di.declared_value * di.quantity) as total_value,
                 STRING_AGG(DISTINCT it.itemtype_name, ', ' ORDER BY it.itemtype_name) as items_summary,
                 CASE 
                     WHEN a.appointment_date IS NOT NULL THEN 
@@ -332,7 +344,7 @@ export const getDonationDetails = async (req, res) => {
                 summary: {
                     totalItems: itemsResult.rows.length,
                     totalQuantity: itemsResult.rows.reduce((sum, item) => sum + item.quantity, 0),
-                    totalValue: itemsResult.rows.reduce((sum, item) => sum + parseFloat(item.declared_value), 0)
+                    totalValue: itemsResult.rows.reduce((sum, item) => sum + (parseFloat(item.declared_value) * item.quantity), 0)
                 }
             },
             message: 'Donation details retrieved successfully'
@@ -482,7 +494,7 @@ export const getAllDonationRequests = async (req, res) => {
                 a.status as appointment_status,
                 COUNT(di.item_id) as item_count,
                 SUM(di.quantity) as total_quantity,
-                SUM(di.declared_value) as total_value,
+                SUM(di.declared_value * di.quantity) as total_value,
                 STRING_AGG(DISTINCT ic.category_name, ', ') as categories
             FROM DonationRequests dr
             JOIN Users u ON dr.user_id = u.user_id
@@ -656,7 +668,7 @@ export const getDonationStatistics = async (req, res) => {
                 SUM(
                     CASE WHEN status IN ('Approved', 'Completed') 
                     THEN (
-                        SELECT SUM(di.declared_value) 
+                        SELECT SUM(di.declared_value * di.quantity) 
                         FROM DonationItems di 
                         WHERE di.donation_id = dr.donation_id
                     ) 
@@ -713,6 +725,129 @@ export const getDonationStatistics = async (req, res) => {
 };
 
 /**
+ * Get donor-specific statistics for donor dashboard
+ */
+export const getDonorStatistics = async (req, res) => {
+    try {
+        console.log('getDonorStatistics called for user:', req.user?.userId, 'year:', req.query.year);
+        const userId = req.user.userId;
+        const { year = new Date().getFullYear() } = req.query;
+
+        // Overall donor statistics - fixed to avoid counting duplicates
+        const statsQuery = `
+            SELECT 
+                COUNT(*) as total_donations,
+                COUNT(CASE WHEN status = 'Pending' THEN 1 END) as pending_count,
+                COUNT(CASE WHEN status = 'Approved' THEN 1 END) as approved_count,
+                COUNT(CASE WHEN status = 'Rejected' THEN 1 END) as rejected_count,
+                COUNT(CASE WHEN status = 'Completed' THEN 1 END) as completed_count
+            FROM DonationRequests 
+            WHERE user_id = $1
+        `;
+        
+        // Separate query for value and items calculation
+        const valueQuery = `
+            SELECT 
+                COALESCE(SUM(di.declared_value * di.quantity), 0) as total_worth_of_response,
+                COALESCE(SUM(di.quantity), 0) as total_items_given
+            FROM DonationRequests dr 
+            JOIN DonationItems di ON dr.donation_id = di.donation_id
+            WHERE dr.user_id = $1 AND dr.status IN ('Approved', 'Completed')
+        `;
+
+        console.log('Executing stats query for user:', userId);
+        const [statsResult, valueResult] = await Promise.all([
+            query(statsQuery, [userId]),
+            query(valueQuery, [userId])
+        ]);
+        
+        const stats = {
+            ...statsResult.rows[0],
+            ...valueResult.rows[0]
+        };
+        console.log('Stats result:', stats);
+
+        // Monthly donation trends for the specified year - simplified
+        const monthlyQuery = `
+            SELECT 
+                EXTRACT(MONTH FROM dr.created_at) as month,
+                COUNT(DISTINCT dr.donation_id) as donation_count,
+                COALESCE(SUM(
+                    CASE WHEN dr.status IN ('Approved', 'Completed') 
+                    THEN di.declared_value * di.quantity 
+                    ELSE 0 END
+                ), 0) as monthly_value
+            FROM DonationRequests dr 
+            LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
+            WHERE dr.user_id = $1 
+              AND EXTRACT(YEAR FROM dr.created_at) = $2
+            GROUP BY EXTRACT(MONTH FROM dr.created_at)
+            ORDER BY month
+        `;
+
+        const monthlyResult = await query(monthlyQuery, [userId, year]);
+
+        // Create array for all 12 months with data or zeros
+        const monthlyData = [];
+        for (let i = 1; i <= 12; i++) {
+            const monthData = monthlyResult.rows.find(row => parseInt(row.month) === i);
+            monthlyData.push({
+                month: i,
+                donation_count: monthData ? parseInt(monthData.donation_count) : 0,
+                monthly_value: monthData ? parseFloat(monthData.monthly_value) || 0 : 0
+            });
+        }
+
+        // Get donation categories breakdown
+        const categoriesQuery = `
+            SELECT 
+                ic.category_name,
+                COUNT(DISTINCT dr.donation_id) as donation_count,
+                SUM(di.quantity) as total_quantity,
+                SUM(di.declared_value * di.quantity) as total_value
+            FROM DonationRequests dr
+            JOIN DonationItems di ON dr.donation_id = di.donation_id
+            JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+            JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+            WHERE dr.user_id = $1 AND dr.status IN ('Approved', 'Completed')
+            GROUP BY ic.category_name
+            ORDER BY total_value DESC
+        `;
+
+        const categoriesResult = await query(categoriesQuery, [userId]);
+
+        res.json({
+            success: true,
+            data: {
+                statistics: {
+                    total_donations: parseInt(stats.total_donations) || 0,
+                    pending_count: parseInt(stats.pending_count) || 0,
+                    approved_count: parseInt(stats.approved_count) || 0,
+                    rejected_count: parseInt(stats.rejected_count) || 0,
+                    completed_count: parseInt(stats.completed_count) || 0,
+                    successful_donations: (parseInt(stats.approved_count) || 0) + (parseInt(stats.completed_count) || 0),
+                    total_worth_of_response: parseFloat(stats.total_worth_of_response) || 0,
+                    total_items_given: parseInt(stats.total_items_given) || 0
+                },
+                monthly_trends: monthlyData,
+                categories: categoriesResult.rows,
+                year: parseInt(year)
+            },
+            message: 'Donor statistics retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting donor statistics:', error);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve donor statistics',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Get all donation categories with their item types
  */
 export const getDonationCategories = async (req, res) => {
@@ -725,7 +860,15 @@ export const getDonationCategories = async (req, res) => {
                 ARRAY_AGG(
                     CASE 
                         WHEN it.itemtype_name IS NOT NULL 
-                        THEN it.itemtype_name 
+                        THEN json_build_object(
+                            'itemtype_id', it.itemtype_id,
+                            'itemtype_name', it.itemtype_name,
+                            'avg_retail_price', it.avg_retail_price,
+                            'condition_factor_new', it.condition_factor_new,
+                            'condition_factor_good', it.condition_factor_good,
+                            'condition_factor_fair', it.condition_factor_fair,
+                            'condition_factor_poor', it.condition_factor_poor
+                        )
                         ELSE NULL 
                     END
                 ) FILTER (WHERE it.itemtype_name IS NOT NULL) as item_types
@@ -737,9 +880,26 @@ export const getDonationCategories = async (req, res) => {
         
         const result = await query(categoriesQuery);
         
+        // Enhance item types with fixed condition information
+        const enhancedData = result.rows.map(category => ({
+            ...category,
+            item_types: category.item_types.map(itemType => {
+                const fixedCondition = getFixedCondition(itemType.itemtype_name);
+                const itemCategory = getItemCategory(itemType.itemtype_name);
+                
+                return {
+                    ...itemType,
+                    fixed_condition: fixedCondition,
+                    has_fixed_condition: fixedCondition !== null,
+                    item_category: itemCategory,
+                    condition_definition: fixedCondition ? getConditionDefinition(itemCategory, fixedCondition) : null
+                };
+            })
+        }));
+        
         res.json({
             success: true,
-            data: result.rows,
+            data: enhancedData,
             message: 'Donation categories fetched successfully'
         });
         
@@ -1031,7 +1191,7 @@ export const getCalendarAppointments = async (req, res) => {
                     a.appointment_time,
                     COUNT(di.item_id) as item_types,
                     SUM(di.quantity) as total_quantity,
-                    SUM(di.declared_value) as total_value,
+                    SUM(di.declared_value * di.quantity) as total_value,
                     STRING_AGG(DISTINCT ic.category_name, ', ') as categories
                 FROM DonationRequests dr
                 JOIN Users u ON dr.user_id = u.user_id
@@ -1061,7 +1221,7 @@ export const getCalendarAppointments = async (req, res) => {
                     a.appointment_time,
                     COUNT(di.item_id) as item_types,
                     SUM(di.quantity) as total_quantity,
-                    SUM(di.declared_value) as total_value,
+                    SUM(di.declared_value * di.quantity) as total_value,
                     STRING_AGG(DISTINCT ic.category_name, ', ') as categories
                 FROM DonationRequests dr
                 JOIN Users u ON dr.user_id = u.user_id
