@@ -22,7 +22,6 @@ import { formatCurrency } from "./utilities/donationHelpers";
 function Inventory() {
   const [search, setSearch] = useState("");
   const [isDistributeModalOpen, setIsDistributeModalOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState([]);
   
   // Data states
   const [inventory, setInventory] = useState([]);
@@ -176,16 +175,7 @@ function Inventory() {
     loadInventoryData();
   };
   
-  const handleItemSelect = (item) => {
-    setSelectedItems(prev => {
-      const isSelected = prev.find(selected => selected.inventory_id === item.inventory_id);
-      if (isSelected) {
-        return prev.filter(selected => selected.inventory_id !== item.inventory_id);
-      } else {
-        return [...prev, item];
-      }
-    });
-  };
+
 
   // Show loading spinner on initial load
   if (loading && inventory.length === 0) {
@@ -365,24 +355,14 @@ function Inventory() {
         <div className="px-6 py-2 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <h2 className="text-base font-semibold text-gray-900">Inventory Items</h2>
-            {selectedItems.length > 0 && (
-              <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                {selectedItems.length} selected
-              </span>
-            )}
           </div>
           <div className="flex space-x-3">
             <button 
               onClick={() => setIsDistributeModalOpen(true)}
-              disabled={selectedItems.length === 0}
-              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium ${
-                selectedItems.length > 0 
-                  ? 'bg-green-600 text-white hover:bg-green-700' 
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              className="flex items-center px-4 py-2 rounded-md text-sm font-medium bg-green-600 text-white hover:bg-green-700"
             >
               <HiTruck className="w-4 h-4 mr-2" />
-              Distribute ({selectedItems.length})
+              Distribute
             </button>
           </div>
         </div>
@@ -398,20 +378,6 @@ function Inventory() {
             <table className="min-w-full">
               <thead className="bg-red-600 sticky top-0">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.length === inventory.length && inventory.length > 0}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedItems(inventory.filter(item => item.quantity_available > 0));
-                        } else {
-                          setSelectedItems([]);
-                        }
-                      }}
-                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                    />
-                  </th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Item</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Category</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Quantity</th>
@@ -424,21 +390,8 @@ function Inventory() {
                 {inventory.map((item) => (
                   <tr 
                     key={item.inventory_id} 
-                    className={`hover:bg-gray-50 ${
-                      selectedItems.find(selected => selected.inventory_id === item.inventory_id) 
-                        ? 'bg-red-50' 
-                        : ''
-                    }`}
+                    className="hover:bg-gray-50"
                   >
-                    <td className="px-6 py-3 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={!!selectedItems.find(selected => selected.inventory_id === item.inventory_id)}
-                        onChange={() => handleItemSelect(item)}
-                        disabled={item.quantity_available === 0}
-                        className="rounded border-gray-300 text-red-600 focus:ring-red-500 disabled:opacity-50"
-                      />
-                    </td>
                     <td className="px-6 py-3 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{item.itemtype_name}</div>
                       <div className="text-sm text-gray-500">Unit FMV: {formatCurrency(item.unit_fmv)}</div>
@@ -465,7 +418,7 @@ function Inventory() {
                 ))}
                 {inventory.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
                       <div className="flex flex-col items-center">
                         <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -502,7 +455,6 @@ function Inventory() {
       <DistributeDonationForm 
         isOpen={isDistributeModalOpen}
         onClose={() => setIsDistributeModalOpen(false)}
-        selectedItems={selectedItems}
       />
       
       {/* Loading overlay for refresh operations */}

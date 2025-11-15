@@ -493,7 +493,7 @@ function BeneficiaryRequestsManagement() {
       {/* Request Details Modal */}
       {showDetailsModal && selectedRequest && (
         <div className="fixed inset-0 z-50 overflow-hidden">
-          <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+          <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
           
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">

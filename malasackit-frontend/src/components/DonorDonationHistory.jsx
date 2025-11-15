@@ -488,7 +488,7 @@ export default function DonorDonationHistory() {
 
             {/* Details Modal */}
             {showDetailsModal && selectedDonation && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999 }}>
                     <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Header */}
                         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -643,7 +643,7 @@ export default function DonorDonationHistory() {
 
             {/* Edit Modal (Placeholder) */}
             {showEditModal && selectedDonation && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999 }}>
                     <div className="bg-white rounded-lg max-w-md w-full">
                         <div className="flex items-center justify-between p-6 border-b border-gray-200">
                             <h3 className="text-lg font-semibold text-gray-900">Edit Donation Request</h3>
@@ -683,7 +683,7 @@ export default function DonorDonationHistory() {
 
             {/* Cancel Confirmation Modal */}
             {showCancelModal && selectedDonation && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999 }}>
                     <div className="bg-white rounded-lg max-w-md w-full">
                         <div className="flex items-center justify-between p-6 border-b border-gray-200">
                             <h3 className="text-lg font-semibold text-gray-900">Cancel Donation Request</h3>

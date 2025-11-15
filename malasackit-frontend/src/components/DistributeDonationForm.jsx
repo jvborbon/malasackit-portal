@@ -235,7 +235,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       {/* Darkened Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-60 transition-opacity duration-300" onClick={onClose}></div>
+      <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity duration-300" onClick={onClose}></div>
       
       {/* Modal Container */}
       <div className="relative bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-6xl max-h-[90vh] transform transition-all duration-300 scale-100 z-10 flex flex-col" onClick={(e) => e.stopPropagation()}>

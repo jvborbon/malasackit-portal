@@ -360,7 +360,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onConfirm }) {
     return (
         <div className="fixed inset-0 z-50">
             {/* Backdrop */}
-            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+            <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm" onClick={onClose}></div>
             
             {/* Modal Container */}
             <div className="fixed inset-0 overflow-y-auto">
