@@ -12,76 +12,91 @@ import BeneficiaryLogs from '../components/DistributionLogs';
 import UserManagement from '../components/UserManagement';
 import BeneficiaryManagement from '../components/BeneficiaryManagement';
 import Calendar from '../components/Calendar';
+import WalkInDonationForm from '../components/WalkInDonationForm';
 
 
 export default function AdminDashboard() {
-    // Function to render main content based on active navigation
-    const renderMainContent = ({ activeNav, userInfo, setActiveNav }) => {
-        switch (activeNav) {
-            case 'User Management':
-                return <UserManagement />;
-            
-            case 'Beneficiary Management':
-                return <BeneficiaryManagement />;
-            
-            case 'Distribution Logs':
-               return <BeneficiaryLogs />;
-
-            case 'Donation Requests':
-                return <DonationRequests />;
-
-            case 'Notifications':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Notifications</h2>
-                        <p className="text-gray-600">System alerts and notifications.</p>
-                        {/* Add admin notifications here */}
-                    </div>
-                );
-
-            case 'Calendar':
-                return <Calendar />;
-
-            case 'Settings':
-                return <UserProfileSettings userInfo={userInfo} />;
-
-            default: // Dashboard (Overview)
-                return (
-                    <div className="space-y-6">
-                        <StaffKPICards />
-                        
-                        {/* User Management KPIs */}
-                        <UserKPICards />
-                        
-                        {/* Donation Reports Chart - Full Width */}
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <DonationReportsChart />
-                        </div>
-                        
-                        {/* Charts Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div className="bg-white rounded-lg shadow-sm p-6">
-                                <DonatedItemsChart />
-                            </div>
-
-                            <div className="bg-white rounded-lg shadow-sm p-6">
-                                <TopDonorsSection />
-                            </div>
-                        </div>
-
-                        {/* New KPI Sections Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <TopParishesSection />
-                            <TopMunicipalitySection />
-                        </div>
-                    </div>
-                );
-        }
-    };
-
     return (
         <DashboardLayout userRole="admin">
-            {renderMainContent}
+            {({ activeNav, userInfo, setActiveNav, showWalkInModal, setShowWalkInModal }) => {
+                // Function to render main content based on active navigation
+                const renderMainContent = () => {
+                    switch (activeNav) {
+                        case 'User Management':
+                            return <UserManagement />;
+                        
+                        case 'Beneficiary Management':
+                            return <BeneficiaryManagement />;
+                        
+                        case 'Distribution Logs':
+                           return <BeneficiaryLogs />;
+
+                        case 'Donation Requests':
+                            return <DonationRequests onWalkInClick={() => setShowWalkInModal(true)} userRole="admin" />;
+
+                        case 'Notifications':
+                            return (
+                                <div className="bg-white rounded-lg shadow-sm p-6">
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Notifications</h2>
+                                    <p className="text-gray-600">System alerts and notifications.</p>
+                                    {/* Add admin notifications here */}
+                                </div>
+                            );
+
+                        case 'Calendar':
+                            return <Calendar />;
+
+                        case 'Settings':
+                            return <UserProfileSettings userInfo={userInfo} />;
+
+                        default: // Dashboard (Overview)
+                            return (
+                                <div className="space-y-6">
+                                    <StaffKPICards />
+                                    
+                                    {/* User Management KPIs */}
+                                    <UserKPICards />
+                                    
+                                    {/* Donation Reports Chart - Full Width */}
+                                    <div className="bg-white rounded-lg shadow-sm p-6">
+                                        <DonationReportsChart />
+                                    </div>
+                                    
+                                    {/* Charts Grid */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div className="bg-white rounded-lg shadow-sm p-6">
+                                            <DonatedItemsChart />
+                                        </div>
+
+                                        <div className="bg-white rounded-lg shadow-sm p-6">
+                                            <TopDonorsSection />
+                                        </div>
+                                    </div>
+
+                                    {/* New KPI Sections Grid */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <TopParishesSection />
+                                        <TopMunicipalitySection />
+                                    </div>
+                                </div>
+                            );
+                    }
+                };
+
+                return (
+                    <>
+                        {renderMainContent()}
+                        <WalkInDonationForm 
+                            isOpen={showWalkInModal}
+                            onClose={() => setShowWalkInModal(false)}
+                            onSuccess={(data) => {
+                                console.log('Walk-in donation recorded:', data);
+                                // Optionally refresh data or show success message
+                            }}
+                        />
+                    </>
+                );
+            }}
         </DashboardLayout>
     );
 }

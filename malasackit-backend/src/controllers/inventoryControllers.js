@@ -433,9 +433,9 @@ export const addToInventoryFromDonation = async (donationId, inventoryStatus = '
             
             console.log(`Value calculation - Declared: ${declared_value}, FMV: ${fmv_value}, Final: ${valueToUse}`);
             
-            // Check if inventory entry exists for this item type
-            const existingQuery = 'SELECT inventory_id, quantity_available, total_fmv_value FROM Inventory WHERE itemtype_id = $1';
-            const existingResult = await query(existingQuery, [itemtype_id]);
+            // Check if inventory entry exists for this item type and location
+            const existingQuery = 'SELECT inventory_id, quantity_available, total_fmv_value FROM Inventory WHERE itemtype_id = $1 AND location = $2';
+            const existingResult = await query(existingQuery, [itemtype_id, 'LASAC Warehouse']);
             
             if (existingResult.rows.length > 0) {
                 // Update existing inventory

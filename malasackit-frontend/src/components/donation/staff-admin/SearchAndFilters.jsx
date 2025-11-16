@@ -1,7 +1,7 @@
 import React from 'react';
-import { HiSearch } from 'react-icons/hi';
+import { HiSearch, HiUserAdd, HiRefresh } from 'react-icons/hi';
 
-function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter }) {
+function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter, onWalkInClick, userRole, onRefresh, loading }) {
   return (
     <div className="flex items-center space-x-4">
       <div className="relative flex-1">
@@ -27,6 +27,27 @@ function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter }) 
         <option value="Completed">Completed</option>
         <option value="Rejected">Rejected</option>
       </select>
+
+      {/* Refresh Button */}
+      <button 
+        onClick={onRefresh}
+        disabled={loading}
+        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
+        title="Refresh"
+      >
+        <HiRefresh className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+      </button>
+
+      {/* Walk-in Button for Staff/Admin */}
+      {(userRole === 'staff' || userRole === 'admin') && onWalkInClick && (
+        <button
+          onClick={onWalkInClick}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium whitespace-nowrap"
+        >
+          <HiUserAdd className="w-4 h-4 mr-2" />
+          Walk-in
+        </button>
+      )}
     </div>
   );
 }

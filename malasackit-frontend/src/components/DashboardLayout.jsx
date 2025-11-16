@@ -26,6 +26,7 @@ export default function DashboardLayout({ children, userRole }) {
     const [activeNav, setActiveNav] = useState('Dashboard');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showWalkInModal, setShowWalkInModal] = useState(false);
 
     // Simple effect to redirect if no user (handled by RouteProtection now)
     useEffect(() => {
@@ -251,9 +252,15 @@ export default function DashboardLayout({ children, userRole }) {
                 </header>
 
                 {/* Dashboard Content */}
-                <main className="p-4 lg:p-6 overflow-x-auto">
-                    <div className="min-w-0">
-                        {children({ activeNav, userInfo: user, setActiveNav })}
+                <main className={`p-4 lg:p-6 ${activeNav === 'Donation Requests' ? 'h-[calc(100vh-80px)] flex flex-col overflow-hidden' : ''}`}>
+                    <div className={`${activeNav === 'Donation Requests' ? 'flex-1 flex flex-col min-h-0' : ''}`}>
+                        {children({ 
+                            activeNav, 
+                            userInfo: user, 
+                            setActiveNav,
+                            showWalkInModal,
+                            setShowWalkInModal 
+                        })}
                     </div>
                 </main>
             </div>

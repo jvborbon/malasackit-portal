@@ -15,6 +15,7 @@ CREATE TABLE Users (
 	vicariate_id INT REFERENCES Vicariates(vicariate_id),
     email_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	created_by VARCHAR(25) REFERENCES Users(user_id),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
     profile_picture_url TEXT,
@@ -59,7 +60,8 @@ CREATE TABLE DonationRequests (
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
  	approved_by VARCHAR(25) REFERENCES Users(user_id),
-	approved_at TIMESTAMP;
+	approved_at TIMESTAMP,
+	is_walkin BOOLEAN DEFAULT FALSE;
 );
 
 CREATE TABLE DonationItems (
@@ -74,7 +76,7 @@ CREATE TABLE DonationItems (
     selected_condition VARCHAR(10) NOT NULL DEFAULT 'New',  -- New, Good, Fair, Poor
     condition_multiplier NUMERIC(5,2) DEFAULT 1.00,        -- fetched from ItemType by default
     calculated_fmv NUMERIC(12,2) DEFAULT 0.00,            -- quantity × avg_retail_price × condition_multiplier
-
+    
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -120,6 +122,16 @@ CREATE TABLE BeneficiaryRequests (
 	urgency VARCHAR(50) CHECK (urgency IN ('Low', 'Medium', 'High')),
     purpose TEXT,     -- Reason for request or project
     notes TEXT
+);
+
+CREATE TABLE BeneficiaryRequestItems (
+    request_item_id SERIAL PRIMARY KEY,
+    request_id INT REFERENCES BeneficiaryRequests(request_id) ON DELETE CASCADE,
+    itemtype_id INT REFERENCES ItemType(itemtype_id),
+    quantity_requested INT NOT NULL,
+    quantity_approved INT DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -644,9 +656,13 @@ SELECT * FROM Notifications
 SELECT * FROM DonationRequests;
 SELECT * FROM DonationItems;
 SELECT * FROM Appointments;
+SELECT * FROM Inventory;
 SELECT * FROM ItemCategory;
 SELECT * FROM ItemType;
 SELECT * FROM DistributionPlans;
+SELECT * FROM DistributionLogs;
+SELECT * FROM BeneficiaryRequests;
+SELECT * FROM Beneficiaries;
 
 SELECT 
     r.role_name,
@@ -715,13 +731,7 @@ INSERT INTO Login_Credentials (user_id, password_hash, login_attempts) VALUES
 TRUNCATE TABLE DonationRequest, Login_Credentials RESTART IDENTITY;
 
 
-DROP TABLE DonationItems;
-DROP TABLE DistributionPlans;
-DROP TABLE DistributionPlanItems;
-DROP TABLE DistributionLogs;
-DROP TABLE BazaarLogs;
-DROP TABLE Inventory;
-DROP TABLE ItemType;
+
 
 
 
@@ -770,6 +780,13 @@ TRUNCATE TABLE rolepermissions, permissions RESTART IDENTITY;
     Inventory
 RESTART IDENTITY CASCADE;
 
+TRUNCATE TABLE 
+	Beneficiaries,
+	BeneficiaryRequests,
+	DistributionLogs,
+	DistributionLogs,
+	DistributionPlanItems
+RESTART IDENTITY CASCADE;
 
 UPDATE DonationRequests
 SET status = 'Approved'
@@ -821,6 +838,20 @@ ADD COLUMN condition_multiplier NUMERIC(5,2) DEFAULT 1.00,        -- fetched fro
 ADD COLUMN calculated_fmv NUMERIC(12,2) DEFAULT 0.00,            -- quantity × avg_retail_price × condition_multiplier
 
 
+DROP TABLE DonationItems;
+DROP TABLE DistributionPlans;
+DROP TABLE DistributionPlanItems;
+DROP TABLE DistributionLogs;
+DROP TABLE BazaarLogs;
+DROP TABLE Inventory;
+DROP TABLE ItemType;
 
 
+ALTER TABLE Users
+ADD COLUMN is_walkin_generated BOOLEAN DEFAULT FALSE,
+ADD COLUMN temp_email_generated BOOLEAN DEFAULT FALSE;
 
+ALTER TABLE DonationRequests 
+ADD COLUMN is_walkin BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE DonationRequests ADD COLUMN created_by VARCHAR(25) REFERENCES Users(user_id);

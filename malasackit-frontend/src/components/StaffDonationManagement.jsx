@@ -9,7 +9,7 @@ import PaginationComponent from "./common/PaginationComponent";
 import DonationDetailsModal from "./donation/staff-admin/DonationDetailsModal";
 import StatusChangeModal from "./donation/staff-admin/StatusChangeModal";
 
-function StaffDonationManagement() {
+function StaffDonationManagement({ onWalkInClick, userRole = 'staff' }) {
   const {
     donations,
     loading,
@@ -46,22 +46,7 @@ function StaffDonationManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Action Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-gray-600">Review and manage donation requests</p>
-        <div className="flex items-center space-x-2">
-          <button 
-            onClick={loadDonations}
-            disabled={loading}
-            className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 rounded-lg"
-            title="Refresh"
-          >
-            <HiRefresh className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
-
+    <div className="h-full flex flex-col space-y-4">
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -84,6 +69,10 @@ function StaffDonationManagement() {
         setSearch={setSearch}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        onWalkInClick={onWalkInClick}
+        userRole={userRole}
+        onRefresh={loadDonations}
+        loading={loading}
       />
 
       {/* Statistics Cards */}
@@ -93,17 +82,19 @@ function StaffDonationManagement() {
         formatCurrency={formatCurrency}
       />
 
-      {/* Table */}
-      <DonationTable 
-        donations={filteredDonations}
-        loading={loading}
-        processingId={processingId}
-        onViewDetails={handleViewDetails}
-        onStatusChange={handleStatusChange}
-        getStatusColor={getStatusColor}
-        formatDate={formatDate}
-        formatCurrency={formatCurrency}
-      />
+      {/* Table - Takes remaining space */}
+      <div className="flex-1 min-h-0">
+        <DonationTable 
+          donations={filteredDonations}
+          loading={loading}
+          processingId={processingId}
+          onViewDetails={handleViewDetails}
+          onStatusChange={handleStatusChange}
+          getStatusColor={getStatusColor}
+          formatDate={formatDate}
+          formatCurrency={formatCurrency}
+        />
+      </div>
 
       {/* Pagination */}
       {pagination.pages > 1 && (

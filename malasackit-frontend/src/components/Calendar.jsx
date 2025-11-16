@@ -142,9 +142,9 @@ export default function CalendarComponent() {
     const monthEvents = getEventsForMonth(date);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 h-full flex flex-col overflow-hidden">
             {/* Calendar Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-shrink-0">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Calendar</h2>
                     <p className="text-gray-600">Donation appointments and events</p>
@@ -182,10 +182,10 @@ export default function CalendarComponent() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0 overflow-hidden">
                 {/* Calendar */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="lg:col-span-2 min-h-0">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-full">
                         <div className="calendar-container">
                             <Calendar
                                 onChange={setDate}
@@ -212,15 +212,15 @@ export default function CalendarComponent() {
                 </div>
 
                 {/* Events Sidebar */}
-                <div className="space-y-6">
+                <div className="space-y-4 flex flex-col h-full min-h-0">
                     {/* Selected Date Events */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex-shrink-0">
                             {formatDate(date, 'long')}
                         </h3>
                         
                         {selectedDateEvents.length > 0 ? (
-                            <div className="space-y-3">
+                            <div className="space-y-3 overflow-y-auto max-h-64 pr-2 scrollbar-thin">
                                 {selectedDateEvents.map((event) => (
                                     <div 
                                         key={event.id}
@@ -296,7 +296,7 @@ export default function CalendarComponent() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-8">
+                            <div className="text-center py-8 flex-shrink-0">
                                 <HiCalendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                                 <p className="text-gray-500">No events scheduled for this date</p>
                                 <button className="mt-2 text-red-600 hover:text-red-700 text-sm font-medium">

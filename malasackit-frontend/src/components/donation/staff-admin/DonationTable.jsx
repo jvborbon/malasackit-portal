@@ -13,66 +13,73 @@ function DonationTable({
   formatCurrency 
 }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-red-600">
+    <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+      {/* Table Header - Fixed */}
+      <div className="bg-red-600">
+        <table className="min-w-full text-sm">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Donor Information
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Donation Details
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Schedule
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
+        </table>
+      </div>
+      
+      {/* Table Body - Scrollable */}
+      <div className="flex-1 overflow-auto">
+        <table className="min-w-full text-sm">
           <tbody className="bg-white divide-y divide-gray-200">
             {donations.map((donation) => (
               <tr key={donation.donation_id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
+                <td className="px-3 py-2">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-xs font-medium text-gray-900 truncate max-w-[150px]" title={donation.donor_name}>
                       {donation.donor_name}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-gray-500 truncate max-w-[150px]" title={donation.donor_email}>
                       {donation.donor_email}
                     </div>
                     {donation.donor_phone && (
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs text-gray-500">
                         {donation.donor_phone}
                       </div>
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-2">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-xs font-medium text-gray-900">
                       ID: {donation.donation_id}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-gray-500">
                       {donation.total_quantity} items • {formatCurrency(donation.total_value)}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-gray-500">
                       {donation.delivery_method === 'pickup' ? '📦 Pickup' : '🚚 Drop-off'}
                     </div>
                     {donation.categories && (
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-gray-400 truncate max-w-[120px]" title={donation.categories}>
                         {donation.categories}
                       </div>
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">
+                <td className="px-3 py-2">
+                  <div className="text-xs text-gray-900">
                     {donation.appointment_date ? (
                       <>
                         <div>{formatDate(donation.appointment_date)}</div>
@@ -87,12 +94,12 @@ function DonationTable({
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-2">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(donation.status)}`}>
                     {donation.status}
                   </span>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-2">
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => onViewDetails(donation.donation_id)}
@@ -139,7 +146,7 @@ function DonationTable({
             ))}
             {donations.length === 0 && !loading && (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                <td colSpan={5} className="px-3 py-4 text-center text-xs text-gray-500">
                   No donation requests found.
                 </td>
               </tr>

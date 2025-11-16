@@ -1,9 +1,9 @@
 import React from "react";
 import StaffDonationManagement from "./StaffDonationManagement";
 
-function DonationRequests() {
+function DonationRequests({ onWalkInClick, userRole }) {
 
-  return <StaffDonationManagement />;
+  return <StaffDonationManagement onWalkInClick={onWalkInClick} userRole={userRole} />;
 }
 
 export default DonationRequests;

@@ -16,6 +16,66 @@ export const getInventory = async (params = {}) => {
 };
 
 /**
+ * Get item categories for walk-in form
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getCategories = async () => {
+    try {
+        const response = await api.get('/api/inventory/categories');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get item types for walk-in form
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getItemTypes = async () => {
+    try {
+        const response = await api.get('/api/inventory/item-types');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching item types:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get item types by category for walk-in form
+ * @param {string} categoryName - The category name
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getItemTypesByCategory = async (categoryName) => {
+    try {
+        // First get all categories to find the category ID
+        const categoriesResponse = await getCategories();
+        const categories = categoriesResponse.data || [];
+        
+        console.log('Categories response:', categories);
+        console.log('Looking for category:', categoryName);
+        
+        // Find the category ID by name
+        const category = categories.find(cat => cat.category_name === categoryName);
+        console.log('Found category:', category);
+        
+        if (!category) {
+            throw new Error(`Category "${categoryName}" not found`);
+        }
+        
+        // Use the donations API endpoint to get item types by category ID
+        const response = await api.get(`/api/donations/categories/${category.itemcategory_id}/item-types`);
+        console.log('API response for item types:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching item types by category:', error);
+        throw error;
+    }
+};
+
+/**
  * Get inventory statistics for dashboard
  * @returns {Promise} Promise that resolves to the API response
  */
@@ -92,16 +152,3 @@ export const getLowStockItems = async (threshold = 10) => {
     }
 };
 
-/**
- * Get available categories for filtering
- * @returns {Promise} Promise that resolves to the API response
- */
-export const getCategories = async () => {
-    try {
-        const response = await api.get('/api/donations/categories');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching categories:', error);
-        throw error;
-    }
-};

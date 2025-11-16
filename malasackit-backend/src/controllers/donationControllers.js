@@ -610,11 +610,11 @@ export const updateDonationStatus = async (req, res) => {
             }
         } else if (status === 'Completed' && donation.status !== 'Completed') {
             try {
-                // Update existing inventory items from Reserved to Available
-                await updateInventoryStatusFromDonation(donationId, 'Available');
-                console.log(`Items from donation ${donationId} status updated to 'Available' in inventory`);
+                // First, ensure items are in inventory (in case donation went directly to Completed)
+                await addToInventoryFromDonation(donationId, 'Available');
+                console.log(`Items from donation ${donationId} added/updated in inventory with 'Available' status`);
             } catch (inventoryError) {
-                console.error('Error updating inventory availability:', inventoryError);
+                console.error('Error adding/updating inventory availability:', inventoryError);
             }
         }
 
@@ -922,19 +922,35 @@ export const getItemTypesByCategory = async (req, res) => {
         
         const itemTypesQuery = `
             SELECT 
-                itemtype_id as item_type_id,
-                itemtype_name as item_type_name,
-                itemcategory_id as category_id
-            FROM ItemType 
-            WHERE itemcategory_id = $1
-            ORDER BY itemtype_name
+                it.itemtype_id as item_type_id,
+                it.itemtype_name as item_type_name,
+                it.itemcategory_id as category_id,
+                it.avg_retail_price as default_value,
+                ic.category_name
+            FROM ItemType it
+            JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+            WHERE it.itemcategory_id = $1
+            ORDER BY it.itemtype_name
         `;
         
         const result = await query(itemTypesQuery, [categoryId]);
         
+        // Enhance with fixed condition information
+        const enhancedItemTypes = result.rows.map(itemType => {
+            const fixedCondition = getFixedCondition(itemType.item_type_name, itemType.category_name);
+            
+            return {
+                ...itemType,
+                fixed_condition: fixedCondition,
+                has_fixed_condition: fixedCondition !== null
+            };
+        });
+        
+        console.log('Item types query result:', enhancedItemTypes);
+        
         res.json({
             success: true,
-            data: result.rows,
+            data: enhancedItemTypes,
             message: 'Item types fetched successfully'
         });
         
@@ -1203,6 +1219,7 @@ export const getCalendarAppointments = async (req, res) => {
                   AND a.appointment_date IS NOT NULL
                   AND a.appointment_date BETWEEN $1 AND $2
                   AND dr.user_id = $3
+                  AND (dr.is_walkin = false OR dr.is_walkin IS NULL)
                 GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
                          a.appointment_date, a.appointment_time
                 ORDER BY a.appointment_date, a.appointment_time
@@ -1232,6 +1249,7 @@ export const getCalendarAppointments = async (req, res) => {
                 WHERE dr.status IN ('Approved', 'Completed')
                   AND a.appointment_date IS NOT NULL
                   AND a.appointment_date BETWEEN $1 AND $2
+                  AND (dr.is_walkin = false OR dr.is_walkin IS NULL)
                 GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
                          a.appointment_date, a.appointment_time
                 ORDER BY a.appointment_date, a.appointment_time

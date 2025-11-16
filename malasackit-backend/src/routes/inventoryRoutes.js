@@ -21,6 +21,49 @@ router.get('/stats', authenticateToken, requireRole(['Resource Staff', 'Executiv
 // GET /api/inventory/low-stock - Get items with low stock for alerts
 router.get('/low-stock', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getLowStockItems);
 
+// GET /api/inventory/categories - Get all categories for walk-in form
+router.get('/categories', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), async (req, res) => {
+    try {
+        const result = await query('SELECT itemcategory_id, category_name FROM ItemCategory ORDER BY category_name');
+        res.json({
+            success: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch categories'
+        });
+    }
+});
+
+// GET /api/inventory/item-types - Get all item types for walk-in form
+router.get('/item-types', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT 
+                it.itemtype_id, 
+                it.itemtype_name, 
+                it.avg_retail_price,
+                ic.category_name
+            FROM ItemType it
+            LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+            ORDER BY ic.category_name, it.itemtype_name
+        `);
+        res.json({
+            success: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching item types:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch item types'
+        });
+    }
+});
+
 // POST /api/inventory/initialize - Initialize inventory system (admin only)
 router.post('/initialize', authenticateToken, requireRole(['Executive Admin']), async (req, res) => {
     try {
