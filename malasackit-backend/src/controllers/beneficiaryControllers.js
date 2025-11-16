@@ -1,6 +1,41 @@
 import { query } from '../db.js';
 
 /**
+ * Helper function to get beneficiary request with items
+ */
+async function getBeneficiaryRequestDetails(requestId) {
+    const requestQuery = `
+        SELECT br.*, b.name as beneficiary_name, b.type as beneficiary_type,
+               b.contact_person, b.phone, b.address
+        FROM BeneficiaryRequests br
+        JOIN Beneficiaries b ON br.beneficiary_id = b.beneficiary_id
+        WHERE br.request_id = $1
+    `;
+
+    const itemsQuery = `
+        SELECT bri.*, it.itemtype_name, ic.category_name
+        FROM BeneficiaryRequestItems bri
+        JOIN ItemType it ON bri.itemtype_id = it.itemtype_id
+        JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+        WHERE bri.request_id = $1
+        ORDER BY ic.category_name, it.itemtype_name
+    `;
+
+    const [requestResult, itemsResult] = await Promise.all([
+        query(requestQuery, [requestId]),
+        query(itemsQuery, [requestId])
+    ]);
+
+    if (requestResult.rows.length === 0) {
+        return null;
+    }
+
+    const request = requestResult.rows[0];
+    request.items = itemsResult.rows;
+    return request;
+}
+
+/**
  * Create a new beneficiary
  */
 export const createBeneficiary = async (req, res) => {
@@ -290,7 +325,7 @@ export const deleteBeneficiary = async (req, res) => {
 };
 
 /**
- * Create a new beneficiary request
+ * Create a new beneficiary request with items
  */
 export const createBeneficiaryRequest = async (req, res) => {
     try {
@@ -298,7 +333,8 @@ export const createBeneficiaryRequest = async (req, res) => {
             beneficiary_id,
             urgency,
             purpose,
-            notes
+            notes,
+            items = [] // Array of {itemtype_id, quantity_requested, notes}
         } = req.body;
 
         // Validate required fields
@@ -322,27 +358,46 @@ export const createBeneficiaryRequest = async (req, res) => {
             });
         }
 
-        const result = await query(
-            `INSERT INTO BeneficiaryRequests (beneficiary_id, urgency, purpose, notes)
-             VALUES ($1, $2, $3, $4)
-             RETURNING *`,
-            [beneficiary_id, urgency || 'Medium', purpose, notes]
-        );
+        // Start transaction
+        await query('BEGIN');
 
-        // Get the complete request with beneficiary info
-        const requestWithBeneficiary = await query(
-            `SELECT br.*, b.name as beneficiary_name, b.type as beneficiary_type
-             FROM BeneficiaryRequests br
-             JOIN Beneficiaries b ON br.beneficiary_id = b.beneficiary_id
-             WHERE br.request_id = $1`,
-            [result.rows[0].request_id]
-        );
+        try {
+            // Create the request
+            const result = await query(
+                `INSERT INTO BeneficiaryRequests (beneficiary_id, urgency, purpose, notes)
+                 VALUES ($1, $2, $3, $4)
+                 RETURNING *`,
+                [beneficiary_id, urgency || 'Medium', purpose, notes]
+            );
 
-        res.status(201).json({
-            success: true,
-            data: requestWithBeneficiary.rows[0],
-            message: 'Beneficiary request created successfully'
-        });
+            const requestId = result.rows[0].request_id;
+
+            // Add items if provided
+            if (items && items.length > 0) {
+                for (const item of items) {
+                    await query(
+                        `INSERT INTO BeneficiaryRequestItems (request_id, itemtype_id, quantity_requested, notes)
+                         VALUES ($1, $2, $3, $4)`,
+                        [requestId, item.itemtype_id, item.quantity_requested, item.notes]
+                    );
+                }
+            }
+
+            await query('COMMIT');
+
+            // Get the complete request with beneficiary info and items
+            const requestWithDetails = await getBeneficiaryRequestDetails(requestId);
+
+            res.status(201).json({
+                success: true,
+                data: requestWithDetails,
+                message: 'Beneficiary request created successfully'
+            });
+
+        } catch (error) {
+            await query('ROLLBACK');
+            throw error;
+        }
 
     } catch (error) {
         console.error('Error creating beneficiary request:', error);
@@ -507,6 +562,95 @@ export const updateBeneficiaryRequestStatus = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update beneficiary request status',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get beneficiary request by ID with items
+ */
+export const getBeneficiaryRequestById = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+
+        const requestDetails = await getBeneficiaryRequestDetails(requestId);
+
+        if (!requestDetails) {
+            return res.status(404).json({
+                success: false,
+                message: 'Beneficiary request not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: requestDetails,
+            message: 'Beneficiary request retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting beneficiary request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve beneficiary request',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Update beneficiary request items
+ */
+export const updateBeneficiaryRequestItems = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { items } = req.body; // Array of items to update/add
+
+        if (!items || !Array.isArray(items)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Items array is required'
+            });
+        }
+
+        // Start transaction
+        await query('BEGIN');
+
+        try {
+            // Delete existing items
+            await query('DELETE FROM BeneficiaryRequestItems WHERE request_id = $1', [requestId]);
+
+            // Add new items
+            for (const item of items) {
+                await query(
+                    `INSERT INTO BeneficiaryRequestItems (request_id, itemtype_id, quantity_requested, quantity_approved, notes)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [requestId, item.itemtype_id, item.quantity_requested, item.quantity_approved || 0, item.notes]
+                );
+            }
+
+            await query('COMMIT');
+
+            // Get updated request details
+            const updatedRequest = await getBeneficiaryRequestDetails(requestId);
+
+            res.json({
+                success: true,
+                data: updatedRequest,
+                message: 'Beneficiary request items updated successfully'
+            });
+
+        } catch (error) {
+            await query('ROLLBACK');
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error updating beneficiary request items:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update beneficiary request items',
             error: error.message
         });
     }

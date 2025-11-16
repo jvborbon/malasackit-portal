@@ -7,7 +7,9 @@ import {
     deleteBeneficiary,
     createBeneficiaryRequest,
     getAllBeneficiaryRequests,
+    getBeneficiaryRequestById,
     updateBeneficiaryRequestStatus,
+    updateBeneficiaryRequestItems,
     getBeneficiaryRequestStatistics
 } from '../controllers/beneficiaryControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
@@ -45,7 +47,13 @@ router.get('/requests/all', requireRole(['Resource Staff', 'Executive Admin']), 
 // POST /api/beneficiaries/requests - Create a new beneficiary request
 router.post('/requests', requireRole(['Resource Staff', 'Executive Admin']), createBeneficiaryRequest);
 
+// GET /api/beneficiaries/requests/:requestId - Get beneficiary request with items
+router.get('/requests/:requestId', requireRole(['Resource Staff', 'Executive Admin']), getBeneficiaryRequestById);
+
 // PUT /api/beneficiaries/requests/:requestId/status - Update request status
 router.put('/requests/:requestId/status', requireRole(['Resource Staff', 'Executive Admin']), updateBeneficiaryRequestStatus);
+
+// PUT /api/beneficiaries/requests/:requestId/items - Update request items
+router.put('/requests/:requestId/items', requireRole(['Resource Staff', 'Executive Admin']), updateBeneficiaryRequestItems);
 
 export default router;

@@ -133,3 +133,18 @@ export const getDonorStatistics = async (year = null) => {
         throw error;
     }
 };
+
+/**
+ * Get item types by category ID
+ * @param {number} categoryId - The category ID
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getItemTypesByCategory = async (categoryId) => {
+    try {
+        const response = await api.get(`/api/donations/categories/${categoryId}/item-types`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching item types by category:', error);
+        throw error;
+    }
+};

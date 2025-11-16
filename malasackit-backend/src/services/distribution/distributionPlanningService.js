@@ -7,11 +7,11 @@ import { query } from '../../db.js';
 
 /**
  * Generate intelligent distribution recommendations based on beneficiary requests and inventory
- * Uses rule-based algorithms to optimize resource allocation
+ * Uses actual requested items from BeneficiaryRequestItems table
  */
 export const generateDistributionRecommendations = async (requestIds) => {
     try {
-        // Get all approved beneficiary requests
+        // Get all approved beneficiary requests with their requested items
         const requestsQuery = `
             SELECT br.*, b.name as beneficiary_name, b.type, b.address
             FROM BeneficiaryRequests br
@@ -19,7 +19,20 @@ export const generateDistributionRecommendations = async (requestIds) => {
             WHERE br.request_id = ANY($1) AND br.status = 'Approved'
         `;
 
-        const requests = await query(requestsQuery, [requestIds]);
+        const requestItemsQuery = `
+            SELECT bri.*, br.request_id, it.itemtype_name, ic.category_name,
+                   it.avg_retail_price as fmv_value
+            FROM BeneficiaryRequestItems bri
+            JOIN BeneficiaryRequests br ON bri.request_id = br.request_id
+            JOIN ItemType it ON bri.itemtype_id = it.itemtype_id
+            JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+            WHERE br.request_id = ANY($1) AND br.status = 'Approved'
+        `;
+
+        const [requests, requestItems] = await Promise.all([
+            query(requestsQuery, [requestIds]),
+            query(requestItemsQuery, [requestIds])
+        ]);
 
         if (requests.rows.length === 0) {
             throw new Error('No approved beneficiary requests found');
@@ -37,11 +50,21 @@ export const generateDistributionRecommendations = async (requestIds) => {
 
         const inventory = await query(inventoryQuery);
 
+        // Group requested items by request_id
+        const itemsByRequest = requestItems.rows.reduce((acc, item) => {
+            if (!acc[item.request_id]) {
+                acc[item.request_id] = [];
+            }
+            acc[item.request_id].push(item);
+            return acc;
+        }, {});
+
         // Generate recommendations for each request
         const recommendations = [];
 
         for (const request of requests.rows) {
-            const recommendation = await generateRecommendationForRequest(request, inventory.rows);
+            const requestedItems = itemsByRequest[request.request_id] || [];
+            const recommendation = await generateRecommendationForRequestWithItems(request, requestedItems, inventory.rows);
             if (recommendation) {
                 recommendations.push(recommendation);
             }
@@ -62,6 +85,95 @@ export const generateDistributionRecommendations = async (requestIds) => {
         throw error;
     }
 };
+
+/**
+ * Generate recommendation for a single request with specific items
+ */
+async function generateRecommendationForRequestWithItems(request, requestedItems, availableInventory) {
+    const { request_id, household_size, urgency_level } = request;
+    
+    const recommendations = [];
+    let totalEstimatedValue = 0;
+
+    // If no specific items requested, fallback to basic allocation
+    if (!requestedItems || requestedItems.length === 0) {
+        return generateRecommendationForRequest(request, availableInventory);
+    }
+
+    // Process each requested item
+    for (const requestedItem of requestedItems) {
+        // Find matching inventory item
+        const inventoryItem = availableInventory.find(inv => 
+            inv.itemtype_id === requestedItem.itemtype_id
+        );
+
+        if (inventoryItem && inventoryItem.quantity_available > 0) {
+            // Calculate recommended quantity based on what's requested vs available
+            const recommendedQuantity = Math.min(
+                requestedItem.requested_quantity,
+                inventoryItem.quantity_available
+            );
+
+            if (recommendedQuantity > 0) {
+                recommendations.push({
+                    itemtype_id: inventoryItem.itemtype_id,
+                    itemtype_name: inventoryItem.itemtype_name,
+                    category_name: inventoryItem.category_name,
+                    requested_quantity: requestedItem.requested_quantity,
+                    recommended_quantity: recommendedQuantity,
+                    available_quantity: inventoryItem.quantity_available,
+                    estimated_value: (inventoryItem.fmv_value || 0) * recommendedQuantity,
+                    priority: urgency_level === 'Critical' ? 'High' : 'Medium',
+                    fulfillment_status: recommendedQuantity >= requestedItem.requested_quantity ? 'Full' : 'Partial'
+                });
+
+                totalEstimatedValue += (inventoryItem.fmv_value || 0) * recommendedQuantity;
+            }
+        } else {
+            // Item not available - still include in recommendations for tracking
+            recommendations.push({
+                itemtype_id: requestedItem.itemtype_id,
+                itemtype_name: requestedItem.itemtype_name || 'Unknown Item',
+                category_name: 'Unknown',
+                requested_quantity: requestedItem.requested_quantity,
+                recommended_quantity: 0,
+                available_quantity: 0,
+                estimated_value: 0,
+                priority: 'High',
+                fulfillment_status: 'Unavailable'
+            });
+        }
+    }
+
+    return {
+        request_id,
+        beneficiary_name: `${request.first_name} ${request.last_name}`,
+        household_size,
+        urgency_level,
+        total_estimated_value: totalEstimatedValue,
+        recommended_items: recommendations,
+        fulfillment_summary: calculateFulfillmentSummary(recommendations),
+        summary: `${recommendations.length} items requested, ${recommendations.filter(r => r.fulfillment_status === 'Full' || r.fulfillment_status === 'Partial').length} available`
+    };
+}
+
+/**
+ * Calculate fulfillment summary for recommendations
+ */
+function calculateFulfillmentSummary(recommendations) {
+    const total = recommendations.length;
+    const full = recommendations.filter(r => r.fulfillment_status === 'Full').length;
+    const partial = recommendations.filter(r => r.fulfillment_status === 'Partial').length;
+    const unavailable = recommendations.filter(r => r.fulfillment_status === 'Unavailable').length;
+
+    return {
+        total_items: total,
+        fully_available: full,
+        partially_available: partial,
+        unavailable: unavailable,
+        fulfillment_rate: total > 0 ? Math.round(((full + partial * 0.5) / total) * 100) : 0
+    };
+}
 
 /**
  * Generate recommendation for a single request

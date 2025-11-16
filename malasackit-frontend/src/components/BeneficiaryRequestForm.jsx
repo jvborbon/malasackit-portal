@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { HiX, HiUser, HiLocationMarker, HiClipboardList, HiExclamationCircle } from 'react-icons/hi';
+import { HiX, HiUser, HiLocationMarker, HiClipboardList, HiExclamationCircle, HiPlus, HiTrash } from 'react-icons/hi';
 import beneficiaryService from '../services/beneficiaryService';
+import { getCategories } from '../services/inventoryService';
+import { getItemTypesByCategory } from '../services/donationService';
 
 const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
-  const [step, setStep] = useState(1); // 1: Select/Create Beneficiary, 2: Request Details
+  const [step, setStep] = useState(1); // 1: Select/Create Beneficiary, 2: Request Details, 3: Select Items
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState(null);
   const [showCreateBeneficiary, setShowCreateBeneficiary] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Item selection state
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [itemTypes, setItemTypes] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   const [beneficiaryForm, setBeneficiaryForm] = useState({
     name: "",
@@ -26,12 +34,20 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
     notes: ""
   });
 
-  // Load beneficiaries when modal opens
+  // Load beneficiaries and categories when modal opens
   useEffect(() => {
     if (isOpen) {
       loadBeneficiaries();
+      loadCategories();
     }
   }, [isOpen]);
+
+  // Load item types when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      loadItemTypes();
+    }
+  }, [selectedCategory]);
 
   const loadBeneficiaries = async () => {
     try {
@@ -43,6 +59,55 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await getCategories();
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  };
+
+  const loadItemTypes = async () => {
+    try {
+      const response = await getItemTypesByCategory(selectedCategory);
+      setItemTypes(response.data || []);
+    } catch (err) {
+      console.error('Failed to load item types:', err);
+      setItemTypes([]);
+    }
+  };
+
+  const addSelectedItem = () => {
+    const newItem = {
+      id: Date.now(),
+      itemtype_id: '',
+      itemtype_name: '',
+      requested_quantity: 1
+    };
+    setSelectedItems([...selectedItems, newItem]);
+  };
+
+  const updateSelectedItem = (id, field, value) => {
+    setSelectedItems(items => items.map(item => {
+      if (item.id === id) {
+        const updated = { ...item, [field]: value };
+        // Update item name when itemtype_id changes
+        if (field === 'itemtype_id') {
+          const itemType = itemTypes.find(it => it.item_type_id === parseInt(value));
+          updated.itemtype_name = itemType ? itemType.item_type_name : '';
+          updated.itemtype_id = parseInt(value);
+        }
+        return updated;
+      }
+      return item;
+    }));
+  };
+
+  const removeSelectedItem = (id) => {
+    setSelectedItems(items => items.filter(item => item.id !== id));
   };
 
   const handleBeneficiaryChange = (field, value) => {
@@ -84,13 +149,20 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
+    // Validate items if any are selected
+    const validItems = selectedItems.filter(item => item.itemtype_id && item.requested_quantity > 0);
+
     try {
       setLoading(true);
       const requestData = {
         beneficiary_id: selectedBeneficiary.beneficiary_id,
         purpose: requestForm.purpose,
         urgency: requestForm.urgency,
-        notes: requestForm.notes
+        notes: requestForm.notes,
+        items: validItems.map(item => ({
+          itemtype_id: item.itemtype_id,
+          requested_quantity: item.requested_quantity
+        }))
       };
 
       const response = await beneficiaryService.createBeneficiaryRequest(requestData);
@@ -127,6 +199,10 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
       urgency: "Medium",
       notes: ""
     });
+    // Reset item selection state
+    setSelectedCategory('');
+    setItemTypes([]);
+    setSelectedItems([]);
     setError(null);
     onClose();
   };
@@ -147,10 +223,11 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  {step === 1 ? 'Select Beneficiary' : 'Request Details'}
+                  {step === 1 ? 'Select Beneficiary' : step === 2 ? 'Request Details' : 'Select Items'}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  {step === 1 ? 'Choose an existing beneficiary or create a new one' : 'Enter request details'}
+                  {step === 1 ? 'Choose an existing beneficiary or create a new one' : 
+                   step === 2 ? 'Enter request details' : 'Specify items needed (optional)'}
                 </p>
               </div>
             </div>
@@ -191,6 +268,12 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                 step >= 2 ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-600'
               }`}>
                 2
+              </div>
+              <div className={`flex-1 h-1 mx-3 ${step >= 3 ? 'bg-red-600' : 'bg-gray-300'}`}></div>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                step >= 3 ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-600'
+              }`}>
+                3
               </div>
             </div>
           </div>
@@ -358,9 +441,9 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                   </form>
                 )}
               </div>
-            ) : (
+            ) : step === 2 ? (
               // Step 2: Request Details
-              <form onSubmit={handleSubmitRequest} className="p-6 space-y-6">
+              <div className="p-6 space-y-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-900">Selected Beneficiary:</h4>
                   <p className="text-gray-600">{selectedBeneficiary?.name} ({selectedBeneficiary?.type})</p>
@@ -420,6 +503,130 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Back
+                  </button>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={handleClose}
+                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStep(3)}
+                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    >
+                      Continue to Items
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Step 3: Select Items
+              <form onSubmit={handleSubmitRequest} className="p-6 space-y-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900">Request Summary:</h4>
+                  <p className="text-gray-600">{selectedBeneficiary?.name} ({selectedBeneficiary?.type})</p>
+                  <p className="text-sm text-gray-600 mt-1">{requestForm.purpose}</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-medium text-gray-900">Specify Items Needed</h4>
+                    <p className="text-sm text-gray-600">(Optional - leave empty for general assistance)</p>
+                  </div>
+
+                  {/* Category Selection */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Item Category
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    >
+                      <option value="">Select a category to add items</option>
+                      {categories.map((category) => (
+                        <option key={category.itemcategory_id} value={category.itemcategory_id}>
+                          {category.category_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Add Item Button */}
+                  {selectedCategory && (
+                    <button
+                      type="button"
+                      onClick={addSelectedItem}
+                      className="mb-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+                    >
+                      <HiPlus className="w-4 h-4 mr-2" />
+                      Add Item
+                    </button>
+                  )}
+
+                  {/* Selected Items List */}
+                  {selectedItems.length > 0 && (
+                    <div className="space-y-3">
+                      <h5 className="font-medium text-gray-900">Requested Items:</h5>
+                      {selectedItems.map((item) => (
+                        <div key={item.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                          <div className="flex-1">
+                            <select
+                              value={item.itemtype_id}
+                              onChange={(e) => updateSelectedItem(item.id, 'itemtype_id', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                              required
+                            >
+                              <option value="">Select item type</option>
+                              {itemTypes.map((itemType) => (
+                                <option key={itemType.item_type_id} value={itemType.item_type_id}>
+                                  {itemType.item_type_name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="w-20">
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.requested_quantity}
+                              onChange={(e) => updateSelectedItem(item.id, 'requested_quantity', parseInt(e.target.value) || 1)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                              placeholder="Qty"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeSelectedItem(item.id)}
+                            className="text-red-600 hover:text-red-800 p-1"
+                          >
+                            <HiTrash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedItems.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <HiClipboardList className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No specific items selected</p>
+                      <p className="text-sm">Request will be processed for general assistance</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
                     className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                   >
                     Back
