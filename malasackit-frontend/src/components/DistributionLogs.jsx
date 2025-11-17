@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import BeneficiaryRequestForm from "./BeneficiaryRequestForm";
 
 const beneficiaryLogs = [];
 
 function BeneficiaryLogs() {
   const [search, setSearch] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
-  const [showModal, setShowModal] = useState(false);
 
   const filteredLogs = beneficiaryLogs.filter(log =>
     log.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -30,14 +28,7 @@ function BeneficiaryLogs() {
     );
   };
 
-  const handleSubmitRequest = (formData) => {
-    // Here you would typically send the data to your backend
-    console.log("New beneficiary request:", formData);
-    
-    // Close modal and show success message
-    setShowModal(false);
-    alert("Beneficiary request logged successfully!");
-  };
+
 
   return (
     <div className="space-y-6">
@@ -156,15 +147,7 @@ function BeneficiaryLogs() {
           </table>
         </div>
 
-        {/* Update Logs Button - Fixed at bottom */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
-          <button 
-            onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-          >
-            Add
-          </button>
-        </div>
+
       </div>
 
       {/* Pagination */}
@@ -183,12 +166,6 @@ function BeneficiaryLogs() {
         </div>
       </div>
 
-      {/* Beneficiary Request Form Modal */}
-      <BeneficiaryRequestForm
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={handleSubmitRequest}
-      />
     </div>
   );
 }

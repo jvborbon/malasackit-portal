@@ -1267,7 +1267,7 @@ export const getCalendarAppointments = async (req, res) => {
             time: row.appointment_time,
             type: row.delivery_method.toLowerCase(),
             deliveryMethod: row.delivery_method.toLowerCase(),
-            location: row.delivery_method === 'pickup' ? 'LASAC Office' : 'Donor Location',
+            location: row.delivery_method === 'pickup' ? 'Donor Location' : 'LASAC Office',
             status: 'approved',
             participants: 1,
             description: `${row.total_quantity} items (${row.item_types} types) - ${row.categories}`,

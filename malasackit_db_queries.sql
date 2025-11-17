@@ -122,6 +122,10 @@ CREATE TABLE BeneficiaryRequests (
 	urgency VARCHAR(50) CHECK (urgency IN ('Low', 'Medium', 'High')),
     purpose TEXT,     -- Reason for request or project
     notes TEXT
+	created_by VARCHAR(25) REFERENCES Users(user_id),
+	updated_by VARCHAR(25) REFERENCES Users(user_id),
+	created_at VARCHAR(25) TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at VARCHAR(25) TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE BeneficiaryRequestItems (
@@ -663,6 +667,7 @@ SELECT * FROM DistributionPlans;
 SELECT * FROM DistributionLogs;
 SELECT * FROM BeneficiaryRequests;
 SELECT * FROM Beneficiaries;
+SELECT * FROM BeneficiaryRequestItems;
 
 SELECT 
     r.role_name,
@@ -751,11 +756,11 @@ INSERT INTO Users (
 
 
 -- Add to DonationRequests
-ALTER TABLE DonationRequests 
+ALTER TABLE BeneficiaryRequests 
 ADD COLUMN created_by VARCHAR(25) REFERENCES Users(user_id),
 ADD COLUMN updated_by VARCHAR(25) REFERENCES Users(user_id),
 ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ADD COLUMN approved_by VARCHAR(25) REFERENCES Users(user_id),
 ADD COLUMN approved_at TIMESTAMP;
 
@@ -848,6 +853,7 @@ DROP TABLE ItemType;
 
 
 ALTER TABLE Users
+DROP COLUMN profile_picture_url
 ADD COLUMN is_walkin_generated BOOLEAN DEFAULT FALSE,
 ADD COLUMN temp_email_generated BOOLEAN DEFAULT FALSE;
 

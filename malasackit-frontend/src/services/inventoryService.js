@@ -152,3 +152,22 @@ export const getLowStockItems = async (threshold = 10) => {
     }
 };
 
+// Alias for compatibility
+export const getAllInventory = getInventory;
+
+// Default export
+const inventoryService = {
+    getInventory,
+    getAllInventory: getInventory,
+    getCategories,
+    getItemTypes,
+    getItemTypesByCategory,
+    getInventoryStats,
+    getInventoryItem,
+    updateInventoryItem,
+    distributeItems,
+    getLowStockItems
+};
+
+export default inventoryService;
+

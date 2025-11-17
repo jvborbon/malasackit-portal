@@ -14,8 +14,11 @@ import {
   HiClipboardList
 } from 'react-icons/hi';
 import beneficiaryService from '../services/beneficiaryService';
+import BeneficiaryRequestForm from './BeneficiaryRequestForm';
+import BeneficiaryRequestsManagement from './BeneficiaryRequestsManagement';
 
 const BeneficiaryManagement = () => {
+  const [activeTab, setActiveTab] = useState('beneficiaries'); // beneficiaries, requests
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,6 +35,14 @@ const BeneficiaryManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // create, edit, view
   const [selectedBeneficiary, setSelectedBeneficiary] = useState(null);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [beneficiaryRequests, setBeneficiaryRequests] = useState([]);
+  
+  // Requests tab state
+  const [allRequests, setAllRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsFilter, setRequestsFilter] = useState(''); // '', 'Pending', 'Approved', etc.
+  const [requestsSearch, setRequestsSearch] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -43,6 +54,22 @@ const BeneficiaryManagement = () => {
     address: '',
     notes: ''
   });
+
+  // Load all requests for requests tab
+  const loadAllRequests = async () => {
+    try {
+      setRequestsLoading(true);
+      const response = await beneficiaryService.getAllBeneficiaryRequests();
+      if (response.success) {
+        setAllRequests(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading requests:', error);
+      setError('Failed to load requests');
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
 
   // Load beneficiaries
   const loadBeneficiaries = async (page = 1) => {
@@ -75,6 +102,12 @@ const BeneficiaryManagement = () => {
   useEffect(() => {
     loadBeneficiaries();
   }, [searchTerm, filterType]);
+
+  useEffect(() => {
+    if (activeTab === 'requests') {
+      loadAllRequests();
+    }
+  }, [activeTab]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -114,15 +147,25 @@ const BeneficiaryManagement = () => {
     setShowModal(true);
   };
 
-  const openViewModal = (beneficiary) => {
+  const openViewModal = async (beneficiary) => {
     setSelectedBeneficiary(beneficiary);
     setModalMode('view');
     setShowModal(true);
+    
+    // Fetch beneficiary requests with items
+    try {
+      const response = await beneficiaryService.getBeneficiaryRequests(beneficiary.beneficiary_id);
+      setBeneficiaryRequests(response.data || []);
+    } catch (err) {
+      console.error('Error fetching beneficiary requests:', err);
+      setBeneficiaryRequests([]);
+    }
   };
 
   const closeModal = () => {
     setShowModal(false);
     setSelectedBeneficiary(null);
+    setBeneficiaryRequests([]);
     setFormData({
       name: '',
       type: '',
@@ -174,6 +217,13 @@ const BeneficiaryManagement = () => {
     loadBeneficiaries(newPage);
   };
 
+  // Request form handler
+  const handleSubmitRequest = (data) => {
+    // Reload beneficiaries after successful request submission
+    loadBeneficiaries(pagination.currentPage);
+    setShowRequestModal(false);
+  };
+
   if (loading && beneficiaries.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -184,17 +234,41 @@ const BeneficiaryManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Action Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-gray-600">Manage beneficiaries and their requests</p>
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          <HiPlus className="w-5 h-5 mr-2" />
-          Add Beneficiary
-        </button>
+
+
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('beneficiaries')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'beneficiaries'
+                ? 'border-red-500 text-red-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center">
+              <HiUsers className="w-5 h-5 mr-2" />
+              Beneficiaries
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'requests'
+                ? 'border-red-500 text-red-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center">
+              <HiClipboardList className="w-5 h-5 mr-2" />
+              Requests
+            </div>
+          </button>
+        </nav>
       </div>
+
+
 
       {/* Error Alert */}
       {error && (
@@ -209,43 +283,54 @@ const BeneficiaryManagement = () => {
         </div>
       )}
 
-      {/* Filters and Search */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search beneficiaries..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            />
+      {/* Beneficiaries Tab Content */}
+      {activeTab === 'beneficiaries' && (
+        <>
+          {/* Filters and Search */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative">
+                  <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search beneficiaries..."
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <HiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <select
+                    value={filterType}
+                    onChange={handleFilterChange}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
+                  >
+                    <option value="">All Types</option>
+                    <option value="Individual">Individual</option>
+                    <option value="Family">Family</option>
+                    <option value="Community">Community</option>
+                    <option value="Institution">Institution</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between lg:justify-end gap-4">
+                <button
+                  onClick={openCreateModal}
+                  className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap"
+                >
+                  <HiPlus className="w-5 h-5 mr-2" />
+                  Add Beneficiary
+                </button>
+              </div>
+            </div>
           </div>
-          
-          <div className="relative">
-            <HiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={filterType}
-              onChange={handleFilterChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
-            >
-              <option value="">All Types</option>
-              <option value="Individual">Individual</option>
-              <option value="Family">Family</option>
-              <option value="Community">Community</option>
-              <option value="Institution">Institution</option>
-            </select>
-          </div>
-          
-          <div className="flex items-center text-sm text-gray-600">
-            <span>Total: {pagination.total} beneficiaries</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Beneficiaries Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* Beneficiaries Table */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -437,7 +522,18 @@ const BeneficiaryManagement = () => {
             </div>
           </div>
         )}
-      </div>
+          </div>
+        </>
+      )}
+
+      {/* Requests Tab Content */}
+      {activeTab === 'requests' && (
+        <BeneficiaryRequestsManagement
+          beneficiaries={beneficiaries}
+          onRefresh={loadBeneficiaries}
+          onNewRequest={() => setShowRequestModal(true)}
+        />
+      )}
 
       {/* Modal for Create/Edit/View */}
       {showModal && (
@@ -510,28 +606,6 @@ const BeneficiaryManagement = () => {
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
                         <p className="text-gray-900">{selectedBeneficiary?.notes || 'No notes'}</p>
-                      </div>
-                    </div>
-
-                    {/* Request Summary */}
-                    <div className="border-t pt-6">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                        <HiClipboardList className="w-5 h-5 mr-2" />
-                        Request Summary
-                      </h3>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-gray-900">{selectedBeneficiary?.total_requests || 0}</p>
-                          <p className="text-sm text-gray-600">Total Requests</p>
-                        </div>
-                        <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-yellow-600">{selectedBeneficiary?.pending_requests || 0}</p>
-                          <p className="text-sm text-gray-600">Pending</p>
-                        </div>
-                        <div className="bg-green-50 p-4 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-green-600">{selectedBeneficiary?.approved_requests || 0}</p>
-                          <p className="text-sm text-gray-600">Approved</p>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -660,8 +734,17 @@ const BeneficiaryManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Beneficiary Request Form Modal */}
+      <BeneficiaryRequestForm
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        onSubmit={handleSubmitRequest}
+      />
     </div>
   );
 };
+
+
 
 export default BeneficiaryManagement;

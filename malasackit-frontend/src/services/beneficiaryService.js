@@ -164,6 +164,21 @@ class BeneficiaryService {
     }
 
     /**
+     * Get beneficiary requests with items for a specific beneficiary
+     */
+    async getBeneficiaryRequests(beneficiaryId) {
+        try {
+            const response = await api.get(`/api/beneficiaries/requests/all`, { 
+                params: { beneficiary_id: beneficiaryId } 
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching beneficiary requests:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Approve beneficiary request
      */
     async approveBeneficiaryRequest(requestId, notes = '') {

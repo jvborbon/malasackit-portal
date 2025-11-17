@@ -21,6 +21,8 @@ import {
   HiRefresh,
   HiChartBar
 } from 'react-icons/hi';
+import beneficiaryService from '../services/beneficiaryService';
+import { getAllInventory } from '../services/inventoryService';
 
 ChartJS.register(
   CategoryScale,
@@ -34,27 +36,114 @@ ChartJS.register(
 
 const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   const [step, setStep] = useState(1);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [inventoryData, setInventoryData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [availableCategories, setAvailableCategories] = useState([]);
   const [formData, setFormData] = useState({
     selectedRequests: [],
     distributionDate: '',
     notes: '',
     distributionPlan: {},
-    selectedDistribution: {}
+    selectedDistribution: {},
+    requests: {}
   });
+  const [aggregatedRequestItems, setAggregatedRequestItems] = useState([]);
 
-  // Reset form when modal opens/closes
+  // Filter inventory data by selected category
+  const safeInventoryData = inventoryData || [];
+  const filteredInventoryData = selectedCategory === 'all' 
+    ? safeInventoryData 
+    : safeInventoryData.filter(item => item.category === selectedCategory);
+
+  // Load data when modal opens
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      loadPendingRequests();
+      loadInventoryData();
+    } else {
       setStep(1);
       setFormData({
         selectedRequests: [],
         distributionDate: '',
         notes: '',
         distributionPlan: {},
-        selectedDistribution: {}
+        selectedDistribution: {},
+        requests: {}
       });
+      setPendingRequests([]);
+      setInventoryData([]);
     }
   }, [isOpen]);
+
+  const loadPendingRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await beneficiaryService.getAllBeneficiaryRequests({
+        status: 'Pending'
+      });
+      if (response.success) {
+        setPendingRequests(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading pending requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadInventoryData = async () => {
+    try {
+      setInventoryLoading(true);
+      const response = await getAllInventory();
+      console.log('Inventory API response:', response); // Debug log
+      
+      if (response.success && response.data && response.data.inventory) {
+        // Transform inventory data to include status and safe distribution amounts
+        const transformedData = response.data.inventory.map(item => {
+          const current = parseInt(item.quantity_available) || 0;
+          const threshold = 10; // Default minimum threshold
+          const safeToDistribute = Math.max(0, current - threshold);
+          
+          let status = 'safe';
+          if (current <= threshold) {
+            status = 'critical';
+          } else if (current <= threshold * 2) {
+            status = 'low';
+          }
+          
+          return {
+            name: item.itemtype_name || item.name,
+            current: current,
+            threshold: threshold,
+            safeToDistribute: safeToDistribute,
+            status: status,
+            category: item.category_name,
+            location: item.location
+          };
+        });
+        setInventoryData(transformedData);
+        
+        // Extract unique categories for filter
+        const categories = [...new Set(transformedData.map(item => item.category).filter(Boolean))];
+        setAvailableCategories(categories);
+        
+        console.log('Transformed inventory data:', transformedData); // Debug log
+        console.log('Available categories:', categories); // Debug log
+      } else {
+        console.log('No inventory data found in response:', response);
+        setInventoryData([]);
+      }
+    } catch (error) {
+      console.error('Error loading inventory data:', error);
+      // Fallback to empty array if service doesn't exist
+      setInventoryData([]);
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
 
   // Sample prescriptive analytics data
   const locations = [
@@ -74,26 +163,25 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     'Taguig City': { food: 20, medical: 30, clothing: 20, education: 25, others: 5 }
   };
 
-  // Inventory with thresholds and recommendations
-  const inventoryData = [];
+  // Inventory data is now loaded from state
 
   // Ensure data is valid for charts
-  const safeInventoryData = inventoryData.filter(item => 
+  const chartInventoryData = inventoryData.filter(item => 
     item && typeof item.current === 'number' && typeof item.threshold === 'number'
   );
 
   const currentInventory = {
-    labels: safeInventoryData.map(item => item.name || 'Unknown'),
+    labels: chartInventoryData.map(item => item.name || 'Unknown'),
     datasets: [
       {
         label: 'Current Stock',
-        data: safeInventoryData.map(item => item.current || 0),
-        backgroundColor: safeInventoryData.map(item => 
+        data: chartInventoryData.map(item => item.current || 0),
+        backgroundColor: chartInventoryData.map(item => 
           item.status === 'safe' ? 'rgba(34, 197, 94, 0.8)' :
           item.status === 'low' ? 'rgba(251, 191, 36, 0.8)' :
           'rgba(239, 68, 68, 0.8)'
         ),
-        borderColor: safeInventoryData.map(item => 
+        borderColor: chartInventoryData.map(item => 
           item.status === 'safe' ? 'rgba(34, 197, 94, 1)' :
           item.status === 'low' ? 'rgba(251, 191, 36, 1)' :
           'rgba(239, 68, 68, 1)'
@@ -102,7 +190,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
       },
       {
         label: 'Minimum Threshold',
-        data: safeInventoryData.map(item => item.threshold || 0),
+        data: chartInventoryData.map(item => item.threshold || 0),
         backgroundColor: 'rgba(107, 114, 128, 0.5)',
         borderColor: 'rgba(107, 114, 128, 1)',
         borderWidth: 2
@@ -215,12 +303,95 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   };
 
   const handleRequestSelection = (requestId) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedRequests: prev.selectedRequests?.includes(requestId)
-        ? prev.selectedRequests.filter(id => id !== requestId)
-        : [...(prev.selectedRequests || []), requestId]
-    }));
+    const newSelectedRequests = formData.selectedRequests?.includes(requestId)
+      ? formData.selectedRequests.filter(id => id !== requestId)
+      : [...(formData.selectedRequests || []), requestId];
+    
+    setFormData(prev => ({ ...prev, selectedRequests: newSelectedRequests }));
+    
+    // Aggregate requested items from selected requests
+    aggregateRequestedItems(newSelectedRequests);
+  };
+
+  const aggregateRequestedItems = (selectedRequestIds) => {
+    if (!selectedRequestIds.length) {
+      setAggregatedRequestItems([]);
+      setFormData(prev => ({ ...prev, requests: {} }));
+      return;
+    }
+
+    // Get selected requests with their items
+    const selectedRequests = pendingRequests.filter(req => 
+      selectedRequestIds.includes(req.request_id)
+    );
+
+    // Aggregate items by itemtype_name
+    const itemAggregation = {};
+    const requestContext = {}; // Track which beneficiaries requested which items
+
+    selectedRequests.forEach(request => {
+      if (request.items && request.items.length > 0) {
+        request.items.forEach(item => {
+          const itemName = item.itemtype_name;
+          const quantity = parseInt(item.quantity_requested) || 0;
+          
+          if (!itemAggregation[itemName]) {
+            itemAggregation[itemName] = {
+              itemtype_name: itemName,
+              total_requested: 0,
+              urgency_levels: [],
+              beneficiaries: [],
+              item_details: item
+            };
+            requestContext[itemName] = [];
+          }
+          
+          itemAggregation[itemName].total_requested += quantity;
+          itemAggregation[itemName].urgency_levels.push(request.urgency);
+          itemAggregation[itemName].beneficiaries.push(request.beneficiary_name);
+          requestContext[itemName].push({
+            beneficiary: request.beneficiary_name,
+            quantity: quantity,
+            urgency: request.urgency,
+            request_id: request.request_id
+          });
+        });
+      }
+    });
+
+    // Convert to array and sort by urgency priority
+    const aggregatedItems = Object.values(itemAggregation).map(item => {
+      const urgencyPriority = {
+        'Critical': 3,
+        'High': 2, 
+        'Medium': 1,
+        'Low': 0
+      };
+      
+      const maxUrgency = item.urgency_levels.reduce((max, current) => 
+        urgencyPriority[current] > urgencyPriority[max] ? current : max
+      , 'Low');
+      
+      return {
+        ...item,
+        max_urgency: maxUrgency,
+        unique_beneficiaries: [...new Set(item.beneficiaries)],
+        context: requestContext[item.itemtype_name]
+      };
+    }).sort((a, b) => {
+      const urgencyPriority = { 'Critical': 3, 'High': 2, 'Medium': 1, 'Low': 0 };
+      return urgencyPriority[b.max_urgency] - urgencyPriority[a.max_urgency];
+    });
+
+    setAggregatedRequestItems(aggregatedItems);
+    
+    // Pre-populate the requests form data with aggregated quantities
+    const newRequests = {};
+    aggregatedItems.forEach(item => {
+      newRequests[item.itemtype_name] = item.total_requested;
+    });
+    
+    setFormData(prev => ({ ...prev, requests: newRequests }));
   };
 
   const handleDistribute = () => {
@@ -308,40 +479,98 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
 
               {/* Inventory Status Overview */}
               <div className="mb-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <HiChartBar className="w-5 h-5 text-blue-600 mr-2" />
-                  Current Inventory Status
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  {safeInventoryData.map((item, index) => (
-                    <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <h5 className="text-sm font-medium text-gray-700 truncate">{item.name}</h5>
-                        <div className={`w-3 h-3 rounded-full ${
-                          item.status === 'safe' ? 'bg-green-500' :
-                          item.status === 'low' ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}></div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-gray-900">{item.current}</div>
-                        <div className="text-xs text-gray-500">Threshold: {item.threshold}</div>
-                        {item.status === 'safe' ? (
-                          <div className="text-xs text-green-600 font-medium">
-                            ✓ Safe to distribute: {item.safeToDistribute}
-                          </div>
-                        ) : item.status === 'low' ? (
-                          <div className="text-xs text-yellow-600 font-medium">
-                            ⚠ Restock recommended
-                          </div>
-                        ) : (
-                          <div className="text-xs text-red-600 font-medium">
-                            🚨 Critical - Hold distribution
-                          </div>
-                        )}
-                      </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900 flex items-center mb-2 sm:mb-0">
+                    <HiChartBar className="w-5 h-5 text-blue-600 mr-2" />
+                    Current Inventory Status
+                    {inventoryLoading && (
+                      <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    )}
+                  </h4>
+                  
+                  {/* Category Filter */}
+                  {availableCategories.length > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium text-gray-700">Filter by category:</label>
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      >
+                        <option value="all">All Categories ({safeInventoryData.length})</option>
+                        {availableCategories.map((category) => {
+                          const count = safeInventoryData.filter(item => item.category === category).length;
+                          return (
+                            <option key={category} value={category}>
+                              {category} ({count})
+                            </option>
+                          );
+                        })}
+                      </select>
                     </div>
-                  ))}
+                  )}
                 </div>
+                {inventoryLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-gray-600">Loading inventory...</span>
+                  </div>
+                ) : filteredInventoryData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <HiChartBar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 mb-2">
+                      {selectedCategory === 'all' ? 'No inventory data available' : `No items found in "${selectedCategory}" category`}
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+                      <button
+                        onClick={loadInventoryData}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                      >
+                        <HiRefresh className="w-4 h-4 mr-1" />
+                        Refresh Inventory
+                      </button>
+                      {selectedCategory !== 'all' && (
+                        <button
+                          onClick={() => setSelectedCategory('all')}
+                          className="text-gray-600 hover:text-gray-700 text-sm font-medium flex items-center"
+                        >
+                          View All Categories
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {filteredInventoryData.map((item, index) => (
+                      <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="text-sm font-medium text-gray-700 truncate">{item.name}</h5>
+                          <div className={`w-3 h-3 rounded-full ${
+                            item.status === 'safe' ? 'bg-green-500' :
+                            item.status === 'low' ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}></div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-2xl font-bold text-gray-900">{item.current}</div>
+                          <div className="text-xs text-gray-500">Threshold: {item.threshold}</div>
+                          {item.status === 'safe' ? (
+                            <div className="text-xs text-green-600 font-medium">
+                              ✓ Safe to distribute: {item.safeToDistribute}
+                            </div>
+                          ) : item.status === 'low' ? (
+                            <div className="text-xs text-yellow-600 font-medium">
+                              ⚠ Restock recommended
+                            </div>
+                          ) : (
+                            <div className="text-xs text-red-600 font-medium">
+                              🚨 Critical - Hold distribution
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Step 1: Select Pending Requests */}
@@ -362,48 +591,96 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                           </p>
                         </div>
                         
-                        {/* Sample pending requests */}
+                        {/* Pending requests from database */}
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {[
-                            { id: 'BID003', name: 'Ana Rodriguez', location: 'Brgy. Poblacion, Lipa City', items: 'School Supplies', count: '30 students', date: '2024-10-20' },
-                            { id: 'BID006', name: 'Miguel Torres', location: 'Brgy. Marawoy, Lipa City', items: 'Emergency Blankets', count: '25 families', date: '2024-10-22' },
-                            { id: 'BID007', name: 'Barangay Captain Santos', location: 'Brgy. Tibig, Lipa City', items: 'Food Package', count: '100 families', date: '2024-10-25' },
-                            { id: 'BID008', name: 'Parish Social Services', location: 'Multiple Barangays', items: 'Medical Supplies', count: '50 individuals', date: '2024-10-23' }
-                          ].map((request, index) => (
-                            <div 
-                              key={request.id} 
-                              className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                                formData.selectedRequests?.includes(request.id) 
-                                  ? 'border-red-500 bg-red-50' 
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                              onClick={() => handleRequestSelection(request.id)}
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={formData.selectedRequests?.includes(request.id) || false}
-                                    onChange={() => handleRequestSelection(request.id)}
-                                    className="mr-3 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                                  />
-                                  <div>
-                                    <h5 className="font-semibold text-gray-900">{request.name}</h5>
-                                    <p className="text-sm text-gray-600">{request.id}</p>
+                          {loading ? (
+                            <div className="flex items-center justify-center py-8">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                              <span className="ml-2 text-gray-600">Loading requests...</span>
+                            </div>
+                          ) : pendingRequests.length === 0 ? (
+                            <div className="text-center py-8">
+                              <HiExclamation className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                              <p className="text-gray-500">No pending beneficiary requests found</p>
+                              <button
+                                onClick={loadPendingRequests}
+                                className="mt-2 text-red-600 hover:text-red-700 text-sm font-medium flex items-center mx-auto"
+                              >
+                                <HiRefresh className="w-4 h-4 mr-1" />
+                                Refresh
+                              </button>
+                            </div>
+                          ) : (
+                            pendingRequests.map((request) => (
+                              <div 
+                                key={request.request_id} 
+                                className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                                  formData.selectedRequests?.includes(request.request_id) 
+                                    ? 'border-red-500 bg-red-50' 
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                onClick={() => handleRequestSelection(request.request_id)}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="flex items-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={formData.selectedRequests?.includes(request.request_id) || false}
+                                      onChange={() => handleRequestSelection(request.request_id)}
+                                      className="mr-3 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                    />
+                                    <div>
+                                      <h5 className="font-semibold text-gray-900">{request.beneficiary_name}</h5>
+                                      <p className="text-sm text-gray-600">Request #{request.request_id}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col items-end space-y-1">
+                                    <span className={`px-2 py-1 text-xs rounded-full ${
+                                      request.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                                      request.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {request.status}
+                                    </span>
+                                    <span className={`px-2 py-1 text-xs rounded-full ${
+                                      request.urgency === 'Critical' ? 'bg-red-100 text-red-800' :
+                                      request.urgency === 'High' ? 'bg-orange-100 text-orange-800' :
+                                      request.urgency === 'Medium' ? 'bg-blue-100 text-blue-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {request.urgency} Priority
+                                    </span>
                                   </div>
                                 </div>
-                                <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
-                                  Pending
-                                </span>
+                                <div className="text-sm text-gray-600 space-y-1">
+                                  <div><strong>Purpose:</strong> {request.purpose}</div>
+                                  <div><strong>Beneficiary Type:</strong> {request.beneficiary_type || 'N/A'}</div>
+                                  {request.items && request.items.length > 0 ? (
+                                    <div>
+                                      <strong>Requested Items:</strong>
+                                      <div className="mt-1 space-y-1">
+                                        {request.items.slice(0, 3).map((item, index) => (
+                                          <div key={index} className="flex justify-between text-xs bg-gray-50 px-2 py-1 rounded">
+                                            <span>{item.itemtype_name}</span>
+                                            <span className="font-medium">Qty: {item.quantity_requested}</span>
+                                          </div>
+                                        ))}
+                                        {request.items.length > 3 && (
+                                          <div className="text-xs text-gray-500 italic">...and {request.items.length - 3} more items</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div><strong>Type:</strong> General assistance request</div>
+                                  )}
+                                  <div><strong>Requested Date:</strong> {new Date(request.request_date).toLocaleDateString()}</div>
+                                  {request.address && (
+                                    <div><strong>Address:</strong> {request.address}</div>
+                                  )}
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-600 space-y-1">
-                                <div><strong>Location:</strong> {request.location}</div>
-                                <div><strong>Items:</strong> {request.items}</div>
-                                <div><strong>Beneficiaries:</strong> {request.count}</div>
-                                <div><strong>Requested Date:</strong> {request.date}</div>
-                              </div>
-                            </div>
-                          ))}
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
@@ -413,43 +690,163 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                         <HiExclamation className="w-5 h-5 text-yellow-600 mr-2" />
                         Assessed Needs
+                        {formData.selectedRequests?.length > 0 && (
+                          <span className="ml-2 text-sm text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                            Based on {formData.selectedRequests.length} selected request{formData.selectedRequests.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
                       </h4>
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                        <p className="text-sm text-yellow-800">
-                          Record the specific quantities needed based on survey findings, community assessment, or direct requests.
-                        </p>
-                      </div>
-                      <div className="space-y-4">
-                        {safeInventoryData.map((item, index) => (
-                          <div key={index} className="border border-gray-100 rounded-lg p-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-medium text-gray-900">{item.name}</span>
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                item.status === 'safe' ? 'bg-green-100 text-green-800' :
-                                item.status === 'low' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                Current Stock: {item.current}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                              <label className="text-sm text-gray-600 w-24">Requested:</label>
-                              <input
-                                type="number"
-                                placeholder="0"
-                                min="0"
-                                value={formData.requests?.[item.name] || ''}
-                                onChange={(e) => handleRequestChange(item.name, e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                              />
-                              <span className="text-sm text-gray-500 w-16">units</span>
-                            </div>
-                            <div className="mt-2 text-xs text-gray-500">
-                              Priority: {item.status === 'safe' ? 'Available for distribution' : 
-                                        item.status === 'low' ? 'Limited availability' : 'Not recommended - low stock'}
-                            </div>
+                      
+                      {formData.selectedRequests?.length === 0 ? (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                          <p className="text-sm text-blue-800 flex items-center">
+                            <HiExclamation className="w-4 h-4 mr-2 flex-shrink-0" />
+                            Select beneficiary requests above to automatically populate assessed needs based on actual requests.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                          <p className="text-sm text-green-800 flex items-center">
+                            <HiCheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                            Showing aggregated needs from selected beneficiary requests. You can adjust quantities based on your assessment.
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {aggregatedRequestItems.length > 0 ? (
+                          aggregatedRequestItems.map((requestItem, index) => {
+                            // Find matching inventory item for current stock info
+                            const inventoryItem = safeInventoryData.find(inv => 
+                              inv.name === requestItem.itemtype_name
+                            );
+                            const currentStock = inventoryItem ? inventoryItem.current : 0;
+                            const stockStatus = inventoryItem ? inventoryItem.status : 'unknown';
+                            
+                            return (
+                              <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <span className="font-medium text-gray-900">{requestItem.itemtype_name}</span>
+                                      <span className={`px-2 py-1 text-xs rounded-full ${
+                                        requestItem.max_urgency === 'Critical' ? 'bg-red-100 text-red-800' :
+                                        requestItem.max_urgency === 'High' ? 'bg-orange-100 text-orange-800' :
+                                        requestItem.max_urgency === 'Medium' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-gray-100 text-gray-800'
+                                      }`}>
+                                        {requestItem.max_urgency} Priority
+                                      </span>
+                                    </div>
+                                    <div className="text-xs text-gray-600">
+                                      Requested by: {requestItem.unique_beneficiaries.slice(0, 3).join(', ')}
+                                      {requestItem.unique_beneficiaries.length > 3 && (
+                                        <span> and {requestItem.unique_beneficiaries.length - 3} more</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <span className={`px-2 py-1 text-xs rounded-full ${
+                                    stockStatus === 'safe' ? 'bg-green-100 text-green-800' :
+                                    stockStatus === 'low' ? 'bg-yellow-100 text-yellow-800' :
+                                    stockStatus === 'critical' ? 'bg-red-100 text-red-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    Current Stock: {currentStock}
+                                  </span>
+                                </div>
+                                
+                                <div className="flex items-center space-x-3">
+                                  <label className="text-sm text-gray-600 w-24">Assessed:</label>
+                                  <input
+                                    type="number"
+                                    placeholder={requestItem.total_requested.toString()}
+                                    min="0"
+                                    value={formData.requests?.[requestItem.itemtype_name] || ''}
+                                    onChange={(e) => handleRequestChange(requestItem.itemtype_name, e.target.value)}
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                  />
+                                  <span className="text-sm text-gray-500 w-16">units</span>
+                                </div>
+                                
+                                {/* Request Details */}
+                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                  <div className="text-xs text-gray-600">
+                                    <div className="font-medium mb-1">Request Breakdown:</div>
+                                    <div className="space-y-1">
+                                      {requestItem.context.slice(0, 2).map((ctx, ctxIndex) => (
+                                        <div key={ctxIndex} className="flex justify-between">
+                                          <span>{ctx.beneficiary} (#{ctx.request_id})</span>
+                                          <span className="font-medium">{ctx.quantity} units</span>
+                                        </div>
+                                      ))}
+                                      {requestItem.context.length > 2 && (
+                                        <div className="text-gray-500 italic">
+                                          ...and {requestItem.context.length - 2} more requests
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="mt-2 pt-2 border-t border-gray-50 font-medium">
+                                      Total Requested: {requestItem.total_requested} units
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="mt-2 text-xs">
+                                  {currentStock >= requestItem.total_requested ? (
+                                    <span className="text-green-600 font-medium">
+                                      ✓ Sufficient stock available
+                                    </span>
+                                  ) : currentStock > 0 ? (
+                                    <span className="text-yellow-600 font-medium">
+                                      ⚠ Partial fulfillment possible ({currentStock} available)
+                                    </span>
+                                  ) : (
+                                    <span className="text-red-600 font-medium">
+                                      ❌ Out of stock - requires procurement
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : formData.selectedRequests?.length > 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <HiExclamation className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                            <p>Selected requests don't have specific item requirements.</p>
+                            <p className="text-sm">These may be general assistance requests.</p>
                           </div>
-                        ))}
+                        ) : (
+                          filteredInventoryData.map((item, index) => (
+                            <div key={index} className="border border-gray-100 rounded-lg p-4">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="font-medium text-gray-900">{item.name}</span>
+                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                  item.status === 'safe' ? 'bg-green-100 text-green-800' :
+                                  item.status === 'low' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}>
+                                  Current Stock: {item.current}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <label className="text-sm text-gray-600 w-24">Requested:</label>
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  min="0"
+                                  value={formData.requests?.[item.name] || ''}
+                                  onChange={(e) => handleRequestChange(item.name, e.target.value)}
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                />
+                                <span className="text-sm text-gray-500 w-16">units</span>
+                              </div>
+                              <div className="mt-2 text-xs text-gray-500">
+                                Priority: {item.status === 'safe' ? 'Available for distribution' : 
+                                          item.status === 'low' ? 'Limited availability' : 'Not recommended - low stock'}
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   </div>
@@ -465,7 +862,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                 <HiLightBulb className="w-6 h-6 text-blue-600 mr-3" />
                 <div>
                   <h4 className="font-semibold text-blue-900">Distribution Planning</h4>
-                  <p className="text-blue-700 text-sm mt-1">Create distribution plan for {formData.selectedRequests?.length || 0} selected beneficiary requests</p>
+                  <p className="text-blue-700 text-sm mt-1">Create distribution plan for {(formData.selectedRequests?.length || 0)} selected beneficiary requests</p>
                 </div>
               </div>
             </div>
@@ -478,16 +875,37 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                   Recommended Distribution Plan
                 </h4>
                 <div className="space-y-4">
-                  {safeInventoryData.map((item, index) => {
-                    const requested = formData.requests[item.name] || 0;
-                    const available = item.current;
-                    const recommended = Math.min(requested, item.safeToDistribute, available);
+                  {/* Show items based on requests or inventory */}
+                  {(aggregatedRequestItems.length > 0 ? aggregatedRequestItems : filteredInventoryData).map((item, index) => {
+                    const itemName = item.itemtype_name || item.name;
+                    const requested = formData.requests[itemName] || 0;
+                    
+                    // Find corresponding inventory item for stock info
+                    const inventoryItem = aggregatedRequestItems.length > 0 
+                      ? safeInventoryData.find(inv => inv.name === itemName)
+                      : item;
+                    
+                    const available = inventoryItem ? inventoryItem.current : 0;
+                    const safeToDistribute = inventoryItem ? inventoryItem.safeToDistribute : 0;
+                    const recommended = Math.min(requested, safeToDistribute, available);
                     const canFulfill = recommended === requested;
                     
                     return (
                       <div key={index} className="border border-gray-100 rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
-                          <span className="font-medium text-gray-900">{item.name}</span>
+                          <div className="flex-1">
+                            <span className="font-medium text-gray-900">{itemName}</span>
+                            {item.max_urgency && (
+                              <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                                item.max_urgency === 'Critical' ? 'bg-red-100 text-red-800' :
+                                item.max_urgency === 'High' ? 'bg-orange-100 text-orange-800' :
+                                item.max_urgency === 'Medium' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {item.max_urgency} Priority
+                              </span>
+                            )}
+                          </div>
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             canFulfill ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                           }`}>
@@ -571,17 +989,22 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
               <h5 className="text-lg font-semibold text-gray-900 mb-4">Selected Requests Summary</h5>
               <div className="space-y-4">
                 {formData.selectedRequests?.map((requestId) => {
-                  const request = mockPendingRequests.find(r => r.id === requestId);
+                  const request = pendingRequests.find(r => r.request_id === requestId);
                   return (
                     <div key={requestId} className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex justify-between items-start mb-2">
-                        <h6 className="text-sm font-medium text-gray-900">Request #{request?.id}</h6>
-                        <span className="text-xs text-gray-500">{request?.date}</span>
+                        <h6 className="text-sm font-medium text-gray-900">Request #{request?.request_id}</h6>
+                        <span className="text-xs text-gray-500">{new Date(request?.request_date).toLocaleDateString()}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div><strong>Location:</strong> {request?.location}</div>
-                        <div><strong>Beneficiaries:</strong> {request?.count}</div>
-                        <div className="col-span-2"><strong>Items:</strong> {request?.items}</div>
+                        <div><strong>Beneficiary:</strong> {request?.beneficiary_name}</div>
+                        <div><strong>Priority:</strong> {request?.urgency}</div>
+                        <div className="col-span-2"><strong>Purpose:</strong> {request?.purpose}</div>
+                        {request?.items && request.items.length > 0 && (
+                          <div className="col-span-2">
+                            <strong>Items:</strong> {request.items.map(item => `${item.itemtype_name} (${item.quantity_requested})`).join(', ')}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

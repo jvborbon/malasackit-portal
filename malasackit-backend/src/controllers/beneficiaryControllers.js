@@ -378,7 +378,7 @@ export const createBeneficiaryRequest = async (req, res) => {
                     await query(
                         `INSERT INTO BeneficiaryRequestItems (request_id, itemtype_id, quantity_requested, notes)
                          VALUES ($1, $2, $3, $4)`,
-                        [requestId, item.itemtype_id, item.quantity_requested, item.notes]
+                        [requestId, item.itemtype_id, item.requested_quantity, item.notes || null]
                     );
                 }
             }
@@ -496,9 +496,30 @@ export const getAllBeneficiaryRequests = async (req, res) => {
 
         const total = parseInt(countResult.rows[0].total);
 
+        // Get items for each request
+        const requestsWithItems = await Promise.all(
+            requestsResult.rows.map(async (request) => {
+                const itemsQuery = `
+                    SELECT bri.*, it.itemtype_name, ic.category_name
+                    FROM BeneficiaryRequestItems bri
+                    JOIN ItemType it ON bri.itemtype_id = it.itemtype_id
+                    JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+                    WHERE bri.request_id = $1
+                    ORDER BY it.itemtype_name
+                `;
+                
+                const itemsResult = await query(itemsQuery, [request.request_id]);
+                
+                return {
+                    ...request,
+                    items: itemsResult.rows
+                };
+            })
+        );
+
         res.json({
             success: true,
-            data: requestsResult.rows,
+            data: requestsWithItems,
             pagination: {
                 total,
                 limit: parseInt(limit),

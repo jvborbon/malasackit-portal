@@ -6,12 +6,11 @@ import {
   HiEye, 
   HiCheck, 
   HiX,
-  HiClockIcon,
+  HiClock,
   HiExclamationCircle,
   HiClipboardList,
   HiUsers
 } from "react-icons/hi";
-import BeneficiaryRequestForm from "./BeneficiaryRequestForm";
 import beneficiaryService from "../services/beneficiaryService";
 import distributionService from "../services/distributionService";
 
@@ -28,7 +27,6 @@ function BeneficiaryRequestsManagement() {
   const [urgencyFilter, setUrgencyFilter] = useState("");
   
   // Modal states
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   
@@ -118,15 +116,11 @@ function BeneficiaryRequestsManagement() {
     }
   };
 
-  const handleSubmitRequest = (data) => {
-    // Reload requests after successful submission
-    loadBeneficiaryRequests();
-    setShowRequestModal(false);
-  };
+
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      'Pending': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: HiClockIcon },
+      'Pending': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: HiClock },
       'Approved': { bg: 'bg-green-100', text: 'text-green-800', icon: HiCheck },
       'Fulfilled': { bg: 'bg-blue-100', text: 'text-blue-800', icon: HiCheck },
       'Rejected': { bg: 'bg-red-100', text: 'text-red-800', icon: HiX }
@@ -177,15 +171,8 @@ function BeneficiaryRequestsManagement() {
             <HiClipboardList className="w-8 h-8 text-red-600 mr-3" />
             Distribution Management
           </h1>
-          <p className="text-gray-600 mt-1">Manage beneficiary requests and distribution logs</p>
+          <p className="text-gray-600 mt-1">Intended Resource Allocation for Beneficiaries</p>
         </div>
-        <button
-          onClick={() => setShowRequestModal(true)}
-          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          <HiPlus className="w-5 h-5 mr-2" />
-          New Request
-        </button>
       </div>
 
       {/* Error Alert */}
@@ -482,13 +469,6 @@ function BeneficiaryRequestsManagement() {
           </div>
         )}
       </div>
-
-      {/* Beneficiary Request Form Modal */}
-      <BeneficiaryRequestForm
-        isOpen={showRequestModal}
-        onClose={() => setShowRequestModal(false)}
-        onSubmit={handleSubmitRequest}
-      />
 
       {/* Request Details Modal */}
       {showDetailsModal && selectedRequest && (
