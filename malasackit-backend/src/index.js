@@ -11,6 +11,7 @@ import inventoryRoutes from './routes/inventoryRoutes.js';
 import beneficiaryRoutes from './routes/beneficiaryRoutes.js';
 import distributionRoutes from './routes/distributionRoutes.js';
 import walkInRoutes from './routes/walkInRoutes.js';
+import receiptRoutes from './routes/receiptRoutes.js';
 
 const app = express();
 const port = 3000;
@@ -37,6 +38,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/beneficiaries', beneficiaryRoutes);
 app.use('/api/distribution', distributionRoutes);
 app.use('/api/walkin', walkInRoutes);
+app.use('/api/receipts', receiptRoutes);
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

@@ -13,10 +13,12 @@ import {
     HiTrash,
     HiExclamation,
     HiTruck,
-    HiHome
+    HiHome,
+    HiDocumentText
 } from 'react-icons/hi';
 import { getUserDonations, getDonationDetails, cancelDonationRequest } from '../services/donationService';
 import PaginationComponent from './common/PaginationComponent';
+import ReceiptGenerator from './ReceiptGenerator';
 
 export default function DonorDonationHistory() {
     const [donations, setDonations] = useState([]);
@@ -27,6 +29,7 @@ export default function DonorDonationHistory() {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [selectedDonation, setSelectedDonation] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
@@ -184,8 +187,15 @@ export default function DonorDonationHistory() {
         setShowDetailsModal(false);
         setShowEditModal(false);
         setShowCancelModal(false);
+        setShowReceiptModal(false);
         setSelectedDonation(null);
         setCancelReason('');
+    };
+
+    // Handle receipt generation
+    const handleGenerateReceipt = (donation) => {
+        setSelectedDonation(donation);
+        setShowReceiptModal(true);
     };
 
     // Get status badge
@@ -462,6 +472,17 @@ export default function DonorDonationHistory() {
                                                             title="Cancel Request"
                                                         >
                                                             <HiX className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {/* Receipt Button - Only for approved/completed donations */}
+                                                    {donation.status && (donation.status.toLowerCase() === 'approved' || donation.status.toLowerCase() === 'completed') && (
+                                                        <button
+                                                            onClick={() => handleGenerateReceipt(donation)}
+                                                            className="p-1.5 text-purple-500 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                                                            title="Generate Receipt"
+                                                        >
+                                                            <HiDocumentText className="w-4 h-4" />
                                                         </button>
                                                     )}
                                                 </div>
@@ -744,6 +765,20 @@ export default function DonorDonationHistory() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Receipt Generator Modal */}
+            {showReceiptModal && selectedDonation && (
+                <ReceiptGenerator
+                    donation={{
+                        donation_id: selectedDonation.id,
+                        donor_name: selectedDonation.donor_name || 'Unknown Donor',
+                        status: selectedDonation.status,
+                        total_value: selectedDonation.total_value,
+                        item_count: selectedDonation.item_count
+                    }}
+                    onClose={closeAllModals}
+                />
             )}
         </div>
     );
