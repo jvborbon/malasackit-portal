@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiUser, HiLockClosed } from 'react-icons/hi';
+import { HiUser, HiLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
 import { useAuth } from '../auth/Authentication';
 
 // Google-style Floating Input Component
@@ -40,6 +40,58 @@ const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon:
         </div>
     );
 };
+
+// Password Input with Toggle
+const FloatingPasswordInput = ({ label, name, value, onChange, icon: Icon, required = false, disabled = false }) => {
+    const [isFocused, setIsFocused] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const hasValue = value && value.length > 0;
+    const shouldFloat = isFocused || hasValue;
+
+    return (
+        <div className="relative">
+            <div className="relative">
+                <Icon className={`absolute left-4 w-5 h-5 transition-all duration-200 z-10 ${
+                    shouldFloat ? 'top-6 text-red-200' : 'top-1/2 transform -translate-y-1/2 text-red-300'
+                }`} />
+                <input
+                    type={showPassword ? "text" : "password"}
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    className={`w-full pl-12 pr-12 py-4 bg-transparent border-2 text-white placeholder-transparent focus:outline-none text-base rounded-lg transition-all duration-200 ${
+                        isFocused ? 'border-red-200' : 'border-white'
+                    } ${shouldFloat ? 'pt-6 pb-2' : 'pt-4 pb-4'}`}
+                    placeholder=" "
+                    required={required}
+                    disabled={disabled}
+                />
+                <label className={`absolute transition-all duration-200 pointer-events-none bg-red-600 px-1 ${
+                    shouldFloat 
+                        ? 'left-4 -top-2 text-xs text-red-200 scale-90' 
+                        : 'left-12 top-1/2 transform -translate-y-1/2 text-base text-white'
+                }`}>
+                    {label}
+                </label>
+                <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-red-200 transition-colors focus:outline-none"
+                    tabIndex={-1}
+                >
+                    {showPassword ? (
+                        <HiEyeOff className="w-5 h-5" />
+                    ) : (
+                        <HiEye className="w-5 h-5" />
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 
 const loginUser = async (email, password) => {
     try {
@@ -161,9 +213,8 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
                 disabled={isLoading}
             />
 
-            <FloatingLoginInput
+            <FloatingPasswordInput
                 label="Password"
-                type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
