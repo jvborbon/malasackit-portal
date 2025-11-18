@@ -495,7 +495,7 @@ export const updateDonationRequest = async (req, res) => {
             `;
             await query(activityQuery, [
                 userId,
-                `Updated donation request (ID: ${donationId}) - delivery method and notes`
+                `Updated donation request (ID: ${donationId}) with ${items.length} item(s)`
             ]);
 
             res.json({
@@ -503,8 +503,8 @@ export const updateDonationRequest = async (req, res) => {
                 message: 'Donation request updated successfully',
                 data: {
                     donation_id: donationId,
-                    delivery_method: delivery_method,
-                    notes: notes
+                    total_items: items.length,
+                    total_value: totalValue
                 }
             });
 
