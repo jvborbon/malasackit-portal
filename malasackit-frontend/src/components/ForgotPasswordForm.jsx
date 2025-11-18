@@ -69,7 +69,7 @@ export default function ForgotPasswordForm({ onBackToLogin }) {
                 throw new Error('Please enter your email address or full name');
             }
 
-            const response = await fetch('http://localhost:3000/api/auth/forgot-password', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/forgot-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

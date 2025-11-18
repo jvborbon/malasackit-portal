@@ -12,8 +12,8 @@ const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon:
     return (
         <div className="relative">
             <div className="relative">
-                <Icon className={`absolute left-4 w-5 h-5 transition-all duration-200 z-10 ${
-                    shouldFloat ? 'top-6 text-red-200' : 'top-1/2 transform -translate-y-1/2 text-red-300'
+                <Icon className={`absolute left-3 sm:left-4 w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 z-10 ${
+                    shouldFloat ? 'top-5 sm:top-6 text-red-200' : 'top-1/2 transform -translate-y-1/2 text-red-300'
                 }`} />
                 <input
                     type={type}
@@ -22,17 +22,17 @@ const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon:
                     onChange={onChange}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className={`w-full pl-12 pr-4 py-4 bg-transparent border-2 text-white placeholder-transparent focus:outline-none text-base rounded-lg transition-all duration-200 ${
+                    className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-transparent border-2 text-white placeholder-transparent focus:outline-none text-sm sm:text-base rounded-lg transition-all duration-200 ${
                         isFocused ? 'border-red-200' : 'border-white'
-                    } ${shouldFloat ? 'pt-6 pb-2' : 'pt-4 pb-4'}`}
+                    } ${shouldFloat ? 'pt-5 sm:pt-6 pb-1 sm:pb-2' : 'pt-3 sm:pt-4 pb-3 sm:pb-4'}`}
                     placeholder=" "
                     required={required}
                     disabled={disabled}
                 />
                 <label className={`absolute transition-all duration-200 pointer-events-none bg-red-600 px-1 ${
                     shouldFloat 
-                        ? 'left-4 -top-2 text-xs text-red-200 scale-90' 
-                        : 'left-12 top-1/2 transform -translate-y-1/2 text-base text-white'
+                        ? 'left-3 sm:left-4 -top-2 text-xs text-red-200 scale-90' 
+                        : 'left-10 sm:left-12 top-1/2 transform -translate-y-1/2 text-sm sm:text-base text-white'
                 }`}>
                     {label}
                 </label>
@@ -51,8 +51,8 @@ const FloatingPasswordInput = ({ label, name, value, onChange, icon: Icon, requi
     return (
         <div className="relative">
             <div className="relative">
-                <Icon className={`absolute left-4 w-5 h-5 transition-all duration-200 z-10 ${
-                    shouldFloat ? 'top-6 text-red-200' : 'top-1/2 transform -translate-y-1/2 text-red-300'
+                <Icon className={`absolute left-3 sm:left-4 w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 z-10 ${
+                    shouldFloat ? 'top-5 sm:top-6 text-red-200' : 'top-1/2 transform -translate-y-1/2 text-red-300'
                 }`} />
                 <input
                     type={showPassword ? "text" : "password"}
@@ -61,30 +61,30 @@ const FloatingPasswordInput = ({ label, name, value, onChange, icon: Icon, requi
                     onChange={onChange}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className={`w-full pl-12 pr-12 py-4 bg-transparent border-2 text-white placeholder-transparent focus:outline-none text-base rounded-lg transition-all duration-200 ${
+                    className={`w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 bg-transparent border-2 text-white placeholder-transparent focus:outline-none text-sm sm:text-base rounded-lg transition-all duration-200 ${
                         isFocused ? 'border-red-200' : 'border-white'
-                    } ${shouldFloat ? 'pt-6 pb-2' : 'pt-4 pb-4'}`}
+                    } ${shouldFloat ? 'pt-5 sm:pt-6 pb-1 sm:pb-2' : 'pt-3 sm:pt-4 pb-3 sm:pb-4'}`}
                     placeholder=" "
                     required={required}
                     disabled={disabled}
                 />
                 <label className={`absolute transition-all duration-200 pointer-events-none bg-red-600 px-1 ${
                     shouldFloat 
-                        ? 'left-4 -top-2 text-xs text-red-200 scale-90' 
-                        : 'left-12 top-1/2 transform -translate-y-1/2 text-base text-white'
+                        ? 'left-3 sm:left-4 -top-2 text-xs text-red-200 scale-90' 
+                        : 'left-10 sm:left-12 top-1/2 transform -translate-y-1/2 text-sm sm:text-base text-white'
                 }`}>
                     {label}
                 </label>
                 <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-red-200 transition-colors focus:outline-none"
+                    className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-red-200 transition-colors focus:outline-none"
                     tabIndex={-1}
                 >
                     {showPassword ? (
-                        <HiEyeOff className="w-5 h-5" />
+                        <HiEyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                     ) : (
-                        <HiEye className="w-5 h-5" />
+                        <HiEye className="w-4 h-4 sm:w-5 sm:h-5" />
                     )}
                 </button>
             </div>
@@ -95,7 +95,7 @@ const FloatingPasswordInput = ({ label, name, value, onChange, icon: Icon, requi
 
 const loginUser = async (email, password) => {
     try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ const loginUser = async (email, password) => {
 
 const logoutUser = async () => {
     try {
-        const response = await fetch('http://localhost:3000/api/auth/logout', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/logout`, {
             method: 'POST',
             credentials: 'include', // Include cookies
         });
@@ -129,7 +129,7 @@ const logoutUser = async () => {
 
 const getUserProfile = async () => {
     try {
-        const response = await fetch('http://localhost:3000/api/auth/profile', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/profile`, {
             method: 'GET',
             credentials: 'include', // Include cookies
         });
@@ -194,11 +194,11 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 w-full max-w-sm sm:max-w-md mx-auto px-4 sm:px-0">
             {/* Error Message */}
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md">
-                    <p className="text-sm">{error}</p>
+                <div className="bg-red-100 border border-red-400 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded-md">
+                    <p className="text-xs sm:text-sm">{error}</p>
                 </div>
             )}
 
@@ -223,21 +223,21 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
                 disabled={isLoading}
             />
 
-            <div className="flex items-center justify-between text-white pt-2" style={{ transform: 'translateZ(0)', willChange: 'auto' }}>
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 text-white pt-2" style={{ transform: 'translateZ(0)', willChange: 'auto' }}>
                 <label className="flex items-center cursor-pointer">
                     <input
                         type="checkbox"
                         name="keepLoggedIn"
                         checked={formData.keepLoggedIn}
                         onChange={handleInputChange}
-                        className="mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                        className="mr-2 sm:mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                     />
-                    <span className="text-sm">Keep me logged in</span>
+                    <span className="text-xs sm:text-sm">Keep me logged in</span>
                 </label>
                 <button
                     type="button"
                     onClick={onSwitchToForgotPassword}
-                    className="text-sm hover:underline hover:text-red-200 transition-colors"
+                    className="text-xs sm:text-sm hover:underline hover:text-red-200 transition-colors text-left sm:text-right"
                 >
                     Forgot password?
                 </button>
@@ -246,7 +246,7 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
             <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-white text-red-600 font-bold py-4 px-6 hover:bg-red-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center rounded-md text-base"
+                className="w-full bg-white text-red-600 font-bold py-3 sm:py-4 px-4 sm:px-6 hover:bg-red-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center rounded-md text-sm sm:text-base"
             >
             {isLoading ? (
                 <>
@@ -258,12 +258,12 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
             )}
             </button>
 
-            <div className="text-center pt-6">
-                <span className="text-white text-base">Don't have an account? </span>
+            <div className="text-center pt-4 sm:pt-6">
+                <span className="text-white text-sm sm:text-base">Don't have an account? </span>
                 <button 
                     type="button"
                     onClick={onSwitchToRegister}
-                    className="text-blue-200 hover:text-blue-100 underline font-semibold text-base transition-colors"
+                    className="text-blue-200 hover:text-blue-100 underline font-semibold text-sm sm:text-base transition-colors"
                 >
                     Register here
                 </button>

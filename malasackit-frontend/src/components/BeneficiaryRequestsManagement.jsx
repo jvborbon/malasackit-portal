@@ -12,14 +12,12 @@ import {
   HiUsers
 } from "react-icons/hi";
 import beneficiaryService from "../services/beneficiaryService";
-import distributionService from "../services/distributionService";
 
-function BeneficiaryRequestsManagement() {
+function BeneficiaryRequestsManagement({ onNewRequest }) {
   const [beneficiaryRequests, setBeneficiaryRequests] = useState([]);
-  const [distributionLogs, setDistributionLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('requests'); // 'requests' or 'logs'
+
   
   // Search and filter states
   const [search, setSearch] = useState("");
@@ -39,12 +37,8 @@ function BeneficiaryRequestsManagement() {
   });
 
   useEffect(() => {
-    if (activeTab === 'requests') {
-      loadBeneficiaryRequests();
-    } else {
-      loadDistributionLogs();
-    }
-  }, [activeTab, search, statusFilter, urgencyFilter]);
+    loadBeneficiaryRequests();
+  }, [search, statusFilter, urgencyFilter]);
 
   const loadBeneficiaryRequests = async (page = 1) => {
     try {
@@ -74,29 +68,7 @@ function BeneficiaryRequestsManagement() {
     }
   };
 
-  const loadDistributionLogs = async (page = 1) => {
-    try {
-      setLoading(true);
-      const params = {
-        limit: pagination.limit,
-        offset: (page - 1) * pagination.limit
-      };
-      
-      const response = await distributionService.getDistributionLogs(params);
-      
-      setDistributionLogs(response.data);
-      setPagination(prev => ({
-        ...prev,
-        currentPage: response.pagination.currentPage,
-        totalPages: response.pagination.pages,
-        total: response.pagination.total
-      }));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleApproveRequest = async (requestId) => {
     try {
@@ -154,7 +126,7 @@ function BeneficiaryRequestsManagement() {
     );
   };
 
-  if (loading && (beneficiaryRequests.length === 0 && distributionLogs.length === 0)) {
+  if (loading && beneficiaryRequests.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
@@ -169,10 +141,17 @@ function BeneficiaryRequestsManagement() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
             <HiClipboardList className="w-8 h-8 text-red-600 mr-3" />
-            Distribution Management
+            Beneficiary Requests
           </h1>
-          <p className="text-gray-600 mt-1">Intended Resource Allocation for Beneficiaries</p>
+          <p className="text-gray-600 mt-1">Manage requests from beneficiaries</p>
         </div>
+        <button
+          onClick={onNewRequest}
+          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          <HiPlus className="w-5 h-5 mr-2" />
+          Add Request
+        </button>
       </div>
 
       {/* Error Alert */}
@@ -188,33 +167,7 @@ function BeneficiaryRequestsManagement() {
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('requests')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'requests'
-                ? 'border-red-500 text-red-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <HiUsers className="w-5 h-5 inline mr-2" />
-            Beneficiary Requests ({pagination.total})
-          </button>
-          <button
-            onClick={() => setActiveTab('logs')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'logs'
-                ? 'border-red-500 text-red-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <HiClipboardList className="w-5 h-5 inline mr-2" />
-            Distribution Logs
-          </button>
-        </nav>
-      </div>
+
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -230,38 +183,34 @@ function BeneficiaryRequestsManagement() {
             />
           </div>
           
-          {activeTab === 'requests' && (
-            <>
-              <div className="relative">
-                <HiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Fulfilled">Fulfilled</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              </div>
-              
-              <div className="relative">
-                <HiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <select
-                  value={urgencyFilter}
-                  onChange={(e) => setUrgencyFilter(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
-                >
-                  <option value="">All Urgency</option>
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
-              </div>
-            </>
-          )}
+          <div className="relative">
+            <HiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
+            >
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Fulfilled">Fulfilled</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          
+          <div className="relative">
+            <HiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <select
+              value={urgencyFilter}
+              onChange={(e) => setUrgencyFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
+            >
+              <option value="">All Urgency</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
           
           <div className="flex items-center text-sm text-gray-600">
             <span>Total: {pagination.total} items</span>
@@ -275,51 +224,28 @@ function BeneficiaryRequestsManagement() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                {activeTab === 'requests' ? (
-                  <>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Beneficiary
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Purpose
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Urgency
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </>
-                ) : (
-                  <>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Beneficiary
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Items Distributed
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Quantity
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Distribution Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Distributed By
-                    </th>
-                  </>
-                )}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Beneficiary
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Purpose
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Urgency
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {activeTab === 'requests' ? (
-                beneficiaryRequests.map((request) => (
+              {beneficiaryRequests.map((request) => (
                   <tr key={request.request_id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -396,51 +322,7 @@ function BeneficiaryRequestsManagement() {
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                distributionLogs.map((log) => (
-                  <tr key={log.distribution_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                            <HiUsers className="h-6 w-6 text-green-600" />
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {log.beneficiary_name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {log.beneficiary_type}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {log.itemtype_name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {log.category_name}
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {log.quantity_distributed}
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(log.distribution_date).toLocaleDateString()}
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {log.distributed_by_name}
-                    </td>
-                  </tr>
-                ))
-              )}
+                ))}
             </tbody>
           </table>
         </div>
@@ -451,14 +333,14 @@ function BeneficiaryRequestsManagement() {
             <div className="flex items-center justify-between">
               <div className="flex-1 flex justify-between sm:hidden">
                 <button
-                  onClick={() => activeTab === 'requests' ? loadBeneficiaryRequests(pagination.currentPage - 1) : loadDistributionLogs(pagination.currentPage - 1)}
+                  onClick={() => loadBeneficiaryRequests(pagination.currentPage - 1)}
                   disabled={pagination.currentPage === 1}
                   className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
                 <button
-                  onClick={() => activeTab === 'requests' ? loadBeneficiaryRequests(pagination.currentPage + 1) : loadDistributionLogs(pagination.currentPage + 1)}
+                  onClick={() => loadBeneficiaryRequests(pagination.currentPage + 1)}
                   disabled={pagination.currentPage === pagination.totalPages}
                   className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

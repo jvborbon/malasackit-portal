@@ -1090,10 +1090,25 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                   {step < 3 ? (
                     <button
                       onClick={() => setStep(step + 1)}
-                      disabled={step === 1 && (
-                        !formData.selectedRequests?.length || 
-                        !Object.values(formData.requests || {}).some(qty => qty > 0)
-                      )}
+                      disabled={
+                        (step === 1 && (
+                          !formData.selectedRequests?.length || 
+                          !Object.values(formData.requests || {}).some(qty => parseInt(qty) > 0)
+                        )) ||
+                        (step === 2 && (() => {
+                          // Calculate if any items have recommended quantities > 0
+                          return !aggregatedRequestItems.some(item => {
+                            const itemName = item.itemtype_name;
+                            const requested = parseInt(formData.requests?.[itemName]) || item.total_requested;
+                            const inventoryItem = filteredInventoryData.find(inv => inv.name === itemName) || 
+                                                safeInventoryData.find(inv => inv.name === itemName) || item;
+                            const available = inventoryItem ? inventoryItem.current : 0;
+                            const safeToDistribute = inventoryItem ? Math.max(0, inventoryItem.safeToDistribute || 0) : 0;
+                            const recommended = Math.min(requested, safeToDistribute, available);
+                            return recommended > 0;
+                          });
+                        })())
+                      }
                       className="flex-1 sm:flex-none px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
                     >
                       {step === 1 ? 'Generate Plan' : 'Review & Submit'}
@@ -1102,7 +1117,20 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                   ) : (
                     <button
                       onClick={handleDistribute}
-                      className="flex-1 sm:flex-none px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
+                      disabled={(() => {
+                        // Calculate if any items have recommended quantities > 0
+                        return !aggregatedRequestItems.some(item => {
+                          const itemName = item.itemtype_name;
+                          const requested = parseInt(formData.requests?.[itemName]) || item.total_requested;
+                          const inventoryItem = filteredInventoryData.find(inv => inv.name === itemName) || 
+                                              safeInventoryData.find(inv => inv.name === itemName) || item;
+                          const available = inventoryItem ? inventoryItem.current : 0;
+                          const safeToDistribute = inventoryItem ? Math.max(0, inventoryItem.safeToDistribute || 0) : 0;
+                          const recommended = Math.min(requested, safeToDistribute, available);
+                          return recommended > 0;
+                        });
+                      })()}
+                      className="flex-1 sm:flex-none px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
                     >
                       <HiCheckCircle className="w-4 h-4 mr-2" />
                       Execute Distribution Plan
