@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -10,6 +10,30 @@ import { Pie } from 'react-chartjs-2';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const DonatedItemsChart = () => {
+  const [chartData, setChartData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDonatedItemsData = async () => {
+      try {
+        setLoading(true);
+        // TODO: Replace with actual API call
+        // const response = await getDonatedItemsDistribution();
+        
+        // For now, show empty state until API is implemented
+        setChartData(null);
+        setError('Data not available - API integration pending');
+      } catch (err) {
+        setError('Failed to load donated items data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDonatedItemsData();
+  }, []);
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -49,28 +73,15 @@ const DonatedItemsChart = () => {
     },
   };
 
-  const data = {
-    labels: ['Food Items', 'Clothing', 'Medical Supplies', 'Educational Materials', 'Electronics', 'Others'],
+  // Empty data structure for when no data is available
+  const emptyData = {
+    labels: ['No Data Available'],
     datasets: [
       {
-        data: [850, 620, 350, 280, 150, 120],
-        backgroundColor: [
-              'rgba(220, 38, 38, 0.8)',   // Red primary
-          'rgba(239, 68, 68, 0.8)',   // Red lighter
-          'rgba(185, 28, 28, 0.8)',   // Red darker
-          'rgba(248, 113, 113, 0.8)', // Red light
-          'rgba(153, 27, 27, 0.8)',   // Red very dark
-          'rgba(107, 114, 128, 0.8)', // Gray for Others
-        ],
-        borderColor: [
-          'rgba(220, 38, 38, 1)',
-          'rgba(239, 68, 68, 1)',
-          'rgba(185, 28, 28, 1)',
-          'rgba(248, 113, 113, 1)',
-          'rgba(153, 27, 27, 1)',
-          'rgba(107, 114, 128, 1)',
-        ],
-        borderWidth: 2,
+        data: [1],
+        backgroundColor: ['rgba(107, 114, 128, 0.3)'],
+        borderColor: ['rgba(107, 114, 128, 0.5)'],
+        borderWidth: 1,
       },
     ],
   };
@@ -78,18 +89,42 @@ const DonatedItemsChart = () => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="h-[408px]">
-        <Pie options={options} data={data} />
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-gray-500 mb-2">📊 Chart Data Unavailable</p>
+              <p className="text-sm text-gray-400">{error}</p>
+            </div>
+          </div>
+        ) : chartData ? (
+          <Pie options={options} data={chartData} />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-gray-500 mb-2">📊 No Data Available</p>
+              <p className="text-sm text-gray-400">Connect to database to view donated items distribution</p>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Summary Stats */}
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-gray-800">2,370</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {loading ? '--' : chartData ? chartData.totalItems || 0 : 0}
+            </p>
             <p className="text-sm text-gray-600">Total Items</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600">6</p>
+            <p className="text-2xl font-bold text-green-600">
+              {loading ? '--' : chartData ? chartData.categories || 0 : 0}
+            </p>
             <p className="text-sm text-gray-600">Categories</p>
           </div>
         </div>

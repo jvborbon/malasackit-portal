@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -37,74 +37,57 @@ ChartJS.register(
 const ResourceAllocation = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('monthly');
   const [selectedScenario, setSelectedScenario] = useState('optimal');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [allocationData, setAllocationData] = useState(null);
 
-  // Current resource allocation data
-  const currentAllocation = {
-    labels: ['Food Items', 'Medical Supplies', 'Clothing', 'Educational Materials', 'Electronics', 'Others'],
+  useEffect(() => {
+    const fetchResourceAllocationData = async () => {
+      try {
+        setLoading(true);
+        // TODO: Replace with actual API call
+        // const response = await getResourceAllocationData(selectedTimeframe, selectedScenario);
+        
+        // For now, show empty state until API is implemented
+        setAllocationData(null);
+        setError('Data not available - API integration pending');
+      } catch (err) {
+        setError('Failed to load resource allocation data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResourceAllocationData();
+  }, [selectedTimeframe, selectedScenario]);
+
+  // Empty data structure for when no data is available
+  const emptyAllocation = {
+    labels: ['No Data Available'],
     datasets: [
       {
         label: 'Current Allocation (%)',
-        data: [35, 25, 20, 10, 5, 5],
-        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-        borderColor: 'rgba(239, 68, 68, 1)',
+        data: [100],
+        backgroundColor: 'rgba(107, 114, 128, 0.3)',
+        borderColor: 'rgba(107, 114, 128, 0.5)',
         borderWidth: 1,
       }
     ],
   };
 
-  // Recommended allocation data
-  const recommendedAllocation = {
-    labels: ['Food Items', 'Medical Supplies', 'Clothing', 'Educational Materials', 'Electronics', 'Others'],
+  // Use actual data or empty data based on loading state
+  const currentAllocation = allocationData?.currentAllocation || emptyAllocation;
+  const recommendedAllocation = allocationData?.recommendedAllocation || emptyAllocation;
+  const comparisonData = allocationData?.comparisonData || emptyAllocation;
+  const efficiencyTrend = allocationData?.efficiencyTrend || {
+    labels: ['No Data'],
     datasets: [
       {
-        label: 'Recommended Allocation (%)',
-        data: [40, 30, 15, 10, 3, 2],
-        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-        borderColor: 'rgba(34, 197, 94, 1)',
-        borderWidth: 1,
-      }
-    ],
-  };
-
-  // Allocation comparison data
-  const comparisonData = {
-    labels: ['Food Items', 'Medical Supplies', 'Clothing', 'Educational Materials', 'Electronics', 'Others'],
-    datasets: [
-      {
-        label: 'Current Allocation (%)',
-        data: [35, 25, 20, 10, 5, 5],
-        backgroundColor: 'rgba(239, 68, 68, 0.7)',
-        borderColor: 'rgba(239, 68, 68, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Recommended Allocation (%)',
-        data: [40, 30, 15, 10, 3, 2],
-        backgroundColor: 'rgba(34, 197, 94, 0.7)',
-        borderColor: 'rgba(34, 197, 94, 1)',
-        borderWidth: 1,
-      }
-    ],
-  };
-
-  // Efficiency trend data
-  const efficiencyTrend = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Current Efficiency (%)',
-        data: [72, 75, 74, 78, 76, 79],
-        borderColor: 'rgba(239, 68, 68, 1)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        label: 'No Data Available',
+        data: [0],
+        borderColor: 'rgba(107, 114, 128, 0.5)',
+        backgroundColor: 'rgba(107, 114, 128, 0.1)',
         tension: 0.4,
-      },
-      {
-        label: 'Projected Efficiency (%)',
-        data: [72, 75, 74, 82, 85, 88],
-        borderColor: 'rgba(34, 197, 94, 1)',
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        tension: 0.4,
-        borderDash: [5, 5],
       }
     ],
   };
@@ -242,7 +225,9 @@ const ResourceAllocation = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-600 text-sm font-medium">Potential Efficiency Gain</p>
-                <p className="text-2xl font-bold text-green-700">+12%</p>
+                <p className="text-2xl font-bold text-green-700">
+                  {loading ? '--' : allocationData?.metrics?.efficiencyGain || '--'}
+                </p>
               </div>
               <HiTrendingUp className="w-8 h-8 text-green-600" />
             </div>
@@ -251,7 +236,9 @@ const ResourceAllocation = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-600 text-sm font-medium">Current Efficiency</p>
-                <p className="text-2xl font-bold text-blue-700">79%</p>
+                <p className="text-2xl font-bold text-blue-700">
+                  {loading ? '--' : allocationData?.metrics?.currentEfficiency || '--'}
+                </p>
               </div>
               <HiCheckCircle className="w-8 h-8 text-blue-600" />
             </div>
@@ -260,7 +247,9 @@ const ResourceAllocation = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-yellow-600 text-sm font-medium">Resources Analyzed</p>
-                <p className="text-2xl font-bold text-yellow-700">6</p>
+                <p className="text-2xl font-bold text-yellow-700">
+                  {loading ? '--' : allocationData?.metrics?.resourcesAnalyzed || '--'}
+                </p>
               </div>
               <HiAdjustments className="w-8 h-8 text-yellow-600" />
             </div>
@@ -269,7 +258,9 @@ const ResourceAllocation = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-600 text-sm font-medium">Cost Savings</p>
-                <p className="text-2xl font-bold text-purple-700">₱45K</p>
+                <p className="text-2xl font-bold text-purple-700">
+                  {loading ? '--' : allocationData?.metrics?.costSavings || '--'}
+                </p>
               </div>
               <HiLightBulb className="w-8 h-8 text-purple-600" />
             </div>
@@ -283,7 +274,20 @@ const ResourceAllocation = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Current vs Recommended Allocation</h3>
           <div className="h-80">
-            <Bar data={comparisonData} options={chartOptions} />
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500 mb-2">📊 Chart Data Unavailable</p>
+                  <p className="text-sm text-gray-400">{error}</p>
+                </div>
+              </div>
+            ) : (
+              <Bar data={comparisonData} options={chartOptions} />
+            )}
           </div>
         </div>
 
@@ -291,7 +295,20 @@ const ResourceAllocation = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Efficiency Projection</h3>
           <div className="h-80">
-            <Line data={efficiencyTrend} options={chartOptions} />
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500 mb-2">📊 Chart Data Unavailable</p>
+                  <p className="text-sm text-gray-400">{error}</p>
+                </div>
+              </div>
+            ) : (
+              <Line data={efficiencyTrend} options={chartOptions} />
+            )}
           </div>
         </div>
 
@@ -299,7 +316,20 @@ const ResourceAllocation = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Allocation</h3>
           <div className="h-80">
-            <Doughnut data={currentAllocation} options={doughnutOptions} />
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500 mb-2">📊 Chart Data Unavailable</p>
+                  <p className="text-sm text-gray-400">{error}</p>
+                </div>
+              </div>
+            ) : (
+              <Doughnut data={currentAllocation} options={doughnutOptions} />
+            )}
           </div>
         </div>
 
@@ -307,7 +337,20 @@ const ResourceAllocation = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recommended Allocation</h3>
           <div className="h-80">
-            <Doughnut data={recommendedAllocation} options={doughnutOptions} />
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500 mb-2">📊 Chart Data Unavailable</p>
+                  <p className="text-sm text-gray-400">{error}</p>
+                </div>
+              </div>
+            ) : (
+              <Doughnut data={recommendedAllocation} options={doughnutOptions} />
+            )}
           </div>
         </div>
       </div>

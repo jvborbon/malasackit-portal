@@ -13,24 +13,30 @@ export default function UserKPICards() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Mock data - replace with actual API calls
-        const mockUserStats = {
-            // Active Users
-            activeStaff: 3,
-            activeDonors: 8,
-            
-            // Total Users
-            totalStaff: 4,
-            totalDonors: 12,
-            
-            // Donor Registration Status
-            registeredDonors: 8,
-            nonRegisteredDonors: 4  // Pending admin approval
+        const fetchUserStats = async () => {
+            try {
+                setLoading(true);
+                // TODO: Replace with actual API call
+                // const response = await getUserStatistics();
+                
+                // For now, show empty state until API is implemented
+                setUserStats({
+                    activeStaff: 0,
+                    activeDonors: 0,
+                    totalStaff: 0,
+                    totalDonors: 0,
+                    registeredDonors: 0,
+                    nonRegisteredDonors: 0
+                });
+            } catch (error) {
+                console.error('Failed to fetch user statistics:', error);
+                setUserStats({});
+            } finally {
+                setLoading(false);
+            }
         };
 
-        // Set data immediately since it's mock data
-        setUserStats(mockUserStats);
-        setLoading(false);
+        fetchUserStats();
     }, []);
 
     const kpiCards = [

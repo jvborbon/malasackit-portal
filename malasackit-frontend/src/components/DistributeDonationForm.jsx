@@ -1090,7 +1090,10 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                   {step < 3 ? (
                     <button
                       onClick={() => setStep(step + 1)}
-                      disabled={step === 1 && (!formData.location || !formData.beneficiaryType || !formData.distributionDate)}
+                      disabled={step === 1 && (
+                        !formData.selectedRequests?.length || 
+                        !Object.values(formData.requests || {}).some(qty => qty > 0)
+                      )}
                       className="flex-1 sm:flex-none px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
                     >
                       {step === 1 ? 'Generate Plan' : 'Review & Submit'}
