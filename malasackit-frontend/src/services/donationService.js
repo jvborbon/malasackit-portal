@@ -61,6 +61,24 @@ export const cancelDonationRequest = async (donationId) => {
 };
 
 /**
+ * Update a donation request
+ * @param {number} donationId - The donation request ID
+ * @param {Object} donationData - The updated donation request data
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const updateDonationRequest = async (donationId, donationData) => {
+    try {
+        const response = await api.put(`/api/donation-requests/${donationId}`, donationData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating donation request:', error);
+        throw error;
+    }
+};
+
+
+
+/**
  * Get available appointment slots for a date
  * @param {string} date - Date in YYYY-MM-DD format
  * @returns {Promise} Promise that resolves to available slots

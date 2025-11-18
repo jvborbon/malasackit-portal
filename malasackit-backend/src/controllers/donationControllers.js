@@ -321,6 +321,7 @@ export const getDonationDetails = async (req, res) => {
         const itemsQuery = `
             SELECT 
                 di.item_id,
+                di.itemtype_id,
                 di.quantity,
                 di.declared_value,
                 di.description,
@@ -422,6 +423,102 @@ export const cancelDonationRequest = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to cancel donation request',
+            error: error.message
+        });
+    }
+};
+
+
+/**
+ * Update a donation request (donor only, pending status only)
+ */
+export const updateDonationRequest = async (req, res) => {
+    try {
+        const { donationId } = req.params;
+        const userId = req.user.userId;
+        const { delivery_method, notes, items } = req.body;
+
+        console.log('Update request received:', { donationId, userId, delivery_method, notes, items });
+
+        // Items are optional for this simplified update (only updating delivery method and notes)
+        // if (!items || !Array.isArray(items) || items.length === 0) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: 'At least one donation item is required'
+        //     });
+        // }
+
+        // Check if donation exists and belongs to user
+        const checkQuery = `
+            SELECT donation_id, status, user_id 
+            FROM DonationRequests 
+            WHERE donation_id = $1 AND user_id = $2
+        `;
+        const checkResult = await query(checkQuery, [donationId, userId]);
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Donation request not found or you do not have permission to update it'
+            });
+        }
+
+        const donation = checkResult.rows[0];
+
+        // Only allow updates if still pending
+        if (donation.status !== 'Pending') {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot update donation request with status: ${donation.status}`
+            });
+        }
+
+        // Start transaction
+        await query('BEGIN');
+
+        try {
+            // Update donation request basic info only (delivery method and notes)
+            const updateDonationQuery = `
+                UPDATE DonationRequests 
+                SET delivery_method = $1, notes = $2
+                WHERE donation_id = $3
+            `;
+            await query(updateDonationQuery, [delivery_method, notes, donationId]);
+
+            // Commit transaction
+            await query('COMMIT');
+
+            // Log activity
+            const activityQuery = `
+                INSERT INTO UserActivityLogs (user_id, action, description)
+                VALUES ($1, 'donation_updated', $2)
+            `;
+            await query(activityQuery, [
+                userId,
+                `Updated donation request (ID: ${donationId}) - delivery method and notes`
+            ]);
+
+            res.json({
+                success: true,
+                message: 'Donation request updated successfully',
+                data: {
+                    donation_id: donationId,
+                    delivery_method: delivery_method,
+                    notes: notes
+                }
+            });
+
+        } catch (error) {
+            // Rollback transaction on error
+            await query('ROLLBACK');
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error updating donation request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update donation request',
             error: error.message
         });
     }

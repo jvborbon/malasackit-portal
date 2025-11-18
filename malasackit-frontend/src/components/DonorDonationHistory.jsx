@@ -19,6 +19,7 @@ import {
 import { getUserDonations, getDonationDetails, cancelDonationRequest } from '../services/donationService';
 import PaginationComponent from './common/PaginationComponent';
 import ReceiptGenerator from './ReceiptGenerator';
+import EditDonationModal from './EditDonationModal';
 
 export default function DonorDonationHistory() {
     const [donations, setDonations] = useState([]);
@@ -131,9 +132,12 @@ export default function DonorDonationHistory() {
 
     // Handle edit donation request
     const handleEditRequest = (donation) => {
+        console.log('Selected donation for editing:', donation);
         const donationId = donation?.id || donation?.request_id || donation?.donation_id || donation?.donation_request_id;
+        console.log('Extracted donation ID:', donationId);
         
         if (!donation || !donationId) {
+            console.error('No donation or donation ID found!');
             return;
         }
         setSelectedDonation(donation);
@@ -662,44 +666,21 @@ export default function DonorDonationHistory() {
                 </div>
             )}
 
-            {/* Edit Modal (Placeholder) */}
+            {/* Edit Modal */}
             {showEditModal && selectedDonation && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999 }}>
-                    <div className="bg-white rounded-lg max-w-md w-full">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">Edit Donation Request</h3>
-                            <button onClick={closeAllModals} className="text-gray-400 hover:text-gray-600">
-                                <HiX className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                                <div className="flex items-start">
-                                    <HiExclamation className="w-5 h-5 text-blue-500 mt-0.5 mr-3" />
-                                    <div>
-                                        <h4 className="text-sm font-medium text-blue-800">Edit Feature Coming Soon</h4>
-                                        <p className="text-sm text-blue-700 mt-1">
-                                            The edit functionality is currently being developed. For now, you can only view details or cancel pending requests.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="text-sm text-gray-600">
-                                <p><strong>Request ID:</strong> #{selectedDonation.id}</p>
-                                <p><strong>Current Status:</strong> {selectedDonation.status}</p>
-                                <p><strong>Items:</strong> {selectedDonation.items_summary || 'Multiple items'}</p>
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-                            <button
-                                onClick={closeAllModals}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <EditDonationModal
+                    donationId={
+                        selectedDonation?.id || 
+                        selectedDonation?.request_id || 
+                        selectedDonation?.donation_id || 
+                        selectedDonation?.donation_request_id
+                    }
+                    onClose={closeAllModals}
+                    onSuccess={() => {
+                        // Refresh the donations list after successful update
+                        loadDonations(pagination.currentPage, statusFilter, searchTerm);
+                    }}
+                />
             )}
 
             {/* Cancel Confirmation Modal */}

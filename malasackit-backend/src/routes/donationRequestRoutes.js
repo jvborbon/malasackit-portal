@@ -3,7 +3,8 @@ import {
     submitDonationRequest,
     getDonorDonations,
     getDonationDetails,
-    cancelDonationRequest
+    cancelDonationRequest,
+    updateDonationRequest
 } from '../controllers/donationControllers.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -23,5 +24,8 @@ router.get('/:donationId', getDonationDetails);
 
 // PUT /api/donation-requests/:donationId/cancel - Cancel a donation request
 router.put('/:donationId/cancel', cancelDonationRequest);
+
+// PUT /api/donation-requests/:donationId - Update a donation request
+router.put('/:donationId', updateDonationRequest);
 
 export default router;
