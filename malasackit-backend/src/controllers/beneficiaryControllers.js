@@ -362,10 +362,10 @@ export const createBeneficiaryRequest = async (req, res) => {
         await query('BEGIN');
 
         try {
-            // Create the request
+            // Create the request with automatic approval (beneficiaries are pre-verified)
             const result = await query(
-                `INSERT INTO BeneficiaryRequests (beneficiary_id, urgency, purpose, notes)
-                 VALUES ($1, $2, $3, $4)
+                `INSERT INTO BeneficiaryRequests (beneficiary_id, urgency, purpose, notes, status)
+                 VALUES ($1, $2, $3, $4, 'Approved')
                  RETURNING *`,
                 [beneficiary_id, urgency || 'Medium', purpose, notes]
             );
@@ -378,7 +378,7 @@ export const createBeneficiaryRequest = async (req, res) => {
                     await query(
                         `INSERT INTO BeneficiaryRequestItems (request_id, itemtype_id, quantity_requested, notes)
                          VALUES ($1, $2, $3, $4)`,
-                        [requestId, item.itemtype_id, item.requested_quantity, item.notes || null]
+                        [requestId, item.itemtype_id, item.quantity_requested, item.notes || null]
                     );
                 }
             }
@@ -391,7 +391,7 @@ export const createBeneficiaryRequest = async (req, res) => {
             res.status(201).json({
                 success: true,
                 data: requestWithDetails,
-                message: 'Beneficiary request created successfully'
+                message: 'Beneficiary request created and automatically approved'
             });
 
         } catch (error) {
@@ -414,25 +414,29 @@ export const createBeneficiaryRequest = async (req, res) => {
  */
 export const getAllBeneficiaryRequests = async (req, res) => {
     try {
-        const {
-            status,
-            urgency,
-            beneficiary_id,
-            dateFrom,
-            dateTo,
-            limit = 20,
-            offset = 0,
-            sortBy = 'request_date',
-            sortOrder = 'DESC'
-        } = req.query;
-
-        let whereConditions = [];
+    const {
+        status,
+        exclude_status,
+        urgency,
+        beneficiary_id,
+        dateFrom,
+        dateTo,
+        limit = 20,
+        offset = 0,
+        sortBy = 'request_date',
+        sortOrder = 'DESC'
+    } = req.query;        let whereConditions = [];
         let params = [];
         let paramCount = 1;
 
         if (status) {
             whereConditions.push(`br.status = $${paramCount++}`);
             params.push(status);
+        }
+
+        if (exclude_status) {
+            whereConditions.push(`br.status != $${paramCount++}`);
+            params.push(exclude_status);
         }
 
         if (urgency) {

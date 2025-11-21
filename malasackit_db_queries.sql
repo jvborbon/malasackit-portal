@@ -481,7 +481,7 @@ INSERT INTO ItemCategory (category_name, description) VALUES
 ('Clothing', 'New or gently used clothing and footwear'),
 ('Shelter Materials', 'Emergency shelter and construction materials'),
 ('Educational Materials', 'School supplies and learning materials'),
-('Kitchen Utensils', 'Cooking and eating utensils'),
+('Kitchen Utensils', 'Cooking and eating utensils'),    
 ('Medical Supplies', 'Basic medicines, first aid items, and protective medical gear');
 
 -- ==================================

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,7 +23,11 @@ import {
 } from "react-icons/hi";
 import beneficiaryService from "../services/beneficiaryService";
 import { getAllInventory } from "../services/inventoryService";
+import distributionService from "../services/distributionService";
 import { HiSparkles } from "react-icons/hi";
+import SuccessModal from "./common/SuccessModal";
+import { useSuccessModal } from "../hooks/useSuccessModal";
+import { getAllSafetyThresholds, getSafetyThresholdSync } from "../utils/safetyThresholds";
 
 ChartJS.register(
   CategoryScale,
@@ -54,8 +58,32 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   const [inventoryInsights, setInventoryInsights] = useState(null);
   const [loadingInventoryInsights, setLoadingInventoryInsights] =
     useState(false);
+  const [safetyThresholds, setSafetyThresholds] = useState({});
+  
+  // Success modal hook
+  const { isOpen: isSuccessOpen, modalData: successData, showSuccess, hideSuccess } = useSuccessModal();
+  
+  // Custom success modal close handler that also closes the parent modal
+  const handleSuccessModalClose = useCallback(() => {
+    console.log('🔴 Success modal closing...');
+    hideSuccess();
+    onClose(); // Close the parent DistributeDonationForm modal
+  }, [hideSuccess, onClose]);
 
   const [aggregatedRequestItems, setAggregatedRequestItems] = useState([]);
+
+  // Load safety thresholds from backend
+  const loadSafetyThresholds = async () => {
+    try {
+      const thresholds = await getAllSafetyThresholds();
+      setSafetyThresholds(thresholds);
+      console.log("Loaded safety thresholds:", thresholds);
+    } catch (error) {
+      console.error("Error loading safety thresholds:", error);
+      // Set empty object, will fall back to defaults
+      setSafetyThresholds({});
+    }
+  };
 
   // Filter inventory data by selected category
   const safeInventoryData = inventoryData || [];
@@ -67,8 +95,11 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   // Load data when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadPendingRequests();
-      loadInventoryData();
+      // Load safety thresholds first, then other data
+      loadSafetyThresholds().then(() => {
+        loadPendingRequests();
+        loadInventoryData();
+      });
     } else {
       setStep(1);
       setFormData({
@@ -87,14 +118,47 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   const loadPendingRequests = async () => {
     try {
       setLoading(true);
-      const response = await beneficiaryService.getAllBeneficiaryRequests({
-        status: "Pending",
-      });
-      if (response.success) {
-        setPendingRequests(response.data || []);
+      
+      // Fetch both beneficiary requests and distribution plans in parallel
+      const [requestsResponse, draftPlansResponse] = await Promise.all([
+        beneficiaryService.getAllBeneficiaryRequests({
+          // Load only approved requests that haven't been fulfilled yet
+          exclude_status: 'Fulfilled'
+        }),
+        distributionService.getDraftPlans()
+      ]);
+      
+      if (requestsResponse.success) {
+        // Additional client-side filtering to ensure we only show approved, non-fulfilled requests
+        const approvedRequests = (requestsResponse.data || []).filter(request => 
+          request.status === 'Approved' && request.status !== 'Fulfilled'
+        );
+        
+        // Get request IDs that already have draft distribution plans
+        const requestsWithDraftPlans = new Set();
+        if (draftPlansResponse.success && draftPlansResponse.data) {
+          draftPlansResponse.data.forEach(plan => {
+            if (plan.request_id) {
+              requestsWithDraftPlans.add(plan.request_id);
+            }
+          });
+        }
+        
+        // Filter out requests that already have draft distribution plans
+        const availableRequests = approvedRequests.filter(request => 
+          !requestsWithDraftPlans.has(request.request_id)
+        );
+        
+        console.log('Filtered requests:', {
+          total_approved: approvedRequests.length,
+          with_draft_plans: requestsWithDraftPlans.size,
+          available_for_distribution: availableRequests.length
+        });
+        
+        setPendingRequests(availableRequests);
       }
     } catch (error) {
-      console.error("Error loading pending requests:", error);
+      console.error("Error loading beneficiary requests:", error);
     } finally {
       setLoading(false);
     }
@@ -105,29 +169,39 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
       setInventoryLoading(true);
       const response = await getAllInventory();
       console.log("Inventory API response:", response); // Debug log
+      console.log("Raw inventory items:", response.data?.inventory); // Debug raw data
 
       if (response.success && response.data && response.data.inventory) {
         // Transform inventory data to include status and safe distribution amounts
         const transformedData = response.data.inventory.map((item) => {
           const current = parseInt(item.quantity_available) || 0;
-          const threshold = 10; // Default minimum threshold
+          const threshold = getSafetyThresholdSync(safetyThresholds, item.itemtype_name);
           const safeToDistribute = Math.max(0, current - threshold);
 
-          let status = "safe";
+          let status = "optimal";
           if (current <= threshold) {
-            status = "critical";
+            status = "advisory"; // Below threshold but can still distribute
           } else if (current <= threshold * 2) {
-            status = "low";
+            status = "caution"; // Approaching threshold
           }
 
           return {
+            // Keep original inventory fields for distribution matching  
+            inventory_id: item.inventory_id,
+            itemtype_id: item.itemtype_id,
+            itemtype_name: item.itemtype_name || item.name,
+            quantity_available: current,
+            unit_value: item.unit_value,
+            category_name: item.category_name,
+            location: item.location,
+            
+            // Add display fields for UI
             name: item.itemtype_name || item.name,
             current: current,
             threshold: threshold,
             safeToDistribute: safeToDistribute,
             status: status,
             category: item.category_name,
-            location: item.location,
           };
         });
         setInventoryData(transformedData);
@@ -251,18 +325,18 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
         label: "Current Stock",
         data: chartInventoryData.map((item) => item.current || 0),
         backgroundColor: chartInventoryData.map((item) =>
-          item.status === "safe"
+          item.status === "optimal"
             ? "rgba(34, 197, 94, 0.8)"
-            : item.status === "low"
+            : item.status === "caution"
             ? "rgba(251, 191, 36, 0.8)"
-            : "rgba(239, 68, 68, 0.8)"
+            : "rgba(59, 130, 246, 0.8)" // Blue for advisory (not red - not blocked)
         ),
         borderColor: chartInventoryData.map((item) =>
-          item.status === "safe"
+          item.status === "optimal"
             ? "rgba(34, 197, 94, 1)"
-            : item.status === "low"
+            : item.status === "caution"
             ? "rgba(251, 191, 36, 1)"
-            : "rgba(239, 68, 68, 1)"
+            : "rgba(59, 130, 246, 1)" // Blue for advisory
         ),
         borderWidth: 2,
       },
@@ -399,7 +473,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     aggregateRequestedItems(newSelectedRequests);
   };
 
-  // Add this function to generate insights
+  // Enhanced function to generate contextual insights based on assessed needs
   const generateInventoryInsights = async () => {
     setLoadingInventoryInsights(true);
 
@@ -414,23 +488,54 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
         category: item.category,
       }));
 
-      const context = `Analyzing inventory levels for ${
-        filteredInventoryData.length
-      } items. 
-      ${
-        selectedCategory === "all"
-          ? "All categories included"
-          : `Filtering by ${selectedCategory} category`
-      }.
-      Total items with safe distribution levels: ${
-        filteredInventoryData.filter((i) => i.status === "safe").length
-      }.
-      Critical/low stock items: ${
-        filteredInventoryData.filter((i) => i.status !== "safe").length
-      }.`;
+      // Include assessed needs context if available
+      const assessedNeedsContext = aggregatedRequestItems.length > 0 
+        ? `\n\nASSESSED NEEDS ANALYSIS:
+        Selected ${formData.selectedRequests?.length || 0} beneficiary requests.
+        Total assessed needs: ${aggregatedRequestItems.map(item => 
+          `${item.itemtype_name}: ${item.total_requested} units (${item.max_urgency} priority)`
+        ).join(', ')}.
+        
+        FULFILLMENT ANALYSIS:
+        ${aggregatedRequestItems.map(item => {
+          const inventoryItem = inventoryAnalysisData.find(inv => inv.name === item.itemtype_name);
+          const currentStock = inventoryItem?.current || 0;
+          const canFulfill = currentStock >= item.total_requested;
+          // Calculate flexible threshold based on urgency
+          const baseThreshold = inventoryItem?.threshold || 10;
+          const urgencyMultiplier = item.max_urgency === 'Critical' ? 0.5 : 
+                                   item.max_urgency === 'High' ? 0.7 : 
+                                   item.max_urgency === 'Medium' ? 0.8 : 1.0;
+          const flexibleThreshold = Math.floor(baseThreshold * urgencyMultiplier);
+          const safeToDistribute = Math.max(0, currentStock - flexibleThreshold);
+          const canFulfillWithFlexibility = safeToDistribute >= item.total_requested;
+          
+          return `${item.itemtype_name}: ${canFulfill ? '✓ Can fulfill' : canFulfillWithFlexibility ? '⚡ Can fulfill with urgency override' : '⚠ Shortage'} (${currentStock} available vs ${item.total_requested} requested, flexible threshold: ${flexibleThreshold})`;
+        }).join(', ')}.`
+        : '';
+
+      const context = `INVENTORY DISTRIBUTION ASSESSMENT:
+      Analyzing inventory levels for ${filteredInventoryData.length} items. 
+      ${selectedCategory === "all" ? "All categories included" : `Filtering by ${selectedCategory} category`}.
+      
+      STOCK STATUS:
+      Optimal stock levels: ${filteredInventoryData.filter((i) => i.status === "optimal").length} items.
+      Caution levels (approaching threshold): ${filteredInventoryData.filter((i) => i.status === "caution").length} items.
+      Advisory levels (below threshold but available): ${filteredInventoryData.filter((i) => i.status === "advisory").length} items.
+      ${assessedNeedsContext}
+      
+      
+      SAFETY THRESHOLD CONTEXT:
+      Safety thresholds serve as advisory guidelines to maintain emergency reserves. The system uses an advisory-only approach:
+      - Thresholds provide warnings but do not block distributions
+      - Staff can proceed with distributions based on professional judgment
+      - Warnings help maintain awareness of emergency reserve levels
+      - Critical situations can be addressed immediately without system restrictions
+      
+      Please provide practical distribution recommendations focusing on optimization and alternatives rather than threshold adjustments. Assume distributions can proceed and focus on suggesting the most effective allocation strategies.`;
 
       const response = await fetch(
-        "http://localhost:3000/api/generate-insights",
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/generate-insights`,
         {
           method: "POST",
           headers: {
@@ -543,12 +648,258 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     setFormData((prev) => ({ ...prev, requests: newRequests }));
   };
 
-  const handleDistribute = () => {
-    // Handle distribution logic here
-    console.log("Distribution data:", formData);
-    alert("Distribution plan created successfully!");
-    onClose();
-  };
+  const handleDistribute = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Ensure inventory data is loaded
+      if (!inventoryData || inventoryData.length === 0) {
+        alert('Inventory data not available. Please wait for data to load and try again.');
+        return;
+      }
+      
+      // Create distribution plans for each selected request
+      const distributionResults = [];
+      
+      for (const requestId of formData.selectedRequests) {
+        const request = pendingRequests.find(r => r.request_id === requestId);
+        if (!request || !request.items || request.items.length === 0) {
+          console.warn(`No items found for request ${requestId}`);
+          continue;
+        }
+        
+        // Map request items to available inventory
+        const planItems = [];
+        for (const item of request.items) {
+          console.log('Request item:', item);
+          console.log('Looking for itemtype_id:', item.itemtype_id, 'needed quantity:', item.quantity_requested);
+          
+          // Debug: Show all inventory itemtype_ids
+          console.log('All inventory itemtype_ids:', inventoryData.map(inv => ({ 
+            itemtype_id: inv.itemtype_id, 
+            itemtype_name: inv.itemtype_name,
+            quantity_available: inv.quantity_available 
+          })));
+          
+          // Find matching inventory for this item type
+          const matchingInventory = inventoryData.filter(inv => inv.itemtype_id == item.itemtype_id);
+          console.log('Matching inventory items by itemtype_id:', matchingInventory);
+          
+          let availableInventory = inventoryData.find(inv => 
+            inv.itemtype_id == item.itemtype_id && 
+            inv.quantity_available >= item.quantity_requested
+          );
+          
+          // Fallback: try to match by item name if itemtype_id doesn't match
+          if (!availableInventory) {
+            console.log(`No match by itemtype_id, trying name match for: ${item.itemtype_name}`);
+            availableInventory = inventoryData.find(inv => 
+              inv.itemtype_name === item.itemtype_name && 
+              inv.quantity_available >= item.quantity_requested
+            );
+            if (availableInventory) {
+              console.log(`Found match by name: ${availableInventory.itemtype_name} (id: ${availableInventory.itemtype_id})`);
+            }
+          }
+          
+          if (availableInventory) {
+            console.log('Found available inventory:', availableInventory);
+            
+            // Safety checks before creating distribution plan
+            const requestedQty = item.quantity_requested;
+            const currentStock = availableInventory.quantity_available;
+            const threshold = availableInventory.threshold || getSafetyThresholdSync(safetyThresholds, item.itemtype_name);
+            const safeToDistribute = availableInventory.safeToDistribute || Math.max(0, currentStock - threshold);
+            const status = availableInventory.status;
+            
+            // Advisory safety threshold checks (warnings only - do not block)
+            let safetyWarnings = [];
+            
+            if (status === 'critical' || currentStock <= threshold) {
+              safetyWarnings.push(`⚠️ Below safety threshold (${currentStock} ≤ ${threshold}) - emergency reserves will be used`);
+              console.warn(`⚠️ Advisory warning: ${item.itemtype_name} is below safety threshold (${currentStock} ≤ ${threshold})`);
+            }
+            
+            if (requestedQty > safeToDistribute && safeToDistribute > 0) {
+              safetyWarnings.push(`⚠️ Exceeds recommended amount (requested: ${requestedQty}, recommended: ${safeToDistribute})`);
+              console.warn(`⚠️ Advisory warning: ${item.itemtype_name} request exceeds recommended amount`);
+            }
+            
+            if ((currentStock - requestedQty) < threshold) {
+              safetyWarnings.push(`⚠️ Will reduce stock below threshold (remaining: ${currentStock - requestedQty})`);
+              console.warn(`⚠️ Advisory warning: ${item.itemtype_name} distribution will reduce stock below threshold`);
+            }
+            
+            // Log status - advisory approach allows all distributions
+            if (safetyWarnings.length > 0) {
+              console.log(`⚡ Proceeding with advisory warnings for ${item.itemtype_name}: ${safetyWarnings.join(', ')}`);
+            } else {
+              console.log(`✅ Optimal distribution for ${item.itemtype_name}: Current(${currentStock}) - Requested(${requestedQty}) = ${currentStock - requestedQty} (above threshold: ${threshold})`);
+            }
+            
+            planItems.push({
+              inventory_id: availableInventory.inventory_id,
+              quantity: item.quantity_requested,
+              allocated_value: item.quantity_requested * (availableInventory.unit_value || 0),
+              notes: `Distribution for ${request.beneficiary_name} - ${item.itemtype_name}`
+            });
+          } else {
+            console.warn(`No available inventory for ${item.itemtype_name} (needed: ${item.quantity_requested})`);
+            console.warn('Available inventory data:', inventoryData.map(inv => ({
+              itemtype_id: inv.itemtype_id,
+              itemtype_name: inv.itemtype_name,
+              quantity_available: inv.quantity_available,
+              status: inv.status,
+              threshold: inv.threshold
+            })));
+          }
+        }
+        
+        // Skip if no items can be fulfilled
+        if (planItems.length === 0) {
+          console.warn(`Cannot create distribution plan for request ${requestId} - no available inventory`);
+          continue;
+        }
+        
+        // Try to create distribution plan
+        let planId = null;
+        let planResult = null;
+        
+        try {
+          planResult = await distributionService.createDistributionPlan({
+            request_id: requestId,
+            planned_date: formData.distributionDate,
+            items: planItems,
+            remarks: formData.notes || `Distribution plan for ${request.beneficiary_name}`
+          });
+          
+          if (planResult.success) {
+            planId = planResult.data.plan_id;
+            if (planResult.isExisting) {
+              console.log(`Using existing distribution plan ${planId} for request ${requestId} (Status: ${planResult.data.status})`);
+            } else {
+              console.log(`Created new distribution plan ${planId} for request ${requestId}`);
+            }
+          }
+        } catch (error) {
+          // Check if error is due to existing plan
+          if (error.response?.status === 400 && error.response?.data?.existingPlanId) {
+            planId = error.response.data.existingPlanId;
+            const existingStatus = error.response.data.existingPlanStatus;
+            console.log(`Using existing distribution plan ${planId} (status: ${existingStatus}) for request ${requestId}`);
+            
+            // If plan is Draft or Approved, we can execute it
+            if (existingStatus === 'Draft' || existingStatus === 'Approved') {
+              planResult = { success: true }; // Allow execution to proceed
+            } else {
+              console.warn(`Cannot execute existing plan ${planId} - status is ${existingStatus}`);
+              continue; // Skip this request
+            }
+          } else {
+            console.error(`Failed to create/find distribution plan for request ${requestId}:`, error);
+            continue; // Skip this request
+          }
+        }
+        
+        if (planResult?.success && planId) {
+          // Just create the plan - don't execute it yet
+          // The plan will show as "Draft" in distribution logs for admin approval
+          console.log(`Distribution plan ${planId} created for request ${requestId} - awaiting admin approval`);
+          
+          distributionResults.push({
+            planId: planId,
+            requestId: requestId,
+            beneficiaryName: request.beneficiary_name,
+            executed: false, // Plan created but not executed yet
+            status: 'Draft' // Pending admin approval
+          });
+        }
+      }
+      
+      // Show success message using modal
+      const createdCount = distributionResults.length;
+      const totalRequests = formData.selectedRequests.length;
+      
+      console.log('Distribution results:', { createdCount, totalRequests, distributionResults });
+      
+      if (createdCount === totalRequests) {
+        showSuccess({
+          title: '🎉 Distribution Plans Created!',
+          message: `Successfully created ${createdCount} distribution plans. All plans are now pending admin approval in Distribution Logs.`,
+          details: {
+            plans_created: createdCount,
+            total_requests: totalRequests,
+            success_rate: '100%',
+            status: 'Pending Admin Approval',
+            next_step: 'Plans available in Distribution Logs'
+          },
+          icon: 'trophy',
+          buttonText: 'Excellent!'
+        });
+      } else if (createdCount > 0) {
+        showSuccess({
+          title: '⚠️ Partial Success',
+          message: `Created ${createdCount} of ${totalRequests} distribution plans. Some requests may need inventory check.`,
+          details: {
+            plans_created: createdCount,
+            total_requests: totalRequests,
+            success_rate: `${Math.round((createdCount / totalRequests) * 100)}%`,
+            status: 'Partial Success',
+            note: 'Check inventory availability for failed requests'
+          },
+          icon: 'checkCircle',
+          buttonText: 'Got It!'
+        });
+      } else {
+        console.log('🟡 About to show success modal...');
+        console.log('🟡 showSuccess function:', showSuccess);
+        console.log('🟡 typeof showSuccess:', typeof showSuccess);
+        console.log('🟡 showSuccess is function?', typeof showSuccess === 'function');
+        
+        if (typeof showSuccess === 'function') {
+          console.log('🟡 Calling showSuccess...');
+          showSuccess({
+          title: '🚫 No Plans Created - Safety Restrictions',
+          message: 'No distribution plans could be created due to inventory safety restrictions and low stock levels.',
+          details: [
+            '⚠️ Items below safety threshold cannot be distributed',
+            '📊 Check inventory status (avoid Critical/Low Stock items)',
+            '🔄 Wait for restocking before creating distribution plans',
+            '🛡️ Safety thresholds protect against stockouts',
+            '📋 Review requests for items with sufficient stock'
+          ],
+          icon: 'thumbsUp',
+          buttonText: 'I Understand'
+        });
+          console.log('🟡 showSuccess called successfully!');
+        } else {
+          console.error('❌ showSuccess is not a function!', showSuccess);
+          alert('ERROR: showSuccess is not a function');
+        }
+        console.log('🟡 Success modal should be showing now...');
+      }
+      
+      // Wait a bit before resetting form to prevent modal from closing too quickly
+      setTimeout(() => {
+        setFormData({
+          selectedRequests: [],
+          distributionDate: "",
+          notes: "",
+          distributionPlan: {},
+          selectedDistribution: {},
+        });
+        setStep(1);
+      }, 500); // 500ms delay
+      // onClose(); // Removed - will be called when success modal is closed
+      
+    } catch (error) {
+      console.error('Error executing distribution:', error);
+      // Still use alert for errors since this is an error case, not a success
+      alert('Failed to execute distribution plan. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [formData.selectedRequests, pendingRequests, inventoryData, formData.distributionDate, formData.notes, onClose]);
 
   if (!isOpen) return null;
 
@@ -573,7 +924,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
               Create Distribution Plan
             </h3>
             <p className="text-gray-600 mt-1">
-              Plan distribution for approved beneficiary requests.
+              Assess needs, optimize with AI insights, and execute distribution plans.
             </p>
           </div>
           <button
@@ -633,7 +984,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                     step >= 2 ? "text-red-600" : "text-gray-500"
                   }`}
                 >
-                  Plan Distribution
+                  Review & Optimize
                 </span>
                 <span
                   className={`font-medium transition-colors text-center ${
@@ -645,7 +996,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
               </div>
             </div>
 
-            {/* Step 1: Select Pending Requests */}
+            {/* Step 1: Select Beneficiary Requests */}
 
             {/* Inventory Overview Chart - Added before Step 1 */}
             {step === 1 && (
@@ -734,7 +1085,12 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       <HiLightBulb className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
                       <div className="flex-1">
                         <h4 className="font-bold text-purple-900 mb-2 text-lg">
-                          AI-Powered Inventory Insights
+                          🤖 AI Assessment & Distribution Insights
+                          {formData.selectedRequests?.length > 0 && (
+                            <span className="ml-2 text-sm font-normal text-purple-700">
+                              (Analyzing {formData.selectedRequests.length} request{formData.selectedRequests.length !== 1 ? 's' : ''})
+                            </span>
+                          )}
                         </h4>
                         <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
                           {inventoryInsights}
@@ -750,19 +1106,19 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                     <div className="flex items-center">
                       <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
                       <span className="text-gray-600">
-                        Safe Stock (Available for distribution)
+                        Optimal Stock (Above safety threshold)
                       </span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
                       <span className="text-gray-600">
-                        Low Stock (Limited availability)
+                        Caution Level (Approaching threshold)
                       </span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                      <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
                       <span className="text-gray-600">
-                        Critical Stock (Below threshold)
+                        Advisory Level (Below threshold - proceed with caution)
                       </span>
                     </div>
                     <div className="flex items-center">
@@ -776,7 +1132,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
             {step === 1 && (
               <div className="space-y-8">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-                  {/* Pending Requests Selection */}
+                  {/* Beneficiary Requests Selection */}
                   <div className="space-y-6">
                     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
                       <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
@@ -791,7 +1147,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                         </p>
                       </div>
 
-                      {/* Pending requests from database */}
+                      {/* Auto-approved requests from database */}
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                         {loading ? (
                           <div className="flex items-center justify-center py-8">
@@ -970,8 +1326,9 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       </div>
                     )}
 
-                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                      {aggregatedRequestItems.length > 0 ? (
+                    {formData.selectedRequests?.length > 0 && (
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {aggregatedRequestItems.length > 0 ? (
                         aggregatedRequestItems.map((requestItem, index) => {
                           // Find matching inventory item for current stock info
                           const inventoryItem = safeInventoryData.find(
@@ -1184,8 +1541,9 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                             </div>
                           </div>
                         ))
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1202,23 +1560,70 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       <HiLightBulb className="w-6 h-6 text-blue-600 mr-3" />
                       <div>
                         <h4 className="font-semibold text-blue-900">
-                          Distribution Planning
+                          Step 2: Review & Optimize Distribution Plan
                         </h4>
                         <p className="text-blue-700 text-sm mt-1">
-                          Create distribution plan for{" "}
-                          {formData.selectedRequests?.length || 0} selected
-                          beneficiary requests
+                          Review assessed needs and optimize distribution plan for{" "}
+                          {formData.selectedRequests?.length || 0} selected requests
                         </p>
                       </div>
                     </div>
                   </div>
 
+                  {/* Assessed Needs Summary */}
+                  {aggregatedRequestItems.length > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                      <h4 className="font-semibold text-green-900 mb-4 flex items-center">
+                        <HiCheckCircle className="w-5 h-5 mr-2" />
+                        Assessed Needs Summary
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {aggregatedRequestItems.slice(0, 6).map((item, index) => {
+                          const inventoryItem = filteredInventoryData.find(inv => inv.name === item.itemtype_name);
+                          const currentStock = inventoryItem?.current || 0;
+                          const canFulfill = currentStock >= item.total_requested;
+                          
+                          return (
+                            <div key={index} className="bg-white rounded-lg p-3 border">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-medium text-sm text-gray-900">{item.itemtype_name}</span>
+                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                  item.max_urgency === "Critical" ? "bg-red-100 text-red-800" :
+                                  item.max_urgency === "High" ? "bg-orange-100 text-orange-800" :
+                                  item.max_urgency === "Medium" ? "bg-blue-100 text-blue-800" :
+                                  "bg-gray-100 text-gray-800"
+                                }`}>
+                                  {item.max_urgency}
+                                </span>
+                              </div>
+                              <div className="text-xs space-y-1">
+                                <div>Requested: {item.total_requested} units</div>
+                                <div>Available: {currentStock} units</div>
+                                <div className={`font-medium ${canFulfill ? 'text-green-600' : 'text-red-600'}`}>
+                                  {canFulfill ? '✓ Can fulfill' : '⚠ Shortage'}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {aggregatedRequestItems.length > 6 && (
+                        <div className="mt-3 text-sm text-green-700">
+                          ...and {aggregatedRequestItems.length - 6} more items
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
                     {/* Request vs Inventory Matching */}
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
                       <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                        <HiLightBulb className="w-5 h-5 text-green-600 mr-2" />
-                        Recommended Distribution Plan
+                        <HiLightBulb className="w-5 h-5 text-purple-600 mr-2" />
+                        AI Optimization Recommendations
+                        <span className="ml-2 text-sm font-normal text-gray-600">
+                          (Based on assessed needs)
+                        </span>
                       </h4>
                       <div className="space-y-4">
                         {/* Show items based on requests or inventory */}
@@ -1512,36 +1917,87 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <h5 className="font-medium text-blue-900 mb-4">
-                    Final Recommendations
+                  <h5 className="font-medium text-blue-900 mb-4 flex items-center">
+                    <HiExclamation className="w-4 h-4 mr-2" />
+                    Distribution Readiness Check
                   </h5>
-                  <ul className="space-y-2 text-sm text-blue-800">
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>
-                        Prioritize food items and medical supplies based on high
-                        demand
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>
-                        Schedule distribution between 9AM - 3PM for optimal
-                        reach
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>
-                        Coordinate with local barangay officials for smooth
-                        execution
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>Prepare backup supplies for emergency cases</span>
-                    </li>
-                  </ul>
+                  
+                  {/* Dynamic recommendations based on assessed needs */}
+                  {aggregatedRequestItems.length > 0 ? (
+                    <div className="space-y-3">
+                      {/* Critical items check */}
+                      {aggregatedRequestItems.filter(item => item.max_urgency === 'Critical').length > 0 && (
+                        <div className="flex items-start text-sm">
+                          <span className="text-red-600 mr-2">⚠</span>
+                          <span className="text-red-800">
+                            <strong>{aggregatedRequestItems.filter(item => item.max_urgency === 'Critical').length} critical priority items</strong> detected. 
+                            Prioritize these for immediate distribution.
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Stock shortage warnings */}
+                      {aggregatedRequestItems.filter(item => {
+                        const inventoryItem = filteredInventoryData.find(inv => inv.name === item.itemtype_name);
+                        return (inventoryItem?.current || 0) < item.total_requested;
+                      }).length > 0 && (
+                        <div className="flex items-start text-sm">
+                          <span className="text-orange-600 mr-2">⚠</span>
+                          <span className="text-orange-800">
+                            <strong>Stock shortages</strong> detected for {
+                              aggregatedRequestItems.filter(item => {
+                                const inventoryItem = filteredInventoryData.find(inv => inv.name === item.itemtype_name);
+                                return (inventoryItem?.current || 0) < item.total_requested;
+                              }).length
+                            } items. Consider partial fulfillment or procurement.
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Safety stock warnings */}
+                      {aggregatedRequestItems.filter(item => {
+                        const inventoryItem = filteredInventoryData.find(inv => inv.name === item.itemtype_name);
+                        return inventoryItem?.status === 'critical' || inventoryItem?.status === 'low';
+                      }).length > 0 && (
+                        <div className="flex items-start text-sm">
+                          <span className="text-yellow-600 mr-2">⚠</span>
+                          <span className="text-yellow-800">
+                            Some requested items are <strong>below safety thresholds</strong>. 
+                            Review distribution quantities to maintain emergency reserves.
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* All good message */}
+                      {aggregatedRequestItems.every(item => {
+                        const inventoryItem = filteredInventoryData.find(inv => inv.name === item.itemtype_name);
+                        return (inventoryItem?.current || 0) >= item.total_requested && inventoryItem?.status === 'safe';
+                      }) && (
+                        <div className="flex items-start text-sm">
+                          <span className="text-green-600 mr-2">✓</span>
+                          <span className="text-green-800">
+                            <strong>All assessed needs can be fulfilled</strong> with current inventory levels. 
+                            Ready for distribution execution.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <ul className="space-y-2 text-sm text-blue-800">
+                      <li className="flex items-start">
+                        <span className="mr-2">•</span>
+                        <span>Select beneficiary requests in Step 1 to get contextual recommendations</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="mr-2">•</span>
+                        <span>Use AI insights to optimize distribution planning</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="mr-2">•</span>
+                        <span>Review stock levels and safety thresholds before execution</span>
+                      </li>
+                    </ul>
+                  )}
                 </div>
               </div>
             )}
@@ -1566,7 +2022,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                     }
                     className="flex-1 sm:flex-none px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
                   >
-                    {step === 1 ? "Generate Plan" : "Review & Submit"}
+                    {step === 1 ? "Review & Optimize →" : "Execute Distribution Plan"}
                     <HiTrendingUp className="w-4 h-4 ml-2" />
                   </button>
                 ) : (
@@ -1583,6 +2039,16 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={isSuccessOpen}
+        onClose={handleSuccessModalClose}
+        title={successData.title}
+        message={successData.message}
+        details={successData.details}
+        icon={successData.icon}
+      />
     </div>
   );
 };

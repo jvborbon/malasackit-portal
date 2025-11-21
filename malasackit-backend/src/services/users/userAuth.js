@@ -9,7 +9,7 @@ export const loginUser = async (emailOrName, password) => {
         const userQuery = `
             SELECT 
                 u.user_id, u.full_name, u.email, u.status, u.is_approved,
-                r.role_name, lc.password_hash
+                u.role_id, r.role_name, lc.password_hash
             FROM Users u
             LEFT JOIN Login_Credentials lc ON u.user_id = lc.user_id
             LEFT JOIN Roles r ON u.role_id = r.role_id

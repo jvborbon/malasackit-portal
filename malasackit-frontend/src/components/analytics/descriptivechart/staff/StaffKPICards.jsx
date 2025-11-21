@@ -1,55 +1,165 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaHandsHelping, FaDollarSign, FaUsers } from 'react-icons/fa';
+import dashboardService from '../../../../services/dashboardService';
 
 const StaffKPICards = () => {
-  const kpiData = [
-    {
-      id: 1,
-      title: 'Total Worth of Response',
-      value: '₱2,450,000',
-      icon: <FaDollarSign className="w-8 h-8 text-red-600" />,
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      textColor: 'text-red-600'
-    },
-    {
-      id: 2,
-      title: 'Donors Engaged',
-      value: '1,234',
-      icon: <FaUsers className="w-8 h-8 text-red-600" />,
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      textColor: 'text-red-600'
-    },
-    {
-      id: 3,
-      title: 'Beneficiaries Served',
-      value: '5,678',
-      icon: <FaHandsHelping className="w-8 h-8 text-red-600" />,
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      textColor: 'text-red-600'
-    }
-  ];
+  const [kpiData, setKpiData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchKPIData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await dashboardService.getStaffKPIMetrics();
+        
+        if (response.success) {
+          const { totalWorth, donorsEngaged, beneficiariesServed } = response.data;
+          
+          const formattedKpiData = [
+            {
+              id: 1,
+              title: 'Total Worth of Response',
+              value: dashboardService.formatCurrency(totalWorth),
+              rawValue: totalWorth,
+              icon: <FaDollarSign className="w-8 h-8 text-red-600" />,
+              bgColor: 'bg-red-50',
+              borderColor: 'border-red-200',
+              textColor: 'text-red-600'
+            },
+            {
+              id: 2,
+              title: 'Donors Engaged',
+              value: dashboardService.formatNumber(donorsEngaged),
+              rawValue: donorsEngaged,
+              icon: <FaUsers className="w-8 h-8 text-red-600" />,
+              bgColor: 'bg-red-50',
+              borderColor: 'border-red-200',
+              textColor: 'text-red-600'
+            },
+            {
+              id: 3,
+              title: 'Beneficiaries Served',
+              value: dashboardService.formatNumber(beneficiariesServed),
+              rawValue: beneficiariesServed,
+              icon: <FaHandsHelping className="w-8 h-8 text-red-600" />,
+              bgColor: 'bg-red-50',
+              borderColor: 'border-red-200',
+              textColor: 'text-red-600'
+            }
+          ];
+          
+          setKpiData(formattedKpiData);
+        } else {
+          throw new Error(response.message || 'Failed to fetch KPI data');
+        }
+      } catch (error) {
+        console.error('Error fetching KPI data:', error);
+        setError(error.message);
+        
+        // Set default/fallback data
+        const fallbackKpiData = [
+          {
+            id: 1,
+            title: 'Total Worth of Response',
+            value: '₱0',
+            rawValue: 0,
+            icon: <FaDollarSign className="w-8 h-8 text-red-600" />,
+            bgColor: 'bg-red-50',
+            borderColor: 'border-red-200',
+            textColor: 'text-red-600'
+          },
+          {
+            id: 2,
+            title: 'Donors Engaged',
+            value: '0',
+            rawValue: 0,
+            icon: <FaUsers className="w-8 h-8 text-red-600" />,
+            bgColor: 'bg-red-50',
+            borderColor: 'border-red-200',
+            textColor: 'text-red-600'
+          },
+          {
+            id: 3,
+            title: 'Beneficiaries Served',
+            value: '0',
+            rawValue: 0,
+            icon: <FaHandsHelping className="w-8 h-8 text-red-600" />,
+            bgColor: 'bg-red-50',
+            borderColor: 'border-red-200',
+            textColor: 'text-red-600'
+          }
+        ];
+        setKpiData(fallbackKpiData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchKPIData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {[1, 2, 3].map((index) => (
+          <div key={index} className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 shadow-sm animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </div>
+              <div className="bg-gray-200 p-3 rounded-lg">
+                <div className="w-8 h-8 bg-gray-300 rounded"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      {kpiData.map((kpi) => (
-        <div
-          key={kpi.id}
-          className={`${kpi.bgColor} ${kpi.borderColor} border-2 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-2">{kpi.title}</p>
-              <p className={`${kpi.textColor} text-3xl font-bold`}>{kpi.value}</p>
+    <div className="space-y-4">
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
             </div>
-            <div className={`${kpi.bgColor} p-3 rounded-lg`}>
-              {kpi.icon}
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                Unable to fetch real-time data. Showing fallback values. Error: {error}
+              </p>
             </div>
           </div>
         </div>
-      ))}
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {kpiData.map((kpi) => (
+          <div
+            key={kpi.id}
+            className={`${kpi.bgColor} ${kpi.borderColor} border-2 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium mb-2">{kpi.title}</p>
+                <p className={`${kpi.textColor} text-3xl font-bold`} title={`Raw value: ${kpi.rawValue}`}>
+                  {kpi.value}
+                </p>
+              </div>
+              <div className={`${kpi.bgColor} p-3 rounded-lg`}>
+                {kpi.icon}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

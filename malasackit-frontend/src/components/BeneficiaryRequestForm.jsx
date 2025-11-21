@@ -3,6 +3,8 @@ import { HiX, HiUser, HiLocationMarker, HiClipboardList, HiExclamationCircle, Hi
 import beneficiaryService from '../services/beneficiaryService';
 import { getCategories } from '../services/inventoryService';
 import { getItemTypesByCategory } from '../services/donationService';
+import SuccessModal from './common/SuccessModal';
+import { useSuccessModal } from '../hooks/useSuccessModal';
 
 const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
   const [step, setStep] = useState(1); // 1: Select/Create Beneficiary, 2: Request Details, 3: Select Items
@@ -33,6 +35,9 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
     urgency: "Medium",
     notes: ""
   });
+
+  // Success modal hook
+  const { isOpen: isSuccessOpen, modalData: successData, showSuccess, hideSuccess } = useSuccessModal();
 
   // Load beneficiaries and categories when modal opens
   useEffect(() => {
@@ -161,15 +166,36 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
         notes: requestForm.notes,
         items: validItems.map(item => ({
           itemtype_id: item.itemtype_id,
-          requested_quantity: item.requested_quantity
+          quantity_requested: item.requested_quantity
         }))
       };
 
       const response = await beneficiaryService.createBeneficiaryRequest(requestData);
       
-      // Call parent callback
+      // Show success modal instead of calling onSubmit immediately
+      showSuccess({
+        title: '🎉 Request Created Successfully!',
+        message: `Beneficiary request for ${selectedBeneficiary.name} has been submitted and automatically approved.`,
+        details: {
+          beneficiary: selectedBeneficiary.name,
+          purpose: requestForm.purpose,
+          urgency: requestForm.urgency,
+          items_requested: validItems.length,
+          status: 'Approved'
+        },
+        icon: 'star',
+        buttonText: 'Perfect!'
+      });
+      
+      // Call parent callback after showing success
       if (onSubmit) {
-        onSubmit(response.data);
+        onSubmit({
+          ...response.data,
+          beneficiaryName: selectedBeneficiary.name,
+          items: validItems,
+          purpose: requestForm.purpose,
+          urgency: requestForm.urgency
+        });
       }
       
       // Reset and close
@@ -653,6 +679,17 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
           </div>
         </div>
       </div>
+
+      {/* Common Success Modal */}
+      <SuccessModal
+        isOpen={isSuccessOpen}
+        onClose={hideSuccess}
+        title={successData.title}
+        message={successData.message}
+        details={successData.details}
+        buttonText={successData.buttonText}
+        icon={successData.icon}
+      />
     </div>
   );
 };

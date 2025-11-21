@@ -1,5 +1,5 @@
 // Test database connection
-import { query } from './src/db.js';
+import { query } from '../src/db.js';
 
 const testDB = async () => {
     try {

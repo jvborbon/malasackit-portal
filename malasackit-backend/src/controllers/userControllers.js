@@ -29,7 +29,8 @@ export const login = async (req, res) => {
         const token = generateToken({
             userId: result.user.user_id,
             email: result.user.email,
-            role: result.user.role_name
+            role: result.user.role_name,
+            roleId: result.user.role_id
         });
         
         // Set HTTP-only cookie instead of sending token in response

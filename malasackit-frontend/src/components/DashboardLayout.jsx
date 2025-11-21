@@ -85,8 +85,9 @@ export default function DashboardLayout({ children, userRole }) {
                 { name: 'Beneficiary Management', icon: HiUserGroup, position: 2 },
                 { name: 'Donation Requests', icon: HiClipboardCheck, position: 3 },
                 { name: 'Distribution Logs', icon: HiUsers, position: 4 },
-                { name: 'Calendar', icon: HiCalendar, position: 5 },
-                { name: 'Settings', icon: HiCog, position: 6 }
+                { name: 'Notifications', icon: HiBell, position: 5 },
+                { name: 'Calendar', icon: HiCalendar, position: 6 },
+                { name: 'Settings', icon: HiCog, position: 7 }
             ]
         };
 

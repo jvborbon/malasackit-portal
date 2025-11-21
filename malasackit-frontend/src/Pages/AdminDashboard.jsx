@@ -12,6 +12,7 @@ import BeneficiaryLogs from '../components/DistributionLogs';
 import UserManagement from '../components/UserManagement';
 import BeneficiaryManagement from '../components/BeneficiaryManagement';
 import Calendar from '../components/Calendar';
+import Notifs from '../components/Notifs';
 import WalkInDonationForm from '../components/WalkInDonationForm';
 
 
@@ -35,13 +36,7 @@ export default function AdminDashboard() {
                             return <DonationRequests onWalkInClick={() => setShowWalkInModal(true)} userRole="admin" />;
 
                         case 'Notifications':
-                            return (
-                                <div className="bg-white rounded-lg shadow-sm p-6">
-                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Notifications</h2>
-                                    <p className="text-gray-600">System alerts and notifications.</p>
-                                    {/* Add admin notifications here */}
-                                </div>
-                            );
+                            return <Notifs />;
 
                         case 'Calendar':
                             return <Calendar />;

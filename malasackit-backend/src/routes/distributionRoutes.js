@@ -36,7 +36,7 @@ router.get('/plans/statistics', requireRole(['Resource Staff', 'Executive Admin'
 router.get('/plans/:planId', requireRole(['Resource Staff', 'Executive Admin']), getDistributionPlanById);
 
 // PUT /api/distribution/plans/:planId/status - Update distribution plan status (approve/reject/cancel)
-router.put('/plans/:planId/status', requireRole(['Resource Staff', 'Executive Admin']), updateDistributionPlanStatus);
+router.put('/plans/:planId/status', requireRole(['Executive Admin']), updateDistributionPlanStatus);
 
 // POST /api/distribution/plans/:planId/execute - Execute distribution plan
 router.post('/plans/:planId/execute', requireRole(['Resource Staff', 'Executive Admin']), executeDistributionPlan);

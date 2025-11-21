@@ -1,10 +1,18 @@
-import api from '../components/utilities/api';
+import axios from 'axios';
+
+// Create axios instance with base configuration
+const api = axios.create({
+  baseURL: 'http://localhost:3000/api',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 /**
  * Distribution Service
  * Handles all API calls related to distribution management
  */
-
 class DistributionService {
 
     // === DISTRIBUTION PLAN MANAGEMENT ===
@@ -13,67 +21,72 @@ class DistributionService {
      * Get all distribution plans with filtering
      */
     async getAllDistributionPlans(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const url = `${API_BASE_URL}/distribution/plans${queryString ? `?${queryString}` : ''}`;
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: this.getAuthHeaders(),
-        });
-        
-        return this.handleResponse(response);
+        try {
+            const response = await api.get('/distribution/plans', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching distribution plans:', error);
+            throw error;
+        }
     }
 
     /**
      * Get distribution plan by ID
      */
     async getDistributionPlanById(planId) {
-        const response = await fetch(`${API_BASE_URL}/distribution/plans/${planId}`, {
-            method: 'GET',
-            headers: this.getAuthHeaders(),
-        });
-        
-        return this.handleResponse(response);
+        try {
+            const response = await api.get(`/distribution/plans/${planId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching distribution plan:', error);
+            throw error;
+        }
     }
 
     /**
      * Create new distribution plan
      */
     async createDistributionPlan(planData) {
-        const response = await fetch(`${API_BASE_URL}/distribution/plans`, {
-            method: 'POST',
-            headers: this.getAuthHeaders(),
-            body: JSON.stringify(planData),
-        });
-        
-        return this.handleResponse(response);
-    }
-
-    /**
-     * Update distribution plan status
-     */
-    async updateDistributionPlanStatus(planId, statusData) {
-        const response = await fetch(`${API_BASE_URL}/distribution/plans/${planId}/status`, {
-            method: 'PUT',
-            headers: this.getAuthHeaders(),
-            body: JSON.stringify(statusData),
-        });
-        
-        return this.handleResponse(response);
+        try {
+            const response = await api.post('/distribution/plans', planData);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating distribution plan:', error);
+            throw error;
+        }
     }
 
     /**
      * Execute distribution plan
      */
     async executeDistributionPlan(planId, executionData = {}) {
-        const response = await fetch(`${API_BASE_URL}/distribution/plans/${planId}/execute`, {
-            method: 'POST',
-            headers: this.getAuthHeaders(),
-            body: JSON.stringify(executionData),
-        });
-        
-        return this.handleResponse(response);
+        try {
+            const response = await api.post(`/distribution/plans/${planId}/execute`, executionData);
+            return response.data;
+        } catch (error) {
+            console.error('Error executing distribution plan:', error);
+            throw error;
+        }
     }
+
+    /**
+     * Update distribution plan status
+     */
+    async updateDistributionPlanStatus(planId, statusData) {
+        try {
+            const response = await api.put(`/distribution/plans/${planId}/status`, statusData);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating distribution plan status:', error);
+            throw error;
+        }
+    }
+
+
+
+
+
+
 
     // === DISTRIBUTION PLANNING SERVICES ===
 
@@ -134,15 +147,13 @@ class DistributionService {
      * Get distribution logs with filtering
      */
     async getDistributionLogs(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const url = `${API_BASE_URL}/distribution/logs${queryString ? `?${queryString}` : ''}`;
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: this.getAuthHeaders(),
-        });
-        
-        return this.handleResponse(response);
+        try {
+            const response = await api.get('/distribution/logs', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching distribution logs:', error);
+            throw error;
+        }
     }
 
     /**

@@ -5,6 +5,10 @@ import { query } from '../db.js';
  */
 export const createDistributionPlan = async (req, res) => {
     try {
+        console.log('=== CREATE DISTRIBUTION PLAN DEBUG ===');
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+        console.log('User ID:', req.user?.userId);
+        
         const {
             request_id,
             planned_date,
@@ -14,45 +18,67 @@ export const createDistributionPlan = async (req, res) => {
         const createdBy = req.user.userId;
 
         // Validate required fields
+        console.log('Validation check - request_id:', request_id, 'items length:', items?.length);
         if (!request_id || !items || items.length === 0) {
+            console.log('Validation failed: missing required fields');
             return res.status(400).json({
                 success: false,
                 message: 'Request ID and items are required'
             });
         }
+        console.log('Basic validation passed');
 
         // Check if request exists and is approved
+        console.log('Checking beneficiary request:', request_id);
         const requestCheck = await query(
             'SELECT * FROM BeneficiaryRequests WHERE request_id = $1',
             [request_id]
         );
+        console.log('Request check result:', requestCheck.rows.length > 0 ? requestCheck.rows[0] : 'NOT FOUND');
 
         if (requestCheck.rows.length === 0) {
+            console.log('Error: Beneficiary request not found');
             return res.status(404).json({
                 success: false,
                 message: 'Beneficiary request not found'
             });
         }
 
+        console.log('Request status:', requestCheck.rows[0].status);
         if (requestCheck.rows[0].status !== 'Approved') {
+            console.log('Error: Request not approved, status is:', requestCheck.rows[0].status);
             return res.status(400).json({
                 success: false,
                 message: 'Can only create distribution plans for approved requests'
             });
         }
+        console.log('Request validation passed');
 
         // Check if a plan already exists for this request
+        console.log('Checking for existing plans for request:', request_id);
         const existingPlan = await query(
             'SELECT plan_id FROM DistributionPlans WHERE request_id = $1',
             [request_id]
         );
+        console.log('Existing plans found:', existingPlan.rows.length);
 
         if (existingPlan.rows.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Distribution plan already exists for this request'
+            console.log('Distribution plan already exists:', existingPlan.rows[0].plan_id);
+            
+            // Get the existing plan details to check its status
+            const existingPlanDetails = await getDistributionPlanDetails(existingPlan.rows[0].plan_id);
+            console.log('Existing plan status:', existingPlanDetails.status);
+            
+            // Return info about existing plan instead of creating duplicate
+            console.log('Returning existing plan info instead of creating duplicate');
+            return res.status(200).json({
+                success: true,
+                data: existingPlanDetails,
+                message: `Distribution plan already exists for this request (Status: ${existingPlanDetails.status})`,
+                isExisting: true
             });
         }
+        console.log('No existing plans, proceeding to create new one');
 
         // Start transaction
         await query('BEGIN');
@@ -70,11 +96,14 @@ export const createDistributionPlan = async (req, res) => {
 
             // Validate inventory availability and create plan items
             for (const item of items) {
-                const { inventory_id, quantity, allocated_value, notes } = item;
+                const { inventory_id, quantity, notes } = item;
 
-                // Check inventory availability
+                // Check inventory availability and get item details
                 const inventoryCheck = await query(
-                    'SELECT quantity_available FROM Inventory WHERE inventory_id = $1',
+                    `SELECT i.quantity_available, it.avg_retail_price 
+                     FROM Inventory i
+                     JOIN ItemType it ON i.itemtype_id = it.itemtype_id
+                     WHERE i.inventory_id = $1`,
                     [inventory_id]
                 );
 
@@ -82,15 +111,20 @@ export const createDistributionPlan = async (req, res) => {
                     throw new Error(`Inventory item ${inventory_id} not found`);
                 }
 
-                if (inventoryCheck.rows[0].quantity_available < quantity) {
-                    throw new Error(`Insufficient stock for inventory item ${inventory_id}. Available: ${inventoryCheck.rows[0].quantity_available}, Requested: ${quantity}`);
+                const { quantity_available, avg_retail_price } = inventoryCheck.rows[0];
+
+                if (quantity_available < quantity) {
+                    throw new Error(`Insufficient stock for inventory item ${inventory_id}. Available: ${quantity_available}, Requested: ${quantity}`);
                 }
 
-                // Create plan item
+                // Calculate allocated value based on quantity and unit price
+                const calculatedAllocatedValue = parseFloat(avg_retail_price) * quantity;
+
+                // Create plan item with calculated value
                 await query(
                     `INSERT INTO DistributionPlanItems (plan_id, inventory_id, quantity, allocated_value, notes)
                      VALUES ($1, $2, $3, $4, $5)`,
-                    [planId, inventory_id, quantity, allocated_value, notes]
+                    [planId, inventory_id, quantity, calculatedAllocatedValue, notes]
                 );
             }
 
@@ -352,19 +386,23 @@ export const updateDistributionPlanStatus = async (req, res) => {
             });
         }
 
-        const updateFields = ['status = $1', 'remarks = COALESCE($2, remarks)', 'updated_at = CURRENT_TIMESTAMP'];
-        const params = [status, remarks, planId];
+        let updateFields = ['status = $1', 'remarks = COALESCE($2, remarks)', 'updated_at = CURRENT_TIMESTAMP'];
+        let params = [status, remarks];
 
         // Add approval fields if approving
         if (status === 'Approved') {
-            updateFields.push('approved_by = $4', 'approved_at = CURRENT_TIMESTAMP');
-            params.splice(-1, 0, approvedBy); // Insert before planId
+            updateFields.push('approved_by = $3', 'approved_at = CURRENT_TIMESTAMP');
+            params.push(approvedBy);
         }
+
+        // Add planId as the last parameter
+        params.push(planId);
+        const planIdParamIndex = params.length;
 
         const updateQuery = `
             UPDATE DistributionPlans 
             SET ${updateFields.join(', ')}
-            WHERE plan_id = $${params.length}
+            WHERE plan_id = $${planIdParamIndex}
             RETURNING *
         `;
 
@@ -449,14 +487,31 @@ export const executeDistributionPlan = async (req, res) => {
                     ]
                 );
 
-                // Update inventory - reduce quantity
-                await query(
-                    `UPDATE Inventory 
-                     SET quantity_available = quantity_available - $1,
-                         last_updated = CURRENT_TIMESTAMP
-                     WHERE inventory_id = $2`,
-                    [item.quantity, item.inventory_id]
+                // Get current inventory details for value calculation
+                const currentInventory = await query(
+                    'SELECT quantity_available, total_fmv_value FROM Inventory WHERE inventory_id = $1',
+                    [item.inventory_id]
                 );
+
+                if (currentInventory.rows.length > 0) {
+                    const { quantity_available: currentQty, total_fmv_value: currentValue } = currentInventory.rows[0];
+                    
+                    // Calculate the value per unit
+                    const valuePerUnit = currentQty > 0 ? parseFloat(currentValue) / currentQty : 0;
+                    
+                    // Calculate the value to deduct
+                    const valueToDeduct = valuePerUnit * item.quantity;
+                    
+                    // Update inventory - reduce both quantity and value
+                    await query(
+                        `UPDATE Inventory 
+                         SET quantity_available = quantity_available - $1,
+                             total_fmv_value = GREATEST(0, total_fmv_value - $2),
+                             last_updated = CURRENT_TIMESTAMP
+                         WHERE inventory_id = $3`,
+                        [item.quantity, valueToDeduct, item.inventory_id]
+                    );
+                }
 
                 // Update inventory status if quantity reaches zero
                 await query(

@@ -43,6 +43,7 @@ export const getAllInventory = async (req, res) => {
         let inventoryQuery = `
             SELECT 
                 i.inventory_id,
+                i.itemtype_id,
                 i.quantity_available,
                 i.total_fmv_value,
                 i.location,
@@ -50,6 +51,11 @@ export const getAllInventory = async (req, res) => {
                 i.last_updated,
                 it.itemtype_name,
                 it.avg_retail_price as unit_fmv,
+                -- Calculate weighted average unit value (actual value per unit in inventory)
+                CASE 
+                    WHEN i.quantity_available > 0 THEN (i.total_fmv_value / i.quantity_available)
+                    ELSE it.avg_retail_price 
+                END as unit_value,
                 ic.category_name,
                 ic.description as category_description
             FROM Inventory i
@@ -328,10 +334,18 @@ export const updateInventoryItem = async (req, res) => {
         if (!newStatus) {
             if (quantity_available === 0) {
                 newStatus = 'No Stock';
-            } else if (quantity_available <= 10) { // Low stock threshold
-                newStatus = 'Low Stock';
             } else {
-                newStatus = 'Available';
+                // Get item type name for threshold lookup
+                const itemTypeQuery = 'SELECT itemtype_name FROM ItemType WHERE itemtype_id = $1';
+                const itemTypeResult = await query(itemTypeQuery, [itemtype_id]);
+                const itemTypeName = itemTypeResult.rows[0]?.itemtype_name || 'Unknown';
+                const threshold = getSafetyThreshold(itemTypeName);
+                
+                if (quantity_available <= threshold) {
+                    newStatus = 'Low Stock';
+                } else {
+                    newStatus = 'Available';
+                }
             }
         }
         
@@ -671,7 +685,8 @@ export const removeFromInventory = async (req, res) => {
  */
 export const getLowStockItems = async (req, res) => {
     try {
-        const { threshold = 10 } = req.query;
+        // If no threshold provided, we'll check each item individually
+        const { threshold } = req.query;
         
         const lowStockQuery = `
             SELECT 
@@ -684,15 +699,25 @@ export const getLowStockItems = async (req, res) => {
             FROM Inventory i
             JOIN ItemType it ON i.itemtype_id = it.itemtype_id
             JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
-            WHERE i.quantity_available <= $1 AND i.quantity_available > 0
+            WHERE i.quantity_available > 0
             ORDER BY i.quantity_available ASC, ic.category_name, it.itemtype_name
         `;
         
-        const result = await query(lowStockQuery, [threshold]);
+        const result = await query(lowStockQuery);
+        
+        // Filter results based on item-specific thresholds
+        const lowStockItems = result.rows.filter(item => {
+            const itemThreshold = threshold ? parseInt(threshold) : getSafetyThreshold(item.itemtype_name);
+            return item.quantity_available <= itemThreshold;
+        });
         
         res.json({
             success: true,
-            data: result.rows
+            data: lowStockItems.map(item => ({
+                ...item,
+                safety_threshold: threshold ? parseInt(threshold) : getSafetyThreshold(item.itemtype_name)
+            })),
+            message: `Found ${lowStockItems.length} items below their safety thresholds`
         });
         
     } catch (error) {
@@ -700,6 +725,28 @@ export const getLowStockItems = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch low stock items'
+        });
+    }
+};
+
+/**
+ * Get safety thresholds for all item types
+ */
+export const getSafetyThresholds = async (req, res) => {
+    try {
+        const { getAllSafetyThresholds } = await import('../config/safetyThresholds.js');
+        const thresholds = getAllSafetyThresholds();
+        
+        res.json({
+            success: true,
+            data: thresholds,
+            message: 'Safety thresholds retrieved successfully'
+        });
+    } catch (error) {
+        console.error('Error fetching safety thresholds:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch safety thresholds'
         });
     }
 };

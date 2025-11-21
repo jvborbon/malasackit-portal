@@ -5,7 +5,8 @@ import {
     getInventoryItem,
     updateInventoryItem,
     removeFromInventory,
-    getLowStockItems
+    getLowStockItems,
+    getSafetyThresholds
 } from '../controllers/inventoryControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 import { query } from '../db.js';
@@ -20,6 +21,9 @@ router.get('/stats', authenticateToken, requireRole(['Resource Staff', 'Executiv
 
 // GET /api/inventory/low-stock - Get items with low stock for alerts
 router.get('/low-stock', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getLowStockItems);
+
+// GET /api/inventory/safety-thresholds - Get safety thresholds for all item types
+router.get('/safety-thresholds', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getSafetyThresholds);
 
 // GET /api/inventory/categories - Get all categories for walk-in form
 router.get('/categories', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), async (req, res) => {

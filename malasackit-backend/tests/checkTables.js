@@ -1,4 +1,4 @@
-import { query } from './src/db.js';
+import { query } from '../src/db.js';
 
 const checkBeneficiaryTables = async () => {
     try {

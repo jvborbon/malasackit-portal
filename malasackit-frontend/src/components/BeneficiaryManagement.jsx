@@ -16,6 +16,9 @@ import {
 import beneficiaryService from '../services/beneficiaryService';
 import BeneficiaryRequestForm from './BeneficiaryRequestForm';
 import BeneficiaryRequestsManagement from './BeneficiaryRequestsManagement';
+import SuccessModal from './common/SuccessModal';
+import { useSuccessModal } from '../hooks/useSuccessModal';
+import PaginationComponent from './common/PaginationComponent';
 
 const BeneficiaryManagement = () => {
   const [activeTab, setActiveTab] = useState('beneficiaries'); // beneficiaries, requests
@@ -26,7 +29,7 @@ const BeneficiaryManagement = () => {
   const [filterType, setFilterType] = useState('');
   const [pagination, setPagination] = useState({
     currentPage: 1,
-    totalPages: 1,
+    pages: 1,
     total: 0,
     limit: 20
   });
@@ -37,6 +40,9 @@ const BeneficiaryManagement = () => {
   const [selectedBeneficiary, setSelectedBeneficiary] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [beneficiaryRequests, setBeneficiaryRequests] = useState([]);
+  
+  // Success modal hook
+  const { isOpen: isSuccessOpen, modalData: successData, showSuccess, hideSuccess } = useSuccessModal();
   
   // Requests tab state
   const [allRequests, setAllRequests] = useState([]);
@@ -89,7 +95,7 @@ const BeneficiaryManagement = () => {
       setPagination(prev => ({
         ...prev,
         currentPage: response.pagination.currentPage,
-        totalPages: response.pagination.pages,
+        pages: response.pagination.pages,
         total: response.pagination.total
       }));
     } catch (err) {
@@ -188,10 +194,35 @@ const BeneficiaryManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let response;
       if (modalMode === 'create') {
-        await beneficiaryService.createBeneficiary(formData);
+        response = await beneficiaryService.createBeneficiary(formData);
+        showSuccess({
+          title: '✅ Beneficiary Added Successfully!',
+          message: `${formData.name} has been added to the beneficiary database.`,
+          details: {
+            name: formData.name,
+            type: formData.type,
+            contact_person: formData.contact_person,
+            address: formData.address
+          },
+          icon: 'checkCircle',
+          buttonText: 'Great!'
+        });
       } else if (modalMode === 'edit') {
-        await beneficiaryService.updateBeneficiary(selectedBeneficiary.beneficiary_id, formData);
+        response = await beneficiaryService.updateBeneficiary(selectedBeneficiary.beneficiary_id, formData);
+        showSuccess({
+          title: '✅ Beneficiary Updated Successfully!',
+          message: `${formData.name}'s information has been updated.`,
+          details: {
+            name: formData.name,
+            type: formData.type,
+            contact_person: formData.contact_person,
+            address: formData.address
+          },
+          icon: 'checkCircle',
+          buttonText: 'Perfect!'
+        });
       }
       
       closeModal();
@@ -219,6 +250,19 @@ const BeneficiaryManagement = () => {
 
   // Request form handler
   const handleSubmitRequest = (data) => {
+    // Show success modal for beneficiary request
+    showSuccess({
+      title: '📋 Beneficiary Request Submitted!',
+      message: `Request for ${data.beneficiaryName || 'beneficiary'} has been successfully submitted and approved automatically.`,
+      details: data.items ? [
+        `${data.items.length} item types requested`,
+        `Urgency level: ${data.urgency || 'Medium'}`,
+        `Purpose: ${data.purpose || 'Not specified'}`
+      ] : null,
+      icon: 'star',
+      buttonText: 'Excellent!'
+    });
+    
     // Reload beneficiaries after successful request submission
     loadBeneficiaries(pagination.currentPage);
     setShowRequestModal(false);
@@ -331,8 +375,10 @@ const BeneficiaryManagement = () => {
 
           {/* Beneficiaries Table */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+            {/* Table container with fixed height and scrolling */}
+            <div className="overflow-x-auto">
+              <div className="max-h-[600px] overflow-y-auto">
+                <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -442,86 +488,20 @@ const BeneficiaryManagement = () => {
               ))}
             </tbody>
           </table>
-        </div>
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => handlePageChange(pagination.currentPage - 1)}
-                  disabled={pagination.currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => handlePageChange(pagination.currentPage + 1)}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-              
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing{' '}
-                    <span className="font-medium">
-                      {(pagination.currentPage - 1) * pagination.limit + 1}
-                    </span>{' '}
-                    to{' '}
-                    <span className="font-medium">
-                      {Math.min(pagination.currentPage * pagination.limit, pagination.total)}
-                    </span>{' '}
-                    of{' '}
-                    <span className="font-medium">{pagination.total}</span> results
-                  </p>
-                </div>
-                
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    <button
-                      onClick={() => handlePageChange(pagination.currentPage - 1)}
-                      disabled={pagination.currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    
-                    {/* Page numbers */}
-                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                      const pageNumber = i + 1;
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => handlePageChange(pageNumber)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            pageNumber === pagination.currentPage
-                              ? 'z-10 bg-red-50 border-red-500 text-red-600'
-                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    })}
-                    
-                    <button
-                      onClick={() => handlePageChange(pagination.currentPage + 1)}
-                      disabled={pagination.currentPage === pagination.totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                  </nav>
-                </div>
               </div>
             </div>
-          </div>
-        )}
+            
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                <PaginationComponent
+                  pagination={pagination}
+                  onPageChange={handlePageChange}
+                  itemName="beneficiaries"
+                />
+              </div>
+            )}
           </div>
         </>
       )}
@@ -740,6 +720,17 @@ const BeneficiaryManagement = () => {
         isOpen={showRequestModal}
         onClose={() => setShowRequestModal(false)}
         onSubmit={handleSubmitRequest}
+      />
+
+      {/* Common Success Modal */}
+      <SuccessModal
+        isOpen={isSuccessOpen}
+        onClose={hideSuccess}
+        title={successData.title}
+        message={successData.message}
+        details={successData.details}
+        buttonText={successData.buttonText}
+        icon={successData.icon}
       />
     </div>
   );

@@ -12,6 +12,8 @@ import beneficiaryRoutes from './routes/beneficiaryRoutes.js';
 import distributionRoutes from './routes/distributionRoutes.js';
 import walkInRoutes from './routes/walkInRoutes.js';
 import receiptRoutes from './routes/receiptRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 const app = express();
 const port = 3000;
@@ -39,6 +41,8 @@ app.use('/api/beneficiaries', beneficiaryRoutes);
 app.use('/api/distribution', distributionRoutes);
 app.use('/api/walkin', walkInRoutes);
 app.use('/api/receipts', receiptRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 
 

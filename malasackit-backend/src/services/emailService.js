@@ -258,6 +258,218 @@ const emailTemplates = {
                 </div>
             </div>
         `
+    }),
+
+    // Donation-related email templates
+    donationApproved: (donorData, donationData, appointmentData) => ({
+        subject: '🎉 Donation Request Approved - Thank You!',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px;">🏥 Malasackit Portal</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Donation Request Approved</p>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e5e5;">
+                    <h2 style="color: #dc2626; margin-top: 0;">Great News, ${donorData.full_name}!</h2>
+                    
+                    <div style="background: #d1f2eb; border: 1px solid #52c41a; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #389e0d; margin: 0 0 10px 0;">✅ Your Donation Request Has Been Approved!</h3>
+                        <p style="color: #389e0d; margin: 0;">We're excited to receive your generous donation. Your contribution will make a significant impact in our community.</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">Donation Details:</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Donation ID:</td>
+                                <td style="padding: 8px 0; color: #333;">#${donationData.donation_id}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Delivery Method:</td>
+                                <td style="padding: 8px 0; color: #333;">${donationData.delivery_method}</td>
+                            </tr>
+                            ${appointmentData ? `
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Appointment Date:</td>
+                                <td style="padding: 8px 0; color: #333;">${new Date(appointmentData.appointment_date).toLocaleDateString()}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Appointment Time:</td>
+                                <td style="padding: 8px 0; color: #333;">${appointmentData.appointment_time}</td>
+                            </tr>
+                            ` : ''}
+                        </table>
+                    </div>
+                    
+                    ${appointmentData ? `
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                            <h3 style="color: #856404; margin: 0 0 10px 0;">📅 Next Steps</h3>
+                            <p style="color: #856404; margin: 0;">Please be available at the scheduled time. Our team will ${donationData.delivery_method === 'pickup' ? 'visit your location' : 'be waiting at our office'} to collect your donation.</p>
+                        </div>
+                    ` : `
+                        <div style="background: #e6f7ff; border: 1px solid #91d5ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                            <h3 style="color: #0050b3; margin: 0 0 10px 0;">📞 Next Steps</h3>
+                            <p style="color: #0050b3; margin: 0;">Our team will contact you soon to schedule the ${donationData.delivery_method}. Please keep your phone available.</p>
+                        </div>
+                    `}
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <p style="margin-bottom: 20px; color: #666;">View your donation details:</p>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/donor/donations/${donationData.donation_id}" 
+                           style="background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                            View Donation →
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; text-align: center;">Thank you for your generosity and for making a difference in our community! 🙏</p>
+                    
+                    <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                    
+                    <p style="color: #888; font-size: 12px; text-align: center; margin: 0;">
+                        This is an automated notification from Malasackit Portal.<br>
+                        Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        `
+    }),
+
+    donationRejected: (donorData, donationData, reason) => ({
+        subject: '📝 Donation Request Update - Action Required',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px;">🏥 Malasackit Portal</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Donation Request Update</p>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e5e5;">
+                    <h2 style="color: #dc2626; margin-top: 0;">Hello, ${donorData.full_name}</h2>
+                    
+                    <div style="background: #ffeaa7; border: 1px solid #fadb14; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #ad6800; margin: 0 0 10px 0;">📝 Donation Request Status Update</h3>
+                        <p style="color: #ad6800; margin: 0;">We regret to inform you that your donation request could not be processed at this time.</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">Donation Details:</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Donation ID:</td>
+                                <td style="padding: 8px 0; color: #333;">#${donationData.donation_id}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Submission Date:</td>
+                                <td style="padding: 8px 0; color: #333;">${new Date().toLocaleDateString()}</td>
+                            </tr>
+                        </table>
+                        ${reason ? `
+                            <h4 style="color: #333; margin: 15px 0 5px 0;">Reason:</h4>
+                            <p style="color: #666; margin: 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">${reason}</p>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="background: #e6f7ff; border: 1px solid #91d5ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #0050b3; margin: 0 0 10px 0;">💡 What's Next?</h3>
+                        <p style="color: #0050b3; margin: 0;">You can submit a new donation request or contact our support team if you have questions. We appreciate your willingness to help our community!</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/donor/donate" 
+                           style="background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">
+                            Submit New Request →
+                        </a>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/contact" 
+                           style="background: #6b7280; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                            Contact Support
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; text-align: center;">Thank you for your understanding and continued support of our mission. 🙏</p>
+                    
+                    <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                    
+                    <p style="color: #888; font-size: 12px; text-align: center; margin: 0;">
+                        This is an automated notification from Malasackit Portal.<br>
+                        Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        `
+    }),
+
+    donationCompleted: (donorData, donationData, itemCount, totalValue) => ({
+        subject: '🎉 Donation Received - Thank You for Your Generosity!',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px;">🏥 Malasackit Portal</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Donation Completed</p>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e5e5;">
+                    <h2 style="color: #dc2626; margin-top: 0;">Thank You, ${donorData.full_name}! 🎉</h2>
+                    
+                    <div style="background: #d1f2eb; border: 1px solid #52c41a; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #389e0d; margin: 0 0 10px 0;">✅ Donation Successfully Received!</h3>
+                        <p style="color: #389e0d; margin: 0;">Your generous donation has been successfully received and processed. It will now help make a positive impact in our community!</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">Donation Summary:</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Donation ID:</td>
+                                <td style="padding: 8px 0; color: #333;">#${donationData.donation_id}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Items Received:</td>
+                                <td style="padding: 8px 0; color: #333;">${itemCount} item types</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Total Value:</td>
+                                <td style="padding: 8px 0; color: #333; font-weight: bold;">₱${totalValue.toLocaleString()}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; font-weight: bold; color: #555;">Completed Date:</td>
+                                <td style="padding: 8px 0; color: #333;">${new Date().toLocaleDateString()}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div style="background: #fff7e6; border: 1px solid #ffd591; padding: 20px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #d46b08; margin: 0 0 15px 0;">🌟 Your Impact</h3>
+                        <p style="color: #d46b08; margin: 0; line-height: 1.6;">Your donation will directly help families and individuals in need within our community. Every item you've contributed brings hope and relief to those who need it most.</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <p style="margin-bottom: 20px; color: #666;">View your donation history and impact:</p>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/donor/donations" 
+                           style="background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">
+                            View Donations →
+                        </a>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/donor/donate" 
+                           style="background: #52c41a; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                            Donate Again →
+                        </a>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                        <h3 style="color: #333; margin-top: 0;">🙏 From Our Community</h3>
+                        <p style="color: #666; font-style: italic; margin: 0;">"Thank you for your kindness and generosity. Your donation helps us continue our mission of supporting those in need and building a stronger, more caring community."</p>
+                        <p style="color: #999; font-size: 14px; margin: 10px 0 0 0;">- Malasackit Portal Team</p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                    
+                    <p style="color: #888; font-size: 12px; text-align: center; margin: 0;">
+                        This is an automated notification from Malasackit Portal.<br>
+                        Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        `
     })
 };
 
@@ -332,4 +544,20 @@ export const sendPasswordResetEmail = async (userData, resetToken) => {
 export const sendPasswordResetConfirmation = async (userData) => {
     const template = emailTemplates.passwordResetSuccess(userData);
     return await sendEmail(userData.email, template);
+};
+
+// Donation-related email functions
+export const sendDonationApprovalEmail = async (donorData, donationData, appointmentData = null) => {
+    const template = emailTemplates.donationApproved(donorData, donationData, appointmentData);
+    return await sendEmail(donorData.email, template);
+};
+
+export const sendDonationRejectionEmail = async (donorData, donationData, reason = null) => {
+    const template = emailTemplates.donationRejected(donorData, donationData, reason);
+    return await sendEmail(donorData.email, template);
+};
+
+export const sendDonationCompletionEmail = async (donorData, donationData, itemCount, totalValue) => {
+    const template = emailTemplates.donationCompleted(donorData, donationData, itemCount, totalValue);
+    return await sendEmail(donorData.email, template);
 };

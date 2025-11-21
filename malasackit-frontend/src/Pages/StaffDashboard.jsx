@@ -11,6 +11,7 @@ import BeneficiaryLogs from '../components/DistributionLogs';
 import BeneficiaryManagement from '../components/BeneficiaryManagement';
 import UserProfileSettings from '../components/UserProfileSettings';
 import Calendar from '../components/Calendar';
+import Notifs from '../components/Notifs';
 import WalkInDonationForm from '../components/WalkInDonationForm';
 
 export default function StaffDashboard() {
@@ -31,6 +32,9 @@ export default function StaffDashboard() {
 
                         case 'Distribution Logs':
                             return <BeneficiaryLogs />;
+
+                        case 'Notifications':
+                            return <Notifs />;
 
                         case 'Calendar':
                             return <Calendar />;

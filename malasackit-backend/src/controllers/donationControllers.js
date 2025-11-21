@@ -2,6 +2,12 @@ import { query } from '../db.js';
 import { addToInventoryFromDonation, updateInventoryStatusFromDonation } from './inventoryControllers.js';
 import { getFixedCondition, isConditionAllowed } from '../config/fixedConditionItems.js';
 import { getConditionDefinition, getItemCategory } from '../config/conditionDefinitions.js';
+import { 
+    notifyNewDonationRequest,
+    notifyDonationApproval,
+    notifyDonationRejection,
+    notifyDonationCompletion
+} from './notificationControllers.js';
 
 /**
  * Submit a new donation request
@@ -124,6 +130,22 @@ export const submitDonationRequest = async (req, res) => {
                 userId,
                 `Submitted donation request with ${items.length} item types (ID: ${donationId})`
             ]);
+
+            // Calculate total value for notification
+            const totalValue = items.reduce((sum, item) => sum + (parseFloat(item.value) * parseInt(item.quantity)), 0);
+            
+            // Get donor information for notification
+            const donorQuery = 'SELECT full_name FROM Users WHERE user_id = $1';
+            const donorResult = await query(donorQuery, [userId]);
+            const donorName = donorResult.rows[0]?.full_name || 'Unknown Donor';
+            
+            // Send notifications to staff and admins
+            try {
+                await notifyNewDonationRequest(donationId, donorName, userId, items.length, totalValue);
+            } catch (notificationError) {
+                console.error('Error sending donation notification:', notificationError);
+                // Don't fail the request if notification fails
+            }
 
             res.status(201).json({
                 success: true,
@@ -308,7 +330,7 @@ export const getDonationDetails = async (req, res) => {
         // Check if user has permission to view this donation
         // Allow donor to view their own, or staff/admin to view any
         const isOwner = donation.user_id === userId;
-        const isStaffOrAdmin = req.user.role === 'Resource Staff' || req.user.role === 'Executive Admin';
+        const isStaffOrAdmin = req.user.roleId === 1 || req.user.roleId === 2; // Executive Admin or Resource Staff
         
         if (!isOwner && !isStaffOrAdmin) {
             return res.status(403).json({
@@ -412,6 +434,19 @@ export const cancelDonationRequest = async (req, res) => {
             userId,
             `Cancelled donation request (ID: ${donationId})`
         ]);
+        
+        // Get donor information for notification
+        const donorQuery = 'SELECT full_name FROM Users WHERE user_id = $1';
+        const donorResult = await query(donorQuery, [userId]);
+        const donorName = donorResult.rows[0]?.full_name || 'Unknown Donor';
+        
+        // Send notification to staff and admins
+        try {
+            await notifyDonationRequestCancellation(donationId, donorName, userId);
+        } catch (notificationError) {
+            console.error('Error sending cancellation notification:', notificationError);
+            // Don't fail the request if notification fails
+        }
 
         res.json({
             success: true,
@@ -497,14 +532,33 @@ export const updateDonationRequest = async (req, res) => {
                 userId,
                 `Updated donation request (ID: ${donationId}) with ${items.length} item(s)`
             ]);
+            
+            // Get donor information for notification
+            const donorQuery = 'SELECT full_name FROM Users WHERE user_id = $1';
+            const donorResult = await query(donorQuery, [userId]);
+            const donorName = donorResult.rows[0]?.full_name || 'Unknown Donor';
+            
+            // Determine what was changed
+            const changes = [];
+            if (delivery_method) changes.push(`delivery method to ${delivery_method}`);
+            if (notes) changes.push('notes/description');
+            const changesText = changes.join(', ');
+            
+            // Send notification to staff and admins
+            try {
+                await notifyDonationRequestUpdate(donationId, donorName, userId, changesText);
+            } catch (notificationError) {
+                console.error('Error sending update notification:', notificationError);
+                // Don't fail the request if notification fails
+            }
 
             res.json({
                 success: true,
                 message: 'Donation request updated successfully',
                 data: {
                     donation_id: donationId,
-                    total_items: items.length,
-                    total_value: totalValue
+                    total_items: items?.length || 0,
+                    total_value: 0 // Will be calculated if items are provided
                 }
             });
 
@@ -728,8 +782,56 @@ export const updateDonationStatus = async (req, res) => {
             }`
         ]);
 
-        // TODO: Send notification to donor about status change
-        // You can integrate with your notification system here
+        // Send appropriate notifications based on status change
+        try {
+            if (status === 'Approved') {
+                // Get appointment details if available
+                const appointmentQuery = `
+                    SELECT appointment_date, appointment_time 
+                    FROM Appointments a
+                    JOIN DonationRequests dr ON a.appointment_id = dr.appointment_id
+                    WHERE dr.donation_id = $1
+                `;
+                const appointmentResult = await query(appointmentQuery, [donationId]);
+                const appointment = appointmentResult.rows[0];
+                
+                await notifyDonationApproval(
+                    donationId, 
+                    donation.donor_name, 
+                    donation.user_id,
+                    appointment?.appointment_date,
+                    appointment?.appointment_time
+                );
+            } else if (status === 'Rejected') {
+                await notifyDonationRejection(
+                    donationId, 
+                    donation.donor_name, 
+                    donation.user_id,
+                    remarks
+                );
+            } else if (status === 'Completed' && donation.status !== 'Completed') {
+                // Get donation items for value calculation
+                const itemsQuery = `
+                    SELECT COUNT(*) as item_count, 
+                           SUM(declared_value * quantity) as total_value
+                    FROM DonationItems 
+                    WHERE donation_id = $1
+                `;
+                const itemsResult = await query(itemsQuery, [donationId]);
+                const itemStats = itemsResult.rows[0];
+                
+                await notifyDonationCompletion(
+                    donationId,
+                    donation.donor_name,
+                    donation.user_id,
+                    parseInt(itemStats.item_count) || 0,
+                    parseFloat(itemStats.total_value) || 0
+                );
+            }
+        } catch (notificationError) {
+            console.error('Error sending status change notification:', notificationError);
+            // Don't fail the request if notification fails
+        }
 
         res.json({
             success: true,
