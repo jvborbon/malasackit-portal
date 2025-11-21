@@ -1,4 +1,4 @@
-import api from '../utilities/api';
+import api from '../components/utilities/api';
 
 export const registrationAPI = {
     // Register new user

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { locationAPI } from './services/locationAPI';
-import { registrationAPI } from './services/registrationAPI';
+import { locationAPI } from '../services/locationAPI';
+import { registrationAPI } from '../services/registrationAPI';
 import { validateRegistrationForm, getStepValidation } from './utilities/formValidation';
 import StepIndicator from './common/StepIndicator';
 import PersonalInfoStep from './registration/PersonalInfoStep';
