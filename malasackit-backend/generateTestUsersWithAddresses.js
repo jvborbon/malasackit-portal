@@ -29,25 +29,25 @@ const generateTestUsersWithAddresses = async () => {
         const testUsers = [
             // Executive Admins
             {
-                user_id: 'EXEC_001',
+                user_id: 'DONOR_001',
                 full_name: 'Maria Santos-Cruz',
                 email: 'maria.santos@malasackit.org',
                 password: 'Maria@2024!',
                 contact_num: '+63 917 123 4567',
                 account_type: 'INDIVIDUAL',
-                role: 'Executive Admin',
+                role: 'Donor',
                 parish: 'St. Sebastian Cathedral',
                 vicariate: 'Vicariate of St. Sebastian',
                 location_index: 0
             },
             {
-                user_id: 'EXEC_002', 
+                user_id: 'DONOR_002', 
                 full_name: 'Father Miguel Rodriguez',
                 email: 'fr.miguel@malasackit.org',
                 password: 'FrMiguel123!',
                 contact_num: '+63 925 987 6543',
                 account_type: 'INDIVIDUAL',
-                role: 'Executive Admin',
+                role: 'Donor',
                 parish: 'Basilica of St. Martin de Tours', 
                 vicariate: 'Vicariate of Our Lady of Caysasay',
                 location_index: 1
@@ -55,13 +55,13 @@ const generateTestUsersWithAddresses = async () => {
 
             // Resource Staff
             {
-                user_id: 'STAFF_001',
+                user_id: 'DONOR_003',
                 full_name: 'Juan dela Cruz',
                 email: 'juan.delacruz@malasackit.org',
                 password: 'Juan2024@',
                 contact_num: '+63 939 555 7890',
                 account_type: 'INDIVIDUAL',
-                role: 'Resource Staff',
+                role: 'Donor',
                 parish: 'St. Francis Xavier Parish',
                 vicariate: 'Vicariate of St. Francis Xavier',
                 location_index: 2
@@ -79,7 +79,7 @@ const generateTestUsersWithAddresses = async () => {
                 location_index: 3
             },
             {
-                user_id: 'STAFF_003',
+                user_id: 'DONOR_004',
                 full_name: 'Roberto Villanueva',
                 email: 'roberto.v@malasackit.org',
                 password: 'Roberto#2024',
@@ -93,7 +93,7 @@ const generateTestUsersWithAddresses = async () => {
 
             // Individual Donors
             {
-                user_id: 'DONOR_001',
+                user_id: 'DONOR_005',
                 full_name: 'Catherine Reyes',
                 email: 'catherine.reyes@gmail.com',
                 password: 'Cathy123!',
@@ -105,7 +105,7 @@ const generateTestUsersWithAddresses = async () => {
                 location_index: 5
             },
             {
-                user_id: 'DONOR_002',
+                user_id: 'DONOR_006',
                 full_name: 'Benjamin Castro',
                 email: 'ben.castro@yahoo.com',
                 password: 'Ben@Donor2024',
@@ -117,7 +117,7 @@ const generateTestUsersWithAddresses = async () => {
                 location_index: 6
             },
             {
-                user_id: 'DONOR_003',
+                user_id: 'DONOR_007',
                 full_name: 'Lisa Marie Fernandez',
                 email: 'lisa.fernandez@gmail.com',
                 password: 'Lisa#2024!',

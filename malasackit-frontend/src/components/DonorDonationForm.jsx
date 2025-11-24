@@ -18,7 +18,8 @@ export default function DonorDonationForm() {
         deliveryMethod: 'pickup',
         description: '',
         scheduleDate: '',
-        appointmentTime: ''
+        appointmentTime: '',
+        dropoffAddress: '' // Added for dropoff address
     });
 
     const [donationItems, setDonationItems] = useState([]);
@@ -118,7 +119,8 @@ export default function DonorDonationForm() {
             deliveryMethod: 'pickup',
             description: '',
             scheduleDate: '',
-            appointmentTime: ''
+            appointmentTime: '',
+            dropoffAddress: ''
         });
         
         // Reset to first available category
@@ -143,6 +145,12 @@ export default function DonorDonationForm() {
         const incompleteItems = donationItems.filter(item => !item.quantity || !item.value);
         if (incompleteItems.length > 0) {
             setSubmitError('Please fill in quantity and value for all donation items.');
+            return;
+        }
+
+        // Validate dropoff address if dropoff is selected
+        if (formData.deliveryMethod === 'dropoff' && !formData.dropoffAddress.trim()) {
+            setSubmitError('Please enter your address for dropoff delivery.');
             return;
         }
 
@@ -173,7 +181,8 @@ export default function DonorDonationForm() {
                 deliveryMethod: formData.deliveryMethod,
                 description: formData.description || null,
                 scheduleDate: formData.scheduleDate || null,
-                appointmentTime: formData.appointmentTime || null
+                appointmentTime: formData.appointmentTime || null,
+                dropoffAddress: formData.deliveryMethod === 'dropoff' ? formData.dropoffAddress : null
             };
             
             console.log('Submitting donation:', donationData);
@@ -372,6 +381,28 @@ export default function DonorDonationForm() {
                     formData={formData}
                     handleInputChange={handleInputChange}
                 />
+
+                {/* Dropoff Address Input - Only shown when dropoff is selected */}
+                {formData.deliveryMethod === 'dropoff' && (
+                    <div className="space-y-2">
+                        <label htmlFor="dropoffAddress" className="block text-sm font-medium text-gray-700">
+                            Dropoff Address <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                            id="dropoffAddress"
+                            name="dropoffAddress"
+                            value={formData.dropoffAddress}
+                            onChange={handleInputChange}
+                            placeholder="Enter your complete address for dropoff (e.g., House/Unit No., Street, Barangay, City, Province)"
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary resize-none"
+                            required
+                        />
+                        <p className="text-xs text-gray-500">
+                            Please provide your complete address where you will bring the donation items.
+                        </p>
+                    </div>
+                )}
 
                 {/* Submit Section */}
                 <SubmitSection

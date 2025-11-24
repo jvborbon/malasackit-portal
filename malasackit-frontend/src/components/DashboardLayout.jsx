@@ -147,6 +147,11 @@ export default function DashboardLayout({ children, userRole }) {
         }
     };
 
+    const handleAvatarClick = () => {
+        setActiveNav('Settings');
+        setIsSidebarOpen(false);
+    };
+
     // Loading state if user data is not available yet
     if (!user) {
         return (
@@ -247,7 +252,12 @@ export default function DashboardLayout({ children, userRole }) {
                             <span className="text-gray-600 text-sm lg:text-base font-medium">
                                 Welcome, {userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
                             </span>
-                            <div className="w-8 h-8 bg-gray-800 rounded-full"></div>
+                            <button
+                                type="button"
+                                onClick={handleAvatarClick}
+                                className="w-8 h-8 bg-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary transition"
+                                aria-label="Open profile settings"
+                            />
                         </div>
                     </div>
                 </header>
