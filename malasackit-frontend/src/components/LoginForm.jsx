@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiUser, HiLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
 import { useAuth } from '../auth/Authentication';
+import { sanitizeInput, sanitizeEmail } from '../utils/sanitization';
 
 // Google-style Floating Input Component
 const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon: Icon, required = false, disabled = false }) => {
@@ -156,9 +157,20 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+        let sanitizedValue = value;
+        
+        if (type !== 'checkbox') {
+            // Sanitize based on field type
+            if (name === 'email') {
+                sanitizedValue = sanitizeEmail(value);
+            } else {
+                sanitizedValue = sanitizeInput(value);
+            }
+        }
+        
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : sanitizedValue
         }));
     };
 

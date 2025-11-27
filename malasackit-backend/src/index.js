@@ -14,6 +14,7 @@ import walkInRoutes from './routes/walkInRoutes.js';
 import receiptRoutes from './routes/receiptRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import { sanitizeMiddleware } from './middleware/sanitization.js';
 
 const app = express();
 const port = 3000;
@@ -26,6 +27,9 @@ app.use(cors({
 
 app.use(cookieParser()); // Add cookie parser middleware
 app.use(express.json());
+
+// Input sanitization middleware (MUST be after express.json())
+app.use(sanitizeMiddleware);
 
 app.get('/', (req, res) => {
     res.send('Hello World!');

@@ -3,6 +3,7 @@ import {
     HiX,
     HiCheck
 } from 'react-icons/hi';
+import { sanitizeInput, sanitizeEmail } from '../utils/sanitization';
 
 export default function UserModalForm({ isOpen, onClose, user, onSave }) {
     const [formData, setFormData] = useState({
@@ -69,7 +70,15 @@ export default function UserModalForm({ isOpen, onClose, user, onSave }) {
     };
 
     const handleInputChange = (field, value) => {
-        setFormData({ ...formData, [field]: value });
+        // Sanitize input based on field type
+        let sanitizedValue = value;
+        if (field === 'email') {
+            sanitizedValue = sanitizeEmail(value);
+        } else if (field === 'name') {
+            sanitizedValue = sanitizeInput(value);
+        }
+        
+        setFormData({ ...formData, [field]: sanitizedValue });
         // Clear error when user starts typing
         if (errors[field]) {
             setErrors({ ...errors, [field]: '' });

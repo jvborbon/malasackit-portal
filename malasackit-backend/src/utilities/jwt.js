@@ -1,7 +1,17 @@
 // src/utilities/jwt.js
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'malasackit-secret-key';
+// Generate a secure secret if none provided (development only)
+const generateSecret = () => {
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET environment variable must be set in production!');
+    }
+    console.warn('No JWT_SECRET found, generating temporary secret for development');
+    return crypto.randomBytes(64).toString('hex');
+};
+
+const JWT_SECRET = process.env.JWT_SECRET || generateSecret();
 const COOKIE_NAME = 'auth_token';
 const COOKIE_OPTIONS = {
     httpOnly: true,          // Not accessible via JavaScript

@@ -5,6 +5,7 @@ import { getCategories } from '../services/inventoryService';
 import { getItemTypesByCategory } from '../services/donationService';
 import SuccessModal from './common/SuccessModal';
 import { useSuccessModal } from '../hooks/useSuccessModal';
+import { sanitizeInput, sanitizeEmail, sanitizePhone, sanitizeText } from '../utils/sanitization';
 
 const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
   const [step, setStep] = useState(1); // 1: Select/Create Beneficiary, 2: Request Details, 3: Select Items

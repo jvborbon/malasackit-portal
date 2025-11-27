@@ -1,4 +1,5 @@
 import FloatingInput from '../common/FloatingInput';
+import { sanitizeInput, sanitizeEmail, sanitizePhone } from '../../utils/sanitization';
 
 const PersonalInfoStep = ({ 
     formData, 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { HiUser, HiArrowLeft } from 'react-icons/hi';
+import { sanitizeEmail } from '../utils/sanitization';
 
 // Google-style Floating Input Component (reused from login form)
 const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon: Icon, required = false, disabled = false }) => {
@@ -49,9 +50,11 @@ export default function ForgotPasswordForm({ onBackToLogin }) {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        // Sanitize input before storing in state
+        const sanitizedValue = name === 'emailOrName' ? sanitizeEmail(value) : value;
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: sanitizedValue
         }));
         // Clear messages when user types
         setError('');

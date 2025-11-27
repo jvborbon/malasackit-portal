@@ -11,6 +11,7 @@ import {
 } from 'react-icons/hi';
 import { createWalkInDonation } from '../services/walkInService';
 import { getCategories, getItemTypesByCategory } from '../services/inventoryService';
+import { sanitizeInput, sanitizeEmail, sanitizePhone } from '../utils/sanitization';
 
 const WalkInDonationForm = ({ isOpen, onClose, onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -295,7 +296,7 @@ const WalkInDonationForm = ({ isOpen, onClose, onSuccess }) => {
                 <input
                   type="text"
                   value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
+                  onChange={(e) => setDonorName(sanitizeInput(e.target.value))}
                   className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter donor's full name"
                 />
@@ -306,7 +307,7 @@ const WalkInDonationForm = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <textarea
                   value={donorAddress}
-                  onChange={(e) => setDonorAddress(e.target.value)}
+                  onChange={(e) => setDonorAddress(sanitizeInput(e.target.value))}
                   className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                   placeholder="Enter donor's address"
@@ -319,7 +320,7 @@ const WalkInDonationForm = ({ isOpen, onClose, onSuccess }) => {
                 <input
                   type="tel"
                   value={donorPhone}
-                  onChange={(e) => setDonorPhone(e.target.value)}
+                  onChange={(e) => setDonorPhone(sanitizePhone(e.target.value))}
                   className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter phone number"
                 />
@@ -331,7 +332,7 @@ const WalkInDonationForm = ({ isOpen, onClose, onSuccess }) => {
                 <input
                   type="email"
                   value={donorEmail}
-                  onChange={(e) => setDonorEmail(e.target.value)}
+                  onChange={(e) => setDonorEmail(sanitizeEmail(e.target.value))}
                   className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter email address"
                 />

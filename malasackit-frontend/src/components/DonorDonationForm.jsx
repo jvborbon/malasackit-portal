@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiCheckCircle, HiX, HiCalendar, HiTruck, HiHome } from 'react-icons/hi';
+import { HiCheckCircle, HiX, HiCalendar, HiTruck, HiHome, HiLocationMarker } from 'react-icons/hi';
 
 // Import organized components
 import { FormHeader } from './donation/donor/DonationFormHeader';
@@ -10,6 +10,7 @@ import { DonationDetails } from './donation/donor/DonationDetails';
 import { SubmitSection } from './donation/donor/SubmitSection';
 import { useDonationCategories } from './donation/useDonationCategories';
 import { submitDonationRequest } from '../services/donationService';
+import { sanitizeInput, sanitizeText } from '../utils/sanitization';
 
 export default function DonorDonationForm() {
     const { categories, isLoading } = useDonationCategories();
@@ -19,7 +20,8 @@ export default function DonorDonationForm() {
         description: '',
         scheduleDate: '',
         appointmentTime: '',
-        dropoffAddress: '' // Added for dropoff address
+        pickupAddress: '', // For pickup delivery address
+        address: '' // General address field that syncs with pickupAddress
     });
 
     const [donationItems, setDonationItems] = useState([]);
@@ -41,10 +43,28 @@ export default function DonorDonationForm() {
     // Event Handlers
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        
+        // Sanitize input based on field type
+        let sanitizedValue = value;
+        if (name === 'description') {
+            sanitizedValue = sanitizeText(value);
+        } else if (['pickupAddress', 'address'].includes(name)) {
+            sanitizedValue = sanitizeInput(value);
+        }
+        
+        // If pickupAddress is being changed, also update the general address field
+        if (name === 'pickupAddress') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: sanitizedValue,
+                address: sanitizedValue // Auto-sync address with pickupAddress
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: sanitizedValue
+            }));
+        }
     };
 
     const confirmSelectedItems = () => {
@@ -120,7 +140,8 @@ export default function DonorDonationForm() {
             description: '',
             scheduleDate: '',
             appointmentTime: '',
-            dropoffAddress: ''
+            pickupAddress: '',
+            address: ''
         });
         
         // Reset to first available category
@@ -148,9 +169,9 @@ export default function DonorDonationForm() {
             return;
         }
 
-        // Validate dropoff address if dropoff is selected
-        if (formData.deliveryMethod === 'dropoff' && !formData.dropoffAddress.trim()) {
-            setSubmitError('Please enter your address for dropoff delivery.');
+        // Validate pickup address if pickup is selected
+        if (formData.deliveryMethod === 'pickup' && !formData.pickupAddress.trim()) {
+            setSubmitError('Please enter your address for pickup delivery.');
             return;
         }
 
@@ -182,7 +203,8 @@ export default function DonorDonationForm() {
                 description: formData.description || null,
                 scheduleDate: formData.scheduleDate || null,
                 appointmentTime: formData.appointmentTime || null,
-                dropoffAddress: formData.deliveryMethod === 'dropoff' ? formData.dropoffAddress : null
+                pickupAddress: formData.deliveryMethod === 'pickup' ? formData.pickupAddress : null,
+                address: formData.address || null // Include synced address
             };
             
             console.log('Submitting donation:', donationData);
@@ -201,7 +223,8 @@ export default function DonorDonationForm() {
                     totalItems: donationItems.reduce((sum, item) => sum + parseInt(item.quantity), 0),
                     totalValue: donationItems.reduce((sum, item) => sum + (parseFloat(item.value) * parseInt(item.quantity)), 0),
                     deliveryMethod: formData.deliveryMethod,
-                    hasAppointment: !!formData.scheduleDate
+                    hasAppointment: !!formData.scheduleDate,
+                    pickupAddress: formData.deliveryMethod === 'pickup' ? formData.pickupAddress : null
                 });
                 
                 // Show success modal
@@ -283,6 +306,18 @@ export default function DonorDonationForm() {
                                         <span className="font-medium text-gray-900 capitalize">{details.deliveryMethod}</span>
                                     </div>
                                 </div>
+                                
+                                {/* Display pickup address if delivery method is pickup */}
+                                {details.deliveryMethod === 'pickup' && details.pickupAddress && (
+                                    <div className="col-span-2">
+                                        <span className="text-gray-600">Pickup Address:</span>
+                                        <div className="flex items-start mt-1">
+                                            <HiLocationMarker className="w-4 h-4 text-gray-600 mr-1 mt-0.5 flex-shrink-0" />
+                                            <p className="font-medium text-gray-900">{details.pickupAddress}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
                                 <div>
                                     <span className="text-gray-600">Item Types:</span>
                                     <p className="font-medium text-gray-900">{details.itemCount}</p>
@@ -382,25 +417,38 @@ export default function DonorDonationForm() {
                     handleInputChange={handleInputChange}
                 />
 
-                {/* Dropoff Address Input - Only shown when dropoff is selected */}
-                {formData.deliveryMethod === 'dropoff' && (
+                {/* Pickup Address Input - Only shown when pickup is selected */}
+                {formData.deliveryMethod === 'pickup' && (
                     <div className="space-y-2">
-                        <label htmlFor="dropoffAddress" className="block text-sm font-medium text-gray-700">
-                            Dropoff Address <span className="text-red-500">*</span>
+                        <label htmlFor="pickupAddress" className="block text-sm font-medium text-gray-700">
+                            Pickup Address <span className="text-red-500">*</span>
                         </label>
                         <textarea
-                            id="dropoffAddress"
-                            name="dropoffAddress"
-                            value={formData.dropoffAddress}
+                            id="pickupAddress"
+                            name="pickupAddress"
+                            value={formData.pickupAddress}
                             onChange={handleInputChange}
-                            placeholder="Enter your complete address for dropoff (e.g., House/Unit No., Street, Barangay, City, Province)"
+                            placeholder="Enter your complete address for pickup (e.g., House/Unit No., Street, Barangay, City, Province)"
                             rows={3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary resize-none"
                             required
                         />
                         <p className="text-xs text-gray-500">
-                            Please provide your complete address where you will bring the donation items.
+                            Please provide your complete address where we will pick up the donation items.
                         </p>
+                        
+                        {/* Display saved address below the textarea */}
+                        {formData.address && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
+                                <div className="flex items-start">
+                                    <HiLocationMarker className="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-green-800 mb-1">Saved Address:</p>
+                                        <p className="text-sm text-green-700">{formData.address}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

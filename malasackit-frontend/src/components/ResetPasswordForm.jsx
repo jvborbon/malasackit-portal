@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { HiLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
+import { sanitizeInput } from '../utils/sanitization';
 
 // Google-style Floating Input Component
 const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon: Icon, required = false, disabled = false, showPasswordToggle = false, onTogglePassword }) => {

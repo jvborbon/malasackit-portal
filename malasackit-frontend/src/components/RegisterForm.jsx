@@ -7,6 +7,7 @@ import PersonalInfoStep from './registration/PersonalInfoStep';
 import AddressInfoStep from './registration/AddressInfoStep';
 import ParishVicariateStep from './registration/ParishVicariateStep';
 import SecurityStep from './registration/SecurityStep';
+import { sanitizeInput, sanitizeEmail, sanitizePhone } from '../utils/sanitization';
 
 export default function RegisterForm({ onSwitchToLogin }) {
     const [currentStep, setCurrentStep] = useState(1);
@@ -232,9 +233,19 @@ export default function RegisterForm({ onSwitchToLogin }) {
                 parishId: ''
             }));
         } else {
+            // Sanitize input based on field type
+            let sanitizedValue = value;
+            if (name === 'email') {
+                sanitizedValue = sanitizeEmail(value);
+            } else if (name === 'phoneNumber') {
+                sanitizedValue = sanitizePhone(value);
+            } else if (['fullName', 'streetAddress', 'customVicariate', 'customParish'].includes(name)) {
+                sanitizedValue = sanitizeInput(value);
+            }
+            
             setFormData(prev => ({
                 ...prev,
-                [name]: value
+                [name]: sanitizedValue
             }));
         }
     };
