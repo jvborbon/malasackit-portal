@@ -11,9 +11,10 @@ const sanitizeString = (str) => {
     
     return str
         .trim()                           // Remove leading/trailing whitespace
-        .replace(/[<>]/g, '')            // Remove angle brackets (HTML tags)
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags completely
+        .replace(/<[^>]+>/g, '')          // Remove all HTML tags
         .replace(/javascript:/gi, '')     // Remove javascript: protocol
-        .replace(/on\w+=/gi, '')         // Remove event handlers (onclick, onload, etc.)
+        .replace(/on\w+\s*=\s*[^>\s]*/gi, '') // Remove event handlers
         .replace(/&/g, '&amp;')          // Escape ampersands
         .replace(/"/g, '&quot;')         // Escape double quotes
         .replace(/'/g, '&#x27;')         // Escape single quotes

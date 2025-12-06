@@ -6,6 +6,82 @@ import { requestPasswordReset, verifyResetToken, resetPassword } from '../servic
 import { sendPasswordResetEmail, sendPasswordResetConfirmation } from '../services/emailService.js';
 import { generateToken, setTokenCookie, clearTokenCookie } from '../utilities/jwt.js';
 
+// Enhanced password validation function
+function validatePassword(password, userInfo = {}) {
+    const errors = [];
+    
+    // Length requirements
+    if (password.length < 8) {
+        errors.push('Password must be at least 8 characters long');
+    }
+    
+    if (password.length > 128) {
+        errors.push('Password must be less than 128 characters long');
+    }
+    
+    // Complexity requirements
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
+    
+    if (!hasUppercase) {
+        errors.push('Password must contain at least one uppercase letter (A-Z)');
+    }
+    
+    if (!hasLowercase) {
+        errors.push('Password must contain at least one lowercase letter (a-z)');
+    }
+    
+    if (!hasNumbers) {
+        errors.push('Password must contain at least one number (0-9)');
+    }
+    
+    if (!hasSpecialChar) {
+        errors.push('Password must contain at least one special character (!@#$%^&*)');
+    }
+    
+    return {
+        isValid: errors.length === 0,
+        errors: errors,
+        strength: calculatePasswordStrength(password)
+    };
+}
+
+// Password strength calculator
+function calculatePasswordStrength(password) {
+    let score = 0;
+    
+    // Length scoring
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (password.length >= 16) score += 1;
+    
+    // Character variety scoring
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[^\w\s]/.test(password)) score += 1;
+    
+    // Bonus for mixed character types
+    const charTypes = [
+        /[a-z]/.test(password),
+        /[A-Z]/.test(password),
+        /\d/.test(password),
+        /[^\w\s]/.test(password)
+    ].filter(Boolean).length;
+    
+    if (charTypes >= 3) score += 1;
+    if (charTypes === 4) score += 1;
+    
+    // Return strength level
+    if (score >= 7) return 'Very Strong';
+    if (score >= 5) return 'Strong';
+    if (score >= 3) return 'Moderate';
+    if (score >= 1) return 'Weak';
+    return 'Very Weak';
+}
+
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -133,10 +209,14 @@ export const register = async (req, res) => {
             });
         }
 
-        if (password.length < 6) {
+        // Enhanced password validation
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
             return res.status(400).json({
                 success: false,
-                message: 'Password must be at least 6 characters long'
+                message: 'Password does not meet security requirements',
+                errors: passwordValidation.errors,
+                passwordStrength: passwordValidation.strength
             });
         }
 
@@ -461,14 +541,7 @@ export const resetPasswordController = async (req, res) => {
             });
         }
 
-        if (password.length < 6) {
-            return res.status(400).json({
-                success: false,
-                message: 'Password must be at least 6 characters long'
-            });
-        }
-
-        // Verify token and get user info first
+        // Verify token and get user info first for password validation
         const tokenVerification = await verifyResetToken(token);
         
         if (!tokenVerification.success) {
@@ -478,7 +551,19 @@ export const resetPasswordController = async (req, res) => {
             });
         }
 
-        const result = await resetPassword(token, password);
+        // Enhanced password validation
+        const passwordValidation = validatePassword(password);
+        
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password does not meet security requirements',
+                errors: passwordValidation.errors,
+                passwordStrength: passwordValidation.strength
+            });
+        }
+
+        // Token verification already done aboven, password);
         
         if (!result.success) {
             return res.status(400).json({

@@ -15,6 +15,10 @@ import receiptRoutes from './routes/receiptRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import { sanitizeMiddleware } from './middleware/sanitization.js';
+import { 
+    generalApiLimiter, 
+    authSecurityLimiter 
+} from './middleware/rateLimiter.js';
 
 const app = express();
 const port = 3000;
@@ -28,7 +32,11 @@ app.use(cors({
 app.use(cookieParser()); // Add cookie parser middleware
 app.use(express.json());
 
-// Input sanitization middleware (MUST be after express.json())
+// Rate limiting middleware (FIRST for security)
+app.use('/api', generalApiLimiter); // General API rate limiting
+app.use('/api/auth', authSecurityLimiter); // Extra protection for auth endpoints
+
+// Input sanitization middleware (AFTER rate limiting)
 app.use(sanitizeMiddleware);
 
 app.get('/', (req, res) => {

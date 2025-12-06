@@ -14,25 +14,32 @@ import {
     resetPasswordController
 } from '../controllers/userControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
+import { 
+    loginLimiter, 
+    passwordResetLimiter, 
+    accountCreationLimiter,
+    writeOperationLimiter 
+} from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-router.post('/register', register); // Registration endpoint enabled but logic disabled
-router.post('/login', login);
+// Apply specific rate limiters to critical endpoints
+router.post('/register', accountCreationLimiter, register); // Registration endpoint enabled but logic disabled
+router.post('/login', loginLimiter, login);
 router.post('/logout', logout);
 router.get('/profile', authenticateToken, getProfile);
 
 // Password reset routes (public - no authentication required)
-router.post('/forgot-password', forgotPasswordController);
+router.post('/forgot-password', passwordResetLimiter, forgotPasswordController);
 router.get('/verify-reset-token/:token', verifyResetTokenController);
-router.post('/reset-password/:token', resetPasswordController);
+router.post('/reset-password/:token', passwordResetLimiter, resetPasswordController);
 
 // Admin user management routes
 router.get('/pending', authenticateToken, requireRole(['Executive Admin']), getPendingUsersController);
 router.get('/all', authenticateToken, requireRole(['Executive Admin', 'Resource Staff']), getAllUsersController);
 router.get('/activity-logs', authenticateToken, requireRole(['Executive Admin', 'Resource Staff']), getActivityLogsController);
-router.post('/approve/:userId', authenticateToken, requireRole(['Executive Admin']), approveUserController);
-router.delete('/reject/:userId', authenticateToken, requireRole(['Executive Admin']), rejectUserController);
+router.post('/approve/:userId', writeOperationLimiter, authenticateToken, requireRole(['Executive Admin']), approveUserController);
+router.delete('/reject/:userId', writeOperationLimiter, authenticateToken, requireRole(['Executive Admin']), rejectUserController);
 
 // Test email functionality (admin only)
 router.post('/test-email', authenticateToken, requireRole(['Executive Admin']), async (req, res) => {

@@ -3,6 +3,7 @@
 # -----------------------------
 malasackit-frontend/node_modules/
 malasackit-backend/node_modules/
+malasackit-backend/backend-tests
 
 # -----------------------------
 # Build outputs
@@ -11,6 +12,9 @@ malasackit-frontend/dist/
 malasackit-backend/dist/
 malasackit-frontend/build/
 malasackit-backend/build/
+
+
+/tests
 
 # -----------------------------
 # Logs
