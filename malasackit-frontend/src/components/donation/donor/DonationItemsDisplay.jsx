@@ -13,7 +13,7 @@ export function DonationItemsDisplay({
     }
 
     return (
-        <div className="bg-gray-50 rounded-lg p-6">
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-4 md:p-5 lg:p-6">
             <DonationItemsHeader 
                 itemCount={donationItems.length}
                 setShowDonationModal={setShowDonationModal}
@@ -34,16 +34,16 @@ export function DonationItemsDisplay({
 // Empty State Component
 function EmptyItemsState({ setShowDonationModal }) {
     return (
-        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-            <HiShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Add Donation Items</h3>
-            <p className="text-gray-500 mb-4">Select items from different categories to build your donation</p>
+        <div className="text-center py-6 sm:py-8 border-2 border-dashed border-gray-300 rounded-lg">
+            <HiShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1.5 sm:mb-2">Add Donation Items</h3>
+            <p className="text-gray-500 mb-3 sm:mb-4 text-xs sm:text-sm px-4">Select items from different categories to build your donation</p>
             <button
                 type="button"
                 onClick={() => setShowDonationModal(true)}
-                className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center mx-auto"
+                className="bg-red-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center mx-auto text-sm sm:text-base"
             >
-                <HiPlus className="w-5 h-5 mr-2" />
+                <HiPlus className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                 Add / Remove Items
             </button>
         </div>
@@ -53,16 +53,16 @@ function EmptyItemsState({ setShowDonationModal }) {
 // Header Component for Items Display
 function DonationItemsHeader({ itemCount, setShowDonationModal }) {
     return (
-        <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                 Your Donation Items ({itemCount})
             </h3>
             <button
                 type="button"
                 onClick={() => setShowDonationModal(true)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm"
+                className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center text-xs sm:text-sm"
             >
-                <HiPlus className="w-4 h-4 mr-1" />
+                <HiPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                 Add / Remove Items
             </button>
         </div>
@@ -72,7 +72,7 @@ function DonationItemsHeader({ itemCount, setShowDonationModal }) {
 // Items List Component
 function DonationItemsList({ donationItems, updateDonationItem, removeDonationItem, categories }) {
     return (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
             {donationItems.map((item) => (
                 <DonationItemCard
                     key={item.id}
@@ -96,7 +96,7 @@ function DonationItemCard({ item, updateDonationItem, removeDonationItem, catego
     };
 
     return (
-        <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+        <div className="bg-white p-2.5 sm:p-3 rounded-lg border border-gray-200 shadow-sm">
             <ItemHeader 
                 item={item}
                 categoryInfo={categoryInfo}
@@ -114,20 +114,20 @@ function DonationItemCard({ item, updateDonationItem, removeDonationItem, catego
 // Item Header with Category and Remove Button
 function ItemHeader({ item, categoryInfo, removeDonationItem }) {
     return (
-        <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-                <span className="text-lg mr-2">{categoryInfo?.icon}</span>
-                <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${categoryInfo?.bgColor} ${categoryInfo?.color}`}>
+        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <div className="flex items-center min-w-0 flex-1">
+                <span className="text-base sm:text-lg mr-1.5 sm:mr-2 flex-shrink-0">{categoryInfo?.icon}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 min-w-0">
+                    <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${categoryInfo?.bgColor} ${categoryInfo?.color} whitespace-nowrap`}>
                         {item.category}
                     </span>
-                    <span className="font-medium text-gray-900 text-sm">{item.itemType}</span>
+                    <span className="font-medium text-gray-900 text-xs sm:text-sm truncate mt-0.5 sm:mt-0">{item.itemType}</span>
                 </div>
             </div>
             <button
                 type="button"
                 onClick={() => removeDonationItem(item.id)}
-                className="text-red-600 hover:text-red-800 p-1"
+                className="text-red-600 hover:text-red-800 p-1 flex-shrink-0 ml-2"
                 title="Remove this item"
             >
                 <HiX className="w-4 h-4" />
@@ -191,7 +191,7 @@ function ItemFields({ item, updateDonationItem }) {
     };
 
     return (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
                     Quantity <span className="text-red-500">*</span>
@@ -202,7 +202,7 @@ function ItemFields({ item, updateDonationItem }) {
                     onChange={(e) => updateDonationItem(item.id, 'quantity', e.target.value)}
                     placeholder="Not set"
                     min="1"
-                    className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-2 py-1.5 sm:py-1 text-xs sm:text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
             </div>
             <div>
@@ -215,9 +215,9 @@ function ItemFields({ item, updateDonationItem }) {
                             type="text"
                             value={item.itemData.fixed_condition.charAt(0).toUpperCase() + item.itemData.fixed_condition.slice(1)}
                             disabled
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100 text-gray-700"
+                            className="w-full px-2 py-1.5 sm:py-1 text-xs sm:text-sm border border-gray-300 rounded bg-gray-100 text-gray-700"
                         />
-                        <span className="ml-2 text-xs text-blue-600" title={item.itemData?.condition_definition || "This item type only accepts this condition for safety/hygiene reasons"}>
+                        <span className="ml-2 text-xs text-blue-600 flex-shrink-0" title={item.itemData?.condition_definition || "This item type only accepts this condition for safety/hygiene reasons"}>
                             🔒
                         </span>
                     </div>
@@ -225,7 +225,7 @@ function ItemFields({ item, updateDonationItem }) {
                     <select
                         value={item.condition || 'good'}
                         onChange={(e) => handleConditionChange(e.target.value)}
-                        className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-2 py-1.5 sm:py-1 text-xs sm:text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
                         {getAvailableConditions(item).map(condition => (
                             <option key={condition.value} value={condition.value}>
@@ -247,7 +247,7 @@ function ItemFields({ item, updateDonationItem }) {
                         placeholder="Auto-calculated"
                         step="0.01"
                         min="0"
-                        className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-2 py-1.5 sm:py-1 text-xs sm:text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     />
                     {item.value && item.quantity && (
                         <div className="text-xs text-green-600 mt-1">
@@ -265,7 +265,7 @@ function ItemFields({ item, updateDonationItem }) {
                     value={item.description}
                     onChange={(e) => updateDonationItem(item.id, 'description', e.target.value)}
                     placeholder="None"
-                    className="w-full px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-2 py-1.5 sm:py-1 text-xs sm:text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
             </div>
         </div>
@@ -291,24 +291,24 @@ function DonationSummary({ donationItems }) {
     }, {});
 
     return (
-        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mt-3">
-            <div className="grid grid-cols-4 gap-4 text-center text-sm mb-3">
+        <div className="bg-blue-50 rounded-lg p-2.5 sm:p-3 border border-blue-200 mt-2.5 sm:mt-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-center text-xs sm:text-sm mb-2.5 sm:mb-3">
                 <div>
-                    <div className="font-bold text-blue-900 text-lg">{totalItems}</div>
+                    <div className="font-bold text-blue-900 text-base sm:text-lg">{totalItems}</div>
                     <div className="text-blue-700 text-xs">Total Items</div>
                 </div>
                 <div>
-                    <div className="font-bold text-blue-900 text-lg">{totalQuantity}</div>
+                    <div className="font-bold text-blue-900 text-base sm:text-lg">{totalQuantity}</div>
                     <div className="text-blue-700 text-xs">Total Quantity</div>
                 </div>
-                <div>
-                    <div className="font-bold text-blue-900 text-lg">
+                <div className="col-span-2 sm:col-span-1">
+                    <div className="font-bold text-blue-900 text-base sm:text-lg">
                         ₱{totalValue.toLocaleString()}
                     </div>
                     <div className="text-blue-700 text-xs">Total Value</div>
                 </div>
-                <div>
-                    <div className="font-bold text-blue-900 text-lg">{totalCategories}</div>
+                <div className="col-span-2 sm:col-span-1">
+                    <div className="font-bold text-blue-900 text-base sm:text-lg">{totalCategories}</div>
                     <div className="text-blue-700 text-xs">Categories</div>
                 </div>
             </div>

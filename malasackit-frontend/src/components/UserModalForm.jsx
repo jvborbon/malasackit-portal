@@ -3,7 +3,7 @@ import {
     HiX,
     HiCheck
 } from 'react-icons/hi';
-import { sanitizeInput, sanitizeEmail } from '../utils/sanitization';
+import { sanitizeInput, sanitizeEmail, sanitizeFormData } from '../utils/sanitization';
 
 export default function UserModalForm({ isOpen, onClose, user, onSave }) {
     const [formData, setFormData] = useState({
@@ -59,9 +59,11 @@ export default function UserModalForm({ isOpen, onClose, user, onSave }) {
         setIsSubmitting(true);
         
         try {
+            // Sanitize form data before submission
+            const sanitizedData = sanitizeFormData(formData);
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
-            onSave(formData);
+            onSave(sanitizedData);
         } catch (error) {
             console.error('Error saving user:', error);
         } finally {

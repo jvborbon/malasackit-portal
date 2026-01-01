@@ -83,25 +83,25 @@ const FloatingInput = ({
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 disabled={disabled}
-                className={`w-full px-4 py-4 bg-transparent border-2 placeholder-transparent focus:outline-none text-base rounded-lg transition-all duration-200 ${
+                className={`w-full px-3 sm:px-4 py-3.5 sm:py-4 bg-transparent border-2 placeholder-transparent focus:outline-none text-sm sm:text-base rounded-lg transition-all duration-200 ${
                     theme.text
                 } ${getBorderColor()} ${
-                    shouldFloat ? 'pt-6 pb-2' : 'pt-4 pb-4'
+                    shouldFloat ? 'pt-5 sm:pt-6 pb-1.5 sm:pb-2' : 'pt-3.5 sm:pt-4 pb-3.5 sm:pb-4'
                 } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder={placeholder}
                 required={required}
             />
-            <label className={`absolute left-4 transition-all duration-200 pointer-events-none px-1 ${
+            <label className={`absolute left-3 sm:left-4 transition-all duration-200 pointer-events-none px-1 ${
                 theme.labelBg
             } ${getLabelColor()} ${
                 shouldFloat 
-                    ? '-top-2 text-sm scale-90' 
-                    : 'top-1/2 transform -translate-y-1/2 text-base'
+                    ? '-top-2 text-xs sm:text-sm scale-90' 
+                    : 'top-1/2 transform -translate-y-1/2 text-sm sm:text-base'
             }`}>
                 {label}
             </label>
             {error && (
-                <div className="mt-1 text-sm text-red-400">
+                <div className="mt-1 text-xs sm:text-sm text-red-400">
                     {error}
                 </div>
             )}

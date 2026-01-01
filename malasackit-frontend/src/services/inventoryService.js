@@ -1,4 +1,4 @@
-import api from '../components/utilities/api';
+import api from '../utils/api';
 
 /**
  * Get all inventory items with filtering and pagination

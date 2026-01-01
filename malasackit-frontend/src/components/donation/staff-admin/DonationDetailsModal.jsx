@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatCurrency, formatDate, formatTime } from '../../utilities/donationHelpers';
+import { formatCurrency, formatDate, formatTime } from '../../../utils/donationHelpers';
 import Modal from '../../common/Modal';
 import DataTable from '../../common/DataTable';
 

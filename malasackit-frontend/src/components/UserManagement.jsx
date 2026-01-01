@@ -17,8 +17,8 @@ import UserDetails from './UserDetails';
 import { UsersTab } from './UsersTab';
 import { ActivityLogsTab } from './ActivityLogsTab';
 import { PendingApprovalsTab } from './PendingApprovalsTab';
-import api from './utilities/api';
-import { useUserStatusUpdater } from './utilities/userStatusService';
+import api from '../utils/api';
+import { useUserStatusUpdater } from '../utils/userStatusService';
 
 export default function UserManagement() {
     const [activeTab, setActiveTab] = useState('users');

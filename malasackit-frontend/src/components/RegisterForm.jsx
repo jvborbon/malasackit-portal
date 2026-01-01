@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { locationAPI } from '../services/locationAPI';
 import { registrationAPI } from '../services/registrationAPI';
-import { validateRegistrationForm, getStepValidation } from './utilities/formValidation';
+import { validateRegistrationForm, getStepValidation } from '../utils/formValidation';
 import StepIndicator from './common/StepIndicator';
 import PersonalInfoStep from './registration/PersonalInfoStep';
 import AddressInfoStep from './registration/AddressInfoStep';
 import ParishVicariateStep from './registration/ParishVicariateStep';
 import SecurityStep from './registration/SecurityStep';
-import { sanitizeInput, sanitizeEmail, sanitizePhone } from '../utils/sanitization';
+import { sanitizeInput, sanitizeEmail, sanitizePhone, sanitizeFormData } from '../utils/sanitization';
 
 export default function RegisterForm({ onSwitchToLogin }) {
     const [currentStep, setCurrentStep] = useState(1);
@@ -329,7 +329,10 @@ export default function RegisterForm({ onSwitchToLogin }) {
         setValidationErrors({});
 
         try {
-            const result = await registrationAPI.registerUser(formData);
+            // Sanitize form data before submission (trims whitespace, removes XSS)
+            const sanitizedData = sanitizeFormData(formData);
+            
+            const result = await registrationAPI.registerUser(sanitizedData);
             
             if (result.success) {
                 // Show success message and redirect to login
@@ -347,12 +350,23 @@ export default function RegisterForm({ onSwitchToLogin }) {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="w-full">
+            {/* Header */}
+            <div className="text-center mb-5 sm:mb-6">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <svg className="w-7 h-7 sm:w-8 sm:h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                </div>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1.5 sm:mb-2">Create Account</h2>
+                <p className="text-red-100 text-xs sm:text-sm">Join us to make a difference</p>
+            </div>
+
             {/* Step Indicator */}
             <StepIndicator currentStep={currentStep} totalSteps={4} />
 
-            {/* Form Container with Smooth Transitions */}
-            <div className="relative overflow-hidden min-h-[600px]">
+            {/* Form Container */}
+            <div className="mt-4 sm:mt-5 md:mt-6">
                 {/* Step 1: Personal Information */}
                 {currentStep === 1 && (
                     <PersonalInfoStep

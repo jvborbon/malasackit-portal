@@ -7,7 +7,7 @@ import {
     HiUserAdd,
     HiRefresh
 } from 'react-icons/hi';
-import { getTimeSinceActivity } from './utilities/userStatusService';
+import { getTimeSinceActivity } from '../utils/userStatusService';
 import PaginationComponent from './common/PaginationComponent';
 
 // Helper function to calculate days since last login

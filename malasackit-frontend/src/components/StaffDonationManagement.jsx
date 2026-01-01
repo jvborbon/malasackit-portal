@@ -1,7 +1,7 @@
 import React from "react";
 import { HiX, HiRefresh } from "react-icons/hi";
 import { useDonationManagement } from "../hooks/useDonationManagement";
-import { getStatusColor, formatDate, formatCurrency } from "./utilities/donationHelpers";
+import { getStatusColor, formatDate, formatCurrency } from "../utils/donationHelpers";
 import SearchAndFilters from "./donation/staff-admin/SearchAndFilters";
 import DonationStatistics from "./donation/staff-admin/DonationStatistics";
 import DonationTable from "./donation/staff-admin/DonationTable";

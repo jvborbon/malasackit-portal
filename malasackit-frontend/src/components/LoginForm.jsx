@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiUser, HiLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
 import { useAuth } from '../auth/Authentication';
-import { sanitizeInput, sanitizeEmail } from '../utils/sanitization';
+import { sanitizeInput, sanitizeInputForSubmission } from '../utils/sanitization';
 
 // Google-style Floating Input Component
 const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon: Icon, required = false, disabled = false }) => {
@@ -160,12 +160,10 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
         let sanitizedValue = value;
         
         if (type !== 'checkbox') {
-            // Sanitize based on field type
-            if (name === 'email') {
-                sanitizedValue = sanitizeEmail(value);
-            } else {
-                sanitizedValue = sanitizeInput(value);
-            }
+            // For email field, use sanitizeInput to allow both email and full name
+            // This preserves spaces and capitalization for names
+            // Backend will handle the actual validation
+            sanitizedValue = sanitizeInput(value);
         }
         
         setFormData(prev => ({
@@ -184,10 +182,14 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
                 throw new Error('Please fill in all fields');
             }
 
-            console.log('Attempting login with:', formData.email);
+            // Sanitize and trim input before submission
+            const sanitizedEmail = sanitizeInputForSubmission(formData.email);
+            const sanitizedPassword = formData.password.trim(); // Just trim password, don't sanitize
+
+            console.log('Attempting login with:', sanitizedEmail);
 
             // Use the optimized loginAuthentication function
-            const result = await loginAuthentication(formData.email, formData.password);
+            const result = await loginAuthentication(sanitizedEmail, sanitizedPassword);
             
             console.log('Login successful, user role:', result.role);
             
@@ -206,80 +208,91 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 w-full max-w-sm sm:max-w-md mx-auto px-4 sm:px-0">
-            {/* Error Message */}
-            {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded-md">
-                    <p className="text-xs sm:text-sm">{error}</p>
+        <div className="w-full">
+            {/* Header */}
+            <div className="text-center mb-6 sm:mb-8">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <HiUser className="w-7 h-7 sm:w-8 sm:h-8 text-red-600" />
                 </div>
-            )}
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1.5 sm:mb-2">Welcome to Malasackit Portal</h2>
+                <p className="text-red-100 text-xs sm:text-sm">Sign in to continue to your account</p>
+            </div>
 
-            <FloatingLoginInput
-                label="Email or Full Name"
-                type="text"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                icon={HiUser}
-                required
-                disabled={isLoading}
-            />
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                {/* Error Message */}
+                {error && (
+                    <div className="bg-white/10 border border-white/30 text-white px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg backdrop-blur-sm">
+                        <p className="text-xs sm:text-sm">{error}</p>
+                    </div>
+                )}
 
-            <FloatingPasswordInput
-                label="Password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                icon={HiLockClosed}
-                required
-                disabled={isLoading}
-            />
+                <FloatingLoginInput
+                    label="Email or Full Name"
+                    type="text"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    icon={HiUser}
+                    required
+                    disabled={isLoading}
+                />
 
-            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 text-white pt-2" style={{ transform: 'translateZ(0)', willChange: 'auto' }}>
-                <label className="flex items-center cursor-pointer">
-                    <input
-                        type="checkbox"
-                        name="keepLoggedIn"
-                        checked={formData.keepLoggedIn}
-                        onChange={handleInputChange}
-                        className="mr-2 sm:mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                    />
-                    <span className="text-xs sm:text-sm">Keep me logged in</span>
-                </label>
+                <FloatingPasswordInput
+                    label="Password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    icon={HiLockClosed}
+                    required
+                    disabled={isLoading}
+                />
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-white text-xs sm:text-sm">
+                    <label className="flex items-center cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            name="keepLoggedIn"
+                            checked={formData.keepLoggedIn}
+                            onChange={handleInputChange}
+                            className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-white bg-white/20 border-white/40 rounded focus:ring-white focus:ring-offset-0 focus:ring-2"
+                        />
+                        <span className="group-hover:text-red-100 transition-colors whitespace-nowrap">Keep me logged in</span>
+                    </label>
+                    <button
+                        type="button"
+                        onClick={onSwitchToForgotPassword}
+                        className="hover:text-red-100 transition-colors font-medium whitespace-nowrap"
+                    >
+                        Forgot password?
+                    </button>
+                </div>
+
                 <button
-                    type="button"
-                    onClick={onSwitchToForgotPassword}
-                    className="text-xs sm:text-sm hover:underline hover:text-red-200 transition-colors text-left sm:text-right"
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-white text-red-600 font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-red-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl text-sm sm:text-base"
                 >
-                    Forgot password?
+                    {isLoading ? (
+                        <>
+                            <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-red-600 mr-2 sm:mr-3"></div>
+                            <span>Signing in...</span>
+                        </>
+                    ) : (
+                        'Sign In'
+                    )}
                 </button>
-            </div>
 
-            <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-white text-red-600 font-bold py-3 sm:py-4 px-4 sm:px-6 hover:bg-red-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center rounded-md text-sm sm:text-base"
-            >
-            {isLoading ? (
-                <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600 mr-3"></div>
-                    <span>Logging in...</span>
-                </>
-            ) : (
-                'Login'
-            )}
-            </button>
-
-            <div className="text-center pt-4 sm:pt-6">
-                <span className="text-white text-sm sm:text-base">Don't have an account? </span>
-                <button 
-                    type="button"
-                    onClick={onSwitchToRegister}
-                    className="text-blue-200 hover:text-blue-100 underline font-semibold text-sm sm:text-base transition-colors"
-                >
-                    Register here
-                </button>
-            </div>
-        </form>
+                <div className="text-center pt-3 sm:pt-4">
+                    <span className="text-white text-xs sm:text-sm">Don't have an account? </span>
+                    <button 
+                        type="button"
+                        onClick={onSwitchToRegister}
+                        className="text-white font-semibold underline hover:text-red-100 transition-colors text-xs sm:text-sm"
+                    >
+                        Create Account
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 }

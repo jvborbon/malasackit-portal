@@ -9,7 +9,7 @@ import {
     HiX,
     HiRefresh
 } from 'react-icons/hi';
-import api from './utilities/api';
+import api from '../utils/api';
 
 // Pending Approvals Tab Component
 export function PendingApprovalsTab() {

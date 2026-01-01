@@ -1,6 +1,6 @@
 import React from 'react';
 import { HiEye, HiCheck, HiX } from 'react-icons/hi';
-import { formatTime } from '../../utilities/donationHelpers';
+import { formatTime } from '../../../utils/donationHelpers';
 
 function DonationTable({ 
   donations, 

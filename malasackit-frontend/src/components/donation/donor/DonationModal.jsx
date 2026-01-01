@@ -44,42 +44,42 @@ export function DonationModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Modal Header */}
-                <div className="bg-red-600 text-white p-4 flex justify-between items-center">
-                    <div>
-                        <h2 className="text-xl font-bold">Select Donation Items</h2>
-                        <p className="text-red-100 text-sm">Choose items from different categories and add them to your donation</p>
+                <div className="bg-red-600 text-white p-3 sm:p-4 flex justify-between items-start sm:items-center flex-shrink-0">
+                    <div className="min-w-0 flex-1">
+                        <h2 className="text-base sm:text-lg md:text-xl font-bold truncate">Select Donation Items</h2>
+                        <p className="text-red-100 text-xs sm:text-sm mt-0.5 sm:mt-0">Choose items from different categories and add them to your donation</p>
                         {usingFallback && (
                             <div className="flex items-center mt-1 text-yellow-200 text-xs">
-                                <HiExclamationCircle className="w-3 h-3 mr-1" />
+                                <HiExclamationCircle className="w-3 h-3 mr-1 flex-shrink-0" />
                                 Using offline categories - Database connection failed
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0 ml-2">
                         {error && (
                             <button
                                 type="button"
                                 onClick={refreshCategories}
-                                className="text-white hover:text-red-200 transition-colors"
+                                className="text-white hover:text-red-200 transition-colors p-1"
                                 title="Retry loading categories"
                             >
-                                <HiRefresh className="w-5 h-5" />
+                                <HiRefresh className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                         )}
                         <button
                             type="button"
                             onClick={onClose}
-                            className="text-white hover:text-red-200 transition-colors"
+                            className="text-white hover:text-red-200 transition-colors p-1"
                         >
-                            <HiX className="w-6 h-6" />
+                            <HiX className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                     </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row h-[70vh]">
+                <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
                     {isLoading ? (
                         <div className="flex items-center justify-center w-full h-full">
                             <div className="text-center">
@@ -122,26 +122,27 @@ export function DonationModal({
 // Category Tabs Component
 function CategoryTabs({ categories, activeCategory, setActiveCategory }) {
     return (
-        <div className="lg:w-1/3 border-r border-gray-200 bg-gray-50 overflow-y-auto">
-            <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
-                <div className="space-y-2">
+        <div className="lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 bg-gray-50 flex-shrink-0">
+            <div className="p-3 sm:p-4">
+                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 lg:mb-4">Categories</h3>
+                {/* Horizontal scroll on mobile, vertical on desktop */}
+                <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 -mx-3 px-3 lg:mx-0 lg:px-0 scrollbar-hide">
                     {Object.entries(categories).map(([category, info]) => (
                         <button
                             key={category}
                             type="button"
                             onClick={() => setActiveCategory(category)}
-                            className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
+                            className={`flex-shrink-0 lg:flex-shrink lg:w-full text-left p-2 sm:p-2.5 lg:p-3 rounded-lg transition-all duration-200 ${
                                 activeCategory === category
                                     ? `${info.bgColor} ${info.borderColor} border-2 ${info.color}`
                                     : 'border-2 border-transparent hover:bg-gray-100'
                             }`}
                         >
-                            <div className="flex items-center">
-                                <span className="text-2xl mr-3">{info.icon}</span>
-                                <div>
-                                    <div className="font-medium text-gray-900">{category}</div>
-                                    <div className="text-xs text-gray-500">{info.description}</div>
+                            <div className="flex flex-col lg:flex-row items-center lg:items-center">
+                                <span className="text-xl sm:text-2xl mb-1 lg:mb-0 lg:mr-3">{info.icon}</span>
+                                <div className="text-center lg:text-left">
+                                    <div className="font-medium text-gray-900 text-xs sm:text-sm whitespace-nowrap">{category}</div>
+                                    <div className="text-xs text-gray-500 hidden lg:block">{info.description}</div>
                                 </div>
                             </div>
                         </button>
@@ -157,18 +158,18 @@ function ItemSelection({ activeCategory, categories, selectedItems, toggleItemSe
     const categoryInfo = categories[activeCategory];
 
     return (
-        <div className="lg:w-2/3 flex flex-col">
-            <div className="flex-1 overflow-y-auto p-4">
-                <div className="mb-4">
-                    <div className="flex items-center mb-2">
-                        <span className="text-2xl mr-2">{categoryInfo?.icon}</span>
-                        <h3 className="text-xl font-bold text-gray-900">{activeCategory}</h3>
+        <div className="lg:w-2/3 flex flex-col min-h-0 flex-1">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+                <div className="mb-3 sm:mb-4">
+                    <div className="flex items-center mb-1.5 sm:mb-2">
+                        <span className="text-xl sm:text-2xl mr-1.5 sm:mr-2">{categoryInfo?.icon}</span>
+                        <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">{activeCategory}</h3>
                     </div>
-                    <p className="text-gray-600 text-sm">{categoryInfo?.description}</p>
+                    <p className="text-gray-600 text-xs sm:text-sm">{categoryInfo?.description}</p>
                 </div>
 
                 {/* Item Type Selection Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2 sm:gap-2.5 lg:gap-3 mb-4 sm:mb-6">
                     {categoryInfo?.items.map((item, index) => {
                         const itemName = typeof item === 'string' ? item : item.itemtype_name;
                         const itemPrice = typeof item === 'object' ? item.avg_retail_price : null;
@@ -184,7 +185,7 @@ function ItemSelection({ activeCategory, categories, selectedItems, toggleItemSe
                                 key={index}
                                 type="button"
                                 onClick={() => toggleItemSelection(activeCategory, item)}
-                                className={`p-3 text-sm border rounded-lg transition-all duration-200 relative ${
+                                className={`p-2 sm:p-2.5 lg:p-3 text-xs sm:text-sm border rounded-lg transition-all duration-200 relative min-h-[70px] sm:min-h-[80px] flex flex-col justify-center ${
                                     isItemSelected(activeCategory, itemName)
                                         ? 'border-red-500 bg-red-50 text-red-700'
                                         : 'border-gray-200 hover:border-red-200 hover:bg-red-50'
@@ -192,20 +193,20 @@ function ItemSelection({ activeCategory, categories, selectedItems, toggleItemSe
                             >
                                 {isItemSelected(activeCategory, itemName) && (
                                     <div className="flex justify-center mb-1">
-                                        <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                                            <span className="text-white text-xs">✓</span>
+                                        <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                            <span className="text-white text-[10px] sm:text-xs">✓</span>
                                         </div>
                                     </div>
                                 )}
                                 
-                                <div className="font-medium">{itemName}</div>
+                                <div className="font-medium leading-tight">{itemName}</div>
                                 {itemPrice && (
-                                    <div className="text-xs text-gray-500 mt-1">
+                                    <div className="text-[10px] sm:text-xs text-gray-500 mt-1">
                                         Base: ₱{itemPrice.toLocaleString()}
                                     </div>
                                 )}
                                 {isFixedCondition && (
-                                    <div className="text-xs text-blue-600 mt-1 font-medium">
+                                    <div className="text-[10px] sm:text-xs text-blue-600 mt-1 font-medium">
                                         {conditionLabel}
                                     </div>
                                 )}
@@ -232,23 +233,23 @@ function SelectedItemsPreview({ selectedItems, activeCategory, toggleItemSelecti
     if (categorySelectedItems.length === 0) return null;
 
     return (
-        <div className="bg-red-50 rounded-lg p-4 mb-4">
-            <h4 className="font-semibold text-red-800 mb-2">
+        <div className="bg-red-50 rounded-lg p-2.5 sm:p-3 lg:p-4 mb-3 sm:mb-4">
+            <h4 className="font-semibold text-red-800 mb-1.5 sm:mb-2 text-xs sm:text-sm">
                 Selected from {activeCategory} ({categorySelectedItems.length})
             </h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {categorySelectedItems.map((item, index) => (
                     <span
                         key={index}
-                        className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full"
+                        className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-[10px] sm:text-xs rounded-full"
                     >
-                        {item.itemType}
+                        <span className="truncate max-w-[120px] sm:max-w-none">{item.itemType}</span>
                         <button
                             type="button"
                             onClick={() => toggleItemSelection(item.category, item.itemType)}
-                            className="ml-1 text-red-600 hover:text-red-800"
+                            className="ml-1 text-red-600 hover:text-red-800 flex-shrink-0"
                         >
-                            <HiX className="w-3 h-3" />
+                            <HiX className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         </button>
                     </span>
                 ))}
@@ -262,20 +263,20 @@ function ModalFooter({ selectedItems, onClose, onConfirm }) {
     const uniqueCategories = new Set(selectedItems.map(item => item.category)).size;
 
     return (
-        <div className="border-t border-gray-200 p-4 bg-gray-50">
-            <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600">
+        <div className="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
                     {selectedItems.length > 0 && (
                         <span>
-                            {selectedItems.length} items selected from {uniqueCategories} categories
+                            {selectedItems.length} items selected from {uniqueCategories} {uniqueCategories === 1 ? 'category' : 'categories'}
                         </span>
                     )}
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex gap-2 sm:gap-3">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                        className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-xs sm:text-sm font-medium"
                     >
                         Cancel
                     </button>
@@ -283,9 +284,9 @@ function ModalFooter({ selectedItems, onClose, onConfirm }) {
                         type="button"
                         onClick={onConfirm}
                         disabled={selectedItems.length === 0}
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-xs sm:text-sm font-medium"
                     >
-                        <HiShoppingCart className="w-4 h-4 mr-1" />
+                        <HiShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                         Add Items ({selectedItems.length})
                     </button>
                 </div>

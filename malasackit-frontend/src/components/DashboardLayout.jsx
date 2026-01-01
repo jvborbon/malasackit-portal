@@ -15,10 +15,61 @@ import {
     HiClipboardList,
     HiMenu,
     HiX,
-    HiUserGroup
+    HiUserGroup,
+    HiChevronLeft,
+    HiChevronRight
 } from 'react-icons/hi';
 import { useAuth } from '../auth/Authentication';
 import LogoutConfirm from './dialogs/LogoutConfim';
+import lasacLogo from '../assets/images/lasac-logo.png';
+
+// Enhanced Sidebar Collapse Button Component
+const SidebarCollapseButton = ({ isCollapsed, onClick, className = "" }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <button
+            onClick={onClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className={`relative p-1.5 rounded-lg transition-all duration-200 ${className}`}
+            style={{
+                background: isHovered 
+                    ? 'rgba(255, 255, 255, 0.15)' 
+                    : 'rgba(255, 255, 255, 0.08)',
+                transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+            }}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+            {/* Icon with smooth animation */}
+            <div 
+                className="transition-transform duration-300"
+                style={{
+                    transform: isHovered 
+                        ? (isCollapsed ? 'translateX(2px)' : 'translateX(-2px)') 
+                        : 'translateX(0)'
+                }}
+            >
+                {isCollapsed ? (
+                    <HiChevronRight className="w-4 h-4 text-white" />
+                ) : (
+                    <HiChevronLeft className="w-4 h-4 text-white" />
+                )}
+            </div>
+
+            {/* Animated border pulse on hover */}
+            {isHovered && (
+                <div 
+                    className="absolute inset-0 rounded-lg border-2 border-white"
+                    style={{
+                        opacity: 0.3,
+                        animation: 'pulse 1s ease-in-out infinite'
+                    }}
+                />
+            )}
+        </button>
+    );
+};
 
 export default function DashboardLayout({ children, userRole }) {
     const navigate = useNavigate();
@@ -26,6 +77,7 @@ export default function DashboardLayout({ children, userRole }) {
     const [activeNav, setActiveNav] = useState('Dashboard');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const [showWalkInModal, setShowWalkInModal] = useState(false);
 
     // Simple effect to redirect if no user (handled by RouteProtection now)
@@ -35,6 +87,21 @@ export default function DashboardLayout({ children, userRole }) {
         }
     }, [user, navigate]);
 
+    // Load collapse state from localStorage on mount
+    useEffect(() => {
+        const savedCollapseState = localStorage.getItem('sidebarCollapsed');
+        if (savedCollapseState !== null) {
+            setIsCollapsed(savedCollapseState === 'true');
+        }
+    }, []);
+
+    // Save collapse state to localStorage whenever it changes
+    const toggleCollapse = () => {
+        const newState = !isCollapsed;
+        setIsCollapsed(newState);
+        localStorage.setItem('sidebarCollapsed', newState.toString());
+    };
+
     const handleLogoutClick = () => {
         setShowLogoutConfirm(true);
     };
@@ -43,11 +110,9 @@ export default function DashboardLayout({ children, userRole }) {
         try {
             await logout();
             setShowLogoutConfirm(false);
-            // Use React Router for clean navigation after logout
             navigate('/login', { replace: true });
         } catch (error) {
             console.error('Logout error:', error);
-            // Even if logout fails, clear local state and redirect
             setShowLogoutConfirm(false);
             navigate('/login', { replace: true });
         }
@@ -91,7 +156,6 @@ export default function DashboardLayout({ children, userRole }) {
             ]
         };
 
-        // Insert role-specific items at their designated positions
         const items = [...commonItems];
         const roleItems = roleSpecificItems[role] || [];
         
@@ -147,6 +211,19 @@ export default function DashboardLayout({ children, userRole }) {
         }
     };
 
+    // Get abbreviated portal name for collapsed state
+    const getPortalAbbr = (role) => {
+        switch(role) {
+            case 'admin':
+                return 'AP';
+            case 'staff':
+                return 'SP';
+            case 'donor':
+            default:
+                return 'MP';
+        }
+    };
+
     const handleAvatarClick = () => {
         setActiveNav('Settings');
         setIsSidebarOpen(false);
@@ -166,6 +243,14 @@ export default function DashboardLayout({ children, userRole }) {
 
     return (
         <div className="min-h-screen bg-gray-100">
+            {/* Keyframes for pulse animation */}
+            <style>{`
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.3; }
+                    50% { opacity: 0.6; }
+                }
+            `}</style>
+
             {/* Mobile Menu Overlay */}
             {isSidebarOpen && (
                 <div 
@@ -175,44 +260,81 @@ export default function DashboardLayout({ children, userRole }) {
             )}
 
             {/* Sidebar */}
-            <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-theme-primary text-white transform transition-transform duration-300 ease-in-out ${
+            <div className={`fixed inset-y-0 left-0 z-50 bg-theme-primary text-white transform transition-all duration-300 ease-in-out flex flex-col ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-            }`}>
+            } ${isCollapsed ? 'lg:w-20' : 'w-64'} overflow-visible`}>
                 {/* Logo Section */}
-                <div className="flex items-center justify-between p-6 border-b border-theme-primary-dark">
-                    <div className="flex items-center">
-                        <div className="w-8 h-8 bg-white rounded flex items-center justify-center mr-3">
-                            <HiHome className="w-5 h-5 text-theme-primary" />
+                <div className="flex items-center border-b border-theme-primary-dark flex-shrink-0 p-4">
+                    {!isCollapsed ? (
+                        <>
+                            <div className="w-8 h-8 bg-white rounded flex items-center justify-center flex-shrink-0 p-1">
+                                <img src={lasacLogo} alt="LASAC" className="w-full h-full object-contain" />
+                            </div>
+                            <span className="text-base font-bold ml-3 flex-1 min-w-0 truncate">
+                                {getPortalName(userRole)}
+                            </span>
+                            {/* Enhanced Collapse Toggle Button - Desktop Only */}
+                            <SidebarCollapseButton 
+                                isCollapsed={isCollapsed}
+                                onClick={toggleCollapse}
+                                className="hidden lg:block flex-shrink-0 ml-2"
+                            />
+                            {/* Close button for mobile */}
+                            <button
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="lg:hidden p-1.5 rounded-md hover:bg-theme-primary-dark flex-shrink-0 ml-2"
+                            >
+                                <HiX className="w-4 h-4" />
+                            </button>
+                        </>
+                    ) : (
+                        <div className="flex items-center justify-center w-full gap-2">
+                            <div className="w-8 h-8 bg-white rounded flex items-center justify-center flex-shrink-0 p-1">
+                                <img src={lasacLogo} alt="LASAC" className="w-full h-full object-contain" />
+                            </div>
+                            {/* Enhanced Collapse Toggle Button - Desktop Only */}
+                            <SidebarCollapseButton 
+                                isCollapsed={isCollapsed}
+                                onClick={toggleCollapse}
+                                className="hidden lg:block flex-shrink-0"
+                            />
                         </div>
-                        <span className="text-lg font-bold">{getPortalName(userRole)}</span>
-                    </div>
-                    {/* Close button for mobile */}
-                    <button
-                        onClick={() => setIsSidebarOpen(false)}
-                        className="lg:hidden p-1 rounded-md hover:bg-theme-primary-dark"
-                    >
-                        <HiX className="w-5 h-5" />
-                    </button>
+                    )}
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-4 py-6 overflow-y-auto">
-                    <ul className="space-y-2">
+                <nav className="flex-1 py-4 overflow-y-auto overflow-x-visible" style={{ overflowX: 'visible' }}>
+                    <ul className={`space-y-1 ${isCollapsed ? 'px-2' : 'px-3'}`}>
                         {navigationItems.map((item) => (
-                            <li key={item.name}>
+                            <li key={item.name} className="relative" style={{ overflow: 'visible' }}>
                                 <button
                                     onClick={() => {
                                         setActiveNav(item.name);
-                                        setIsSidebarOpen(false); // Close mobile menu on item click
+                                        setIsSidebarOpen(false);
                                     }}
-                                    className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
+                                    className={`w-full flex items-center text-left rounded-lg transition-colors relative group ${
                                         activeNav === item.name
                                             ? 'bg-theme-primary-dark text-white'
                                             : 'text-red-100 hover:bg-theme-primary-dark hover:text-white'
-                                    }`}
+                                    } ${isCollapsed ? 'justify-center p-3' : 'px-4 py-3'}`}
+                                    style={{ overflow: 'visible' }}
                                 >
-                                    <item.icon className="w-5 h-5 mr-3" />
-                                    {item.name}
+                                    <item.icon className={`w-5 h-5 flex-shrink-0 ${!isCollapsed && 'mr-3'}`} />
+                                    {!isCollapsed && (
+                                        <span className="truncate">{item.name}</span>
+                                    )}
+                                    
+                                    {/* Tooltip - fixed position relative to viewport */}
+                                    <div className="fixed px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[9999] pointer-events-none"
+                                         style={{
+                                             left: isCollapsed ? '88px' : '272px',
+                                             transform: 'translateY(-50%)',
+                                             marginTop: '0'
+                                         }}>
+                                        {item.name}
+                                        {/* Arrow pointing to button */}
+                                        <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-gray-900 -mr-[1px]"></div>
+                                    </div>
                                 </button>
                             </li>
                         ))}
@@ -220,36 +342,46 @@ export default function DashboardLayout({ children, userRole }) {
                 </nav>
 
                 {/* Logout Button */}
-                <div className="p-4 border-t border-theme-primary-dark">
+                <div className={`border-t border-theme-primary-dark flex-shrink-0 ${isCollapsed ? 'p-2' : 'p-3'}`}>
                     <button
                         onClick={handleLogoutClick}
-                        className="w-full flex items-center px-4 py-3 text-red-100 hover:bg-theme-primary-dark hover:text-white rounded-lg transition-colors"
+                        className={`w-full flex items-center text-red-100 hover:bg-theme-primary-dark hover:text-white rounded-lg transition-colors relative group ${
+                            isCollapsed ? 'justify-center p-3' : 'px-4 py-3'
+                        }`}
                     >
-                        <HiLogout className="w-5 h-5 mr-3" />
-                        Logout
+                        <HiLogout className={`w-5 h-5 flex-shrink-0 ${!isCollapsed && 'mr-3'}`} />
+                        {!isCollapsed && <span>Logout</span>}
+                        
+                        {/* Tooltip for collapsed state */}
+                        {isCollapsed && (
+                            <div className="hidden lg:block absolute left-full ml-6 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[60] pointer-events-none">
+                                Logout
+                                <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-gray-900 -mr-[1px]"></div>
+                            </div>
+                        )}
                     </button>
                 </div>
             </div>
 
             {/* Main Content Area */}
-            <div className="lg:ml-64">
+            <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
                 {/* Top Header */}
-                <header className="bg-white shadow-sm border-b px-4 lg:px-6 py-4 sticky top-0 z-30">
+                <header className="bg-white shadow-sm border-b px-3 sm:px-4 lg:px-6 py-3 sm:py-4 sticky top-0 z-30">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center">
+                        <div className="flex items-center min-w-0">
                             {/* Mobile menu button */}
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
-                                className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 mr-2"
+                                className="lg:hidden p-1.5 sm:p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 mr-1.5 sm:mr-2 flex-shrink-0"
                             >
-                                <HiMenu className="w-6 h-6" />
+                                <HiMenu className="w-5 h-5 sm:w-6 sm:h-6" />
                             </button>
-                            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+                            <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 truncate">
                                 {getHeaderTitle(activeNav, userRole)}
                             </h1>
                         </div>
-                        <div className="flex items-center space-x-2 lg:space-x-4">
-                            <span className="text-gray-600 text-sm lg:text-base font-medium">
+                        <div className="flex items-center space-x-1.5 sm:space-x-2 lg:space-x-4 flex-shrink-0">
+                            <span className="hidden sm:inline text-gray-600 text-xs sm:text-sm lg:text-base font-medium">
                                 Welcome, {userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
                             </span>
                             <button
@@ -263,7 +395,7 @@ export default function DashboardLayout({ children, userRole }) {
                 </header>
 
                 {/* Dashboard Content */}
-                <main className={`p-4 lg:p-6 ${activeNav === 'Donation Requests' ? 'h-[calc(100vh-80px)] flex flex-col overflow-hidden' : ''}`}>
+                <main className={`p-3 sm:p-4 md:p-5 lg:p-6 ${activeNav === 'Donation Requests' ? 'h-[calc(100vh-80px)] flex flex-col overflow-hidden' : ''}`}>
                     <div className={`${activeNav === 'Donation Requests' ? 'flex-1 flex flex-col min-h-0' : ''}`}>
                         {children({ 
                             activeNav, 

@@ -13,7 +13,7 @@ import {
     HiTruck,
     HiX
 } from 'react-icons/hi';
-import { formatDate, formatTime } from './utilities/donationHelpers';
+import { formatDate, formatTime } from '../utils/donationHelpers';
 import { getCalendarAppointments } from '../services/donationService';
 
 export default function CalendarComponent() {

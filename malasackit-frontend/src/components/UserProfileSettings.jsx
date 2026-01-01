@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { sanitizeInput, sanitizeEmail, sanitizePhone } from '../utils/sanitization';
+import { sanitizeInput, sanitizeEmail, sanitizePhone, sanitizeFormData } from '../utils/sanitization';
 
 export default function UserProfileSettings({ userInfo }) {
     const [formData, setFormData] = useState({
@@ -36,8 +36,11 @@ export default function UserProfileSettings({ userInfo }) {
     };
 
     const handleSaveChanges = () => {
+        // Sanitize form data before submission
+        const sanitizedData = sanitizeFormData(formData);
+        
         // Here you would typically send the data to your backend
-        console.log('Saving profile changes:', formData);
+        console.log('Saving profile changes:', sanitizedData);
         
         // For now, just show an alert
         alert('Profile changes saved successfully!');

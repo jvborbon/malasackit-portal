@@ -1,4 +1,4 @@
-import api from '../utilities/api';
+import api from '../../utils/api';
 
 // Category color themes for UI consistency
 const categoryThemes = {

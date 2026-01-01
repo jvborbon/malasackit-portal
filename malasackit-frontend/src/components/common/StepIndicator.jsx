@@ -36,19 +36,19 @@ const StepIndicator = ({
     // Size configurations
     const sizes = {
         small: {
-            circle: 'w-6 h-6 text-xs',
-            connector: 'w-8 h-0.5',
-            spacing: 'space-x-2'
+            circle: 'w-5 h-5 sm:w-6 sm:h-6 text-xs',
+            connector: 'w-6 sm:w-8 h-0.5',
+            spacing: 'space-x-1.5 sm:space-x-2'
         },
         medium: {
-            circle: 'w-8 h-8 text-sm',
-            connector: 'w-12 h-0.5',
-            spacing: 'space-x-4'
+            circle: 'w-7 h-7 sm:w-8 sm:h-8 text-xs sm:text-sm',
+            connector: 'w-8 sm:w-10 md:w-12 h-0.5',
+            spacing: 'space-x-2 sm:space-x-3 md:space-x-4'
         },
         large: {
-            circle: 'w-10 h-10 text-base',
-            connector: 'w-16 h-0.5',
-            spacing: 'space-x-6'
+            circle: 'w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 text-sm sm:text-base',
+            connector: 'w-10 sm:w-12 md:w-16 h-0.5',
+            spacing: 'space-x-3 sm:space-x-4 md:space-x-6'
         }
     };
 
@@ -56,7 +56,7 @@ const StepIndicator = ({
     const sizeConfig = sizes[size] || sizes.medium;
 
     return (
-        <div className={`flex justify-center mb-6 ${className}`}>
+        <div className={`flex justify-center mb-4 sm:mb-5 md:mb-6 ${className}`}>
             <div className={`flex items-center ${sizeConfig.spacing}`}>
                 {Array.from({ length: totalSteps }, (_, index) => {
                     const stepNumber = index + 1;

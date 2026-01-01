@@ -1,4 +1,4 @@
-import api from '../components/utilities/api';
+import api from '../utils/api';
 
 // Fetch all notifications for the current user
 export const fetchNotifications = async (filter = 'all', limit = 50) => {

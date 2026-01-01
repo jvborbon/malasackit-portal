@@ -24,7 +24,8 @@ ChartJS.register(
 
 export default function DonationTrendsChart() {
     const [donationData, setDonationData] = useState([]);
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const currentYear = new Date().getFullYear();
+    const [selectedYear, setSelectedYear] = useState(currentYear);
     const [loading, setLoading] = useState(true);
     const [statistics, setStatistics] = useState({
         avgPerMonth: 0,
@@ -32,6 +33,11 @@ export default function DonationTrendsChart() {
         lowest: 0,
         activeMonths: 0
     });
+
+    // Generate year options dynamically from system start year (2023) to current year
+    const systemStartYear = 2023;
+    const yearRange = currentYear - systemStartYear + 1;
+    const yearOptions = Array.from({ length: yearRange }, (_, i) => currentYear - i);
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -183,9 +189,9 @@ export default function DonationTrendsChart() {
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                     >
-                        <option value={2025}>2025</option>
-                        <option value={2024}>2024</option>
-                        <option value={2023}>2023</option>
+                        {yearOptions.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                        ))}
                     </select>
                     <button className="text-sm text-gray-500 hover:text-gray-700">
                         <HiDotsHorizontal className="w-4 h-4" />

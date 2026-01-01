@@ -257,15 +257,15 @@ export default function DonorDonationForm() {
         if (!isOpen || !details) return null;
 
         return (
-            <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-                <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+            <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-3 sm:p-4">
+                <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-5 md:p-6 relative max-h-[90vh] overflow-y-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                            <div className="bg-green-100 p-2 rounded-full mr-3">
-                                <HiCheckCircle className="w-6 h-6 text-green-600" />
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                        <div className="flex items-center min-w-0">
+                            <div className="bg-green-100 p-1.5 sm:p-2 rounded-full mr-2 sm:mr-3 flex-shrink-0">
+                                <HiCheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900">Donation Submitted!</h3>
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">Donation Submitted!</h3>
                         </div>
                         <button
                             onClick={onClose}
@@ -276,21 +276,21 @@ export default function DonorDonationForm() {
                     </div>
 
                     {/* Content */}
-                    <div className="space-y-4">
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <h4 className="text-sm font-medium text-green-800 mb-2">
+                    <div className="space-y-3 sm:space-y-4">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4">
+                            <h4 className="text-xs sm:text-sm font-medium text-green-800 mb-1.5 sm:mb-2">
                                 Success! Your donation request has been submitted.
                             </h4>
-                            <p className="text-sm text-green-700">
+                            <p className="text-xs sm:text-sm text-green-700">
                                 Your request is now pending approval. You'll receive a notification when it's reviewed.
                             </p>
                         </div>
 
                         {/* Donation Details */}
-                        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                            <h4 className="font-medium text-gray-900">Donation Summary</h4>
+                        <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+                            <h4 className="font-medium text-gray-900 text-sm sm:text-base">Donation Summary</h4>
                             
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                                 <div>
                                     <span className="text-gray-600">Request ID:</span>
                                     <p className="font-medium text-gray-900">#{details.donationId}</p>
@@ -354,10 +354,10 @@ export default function DonorDonationForm() {
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-6 flex justify-end space-x-3">
+                    <div className="mt-4 sm:mt-5 md:mt-6 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm font-medium transition-colors"
+                            className="px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-xs sm:text-sm font-medium transition-colors order-2 sm:order-1"
                         >
                             Submit Another
                         </button>
@@ -366,7 +366,7 @@ export default function DonorDonationForm() {
                                 onClose();
                                 // You could add navigation to donation history here
                             }}
-                            className="px-4 py-2 bg-theme-primary hover:bg-theme-primary-dark text-white rounded-md text-sm font-medium transition-colors"
+                            className="px-3 sm:px-4 py-2 bg-theme-primary hover:bg-theme-primary-dark text-white rounded-md text-xs sm:text-sm font-medium transition-colors order-1 sm:order-2"
                         >
                             View History
                         </button>
@@ -377,7 +377,7 @@ export default function DonorDonationForm() {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 lg:p-8">
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8">
             {/* Form Header */}
             <FormHeader />
 
@@ -399,7 +399,7 @@ export default function DonorDonationForm() {
                 details={successDetails}
             />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
                 {/* Donation Items Display */}
                 <DonationItemsDisplay
                     donationItems={donationItems}
@@ -416,41 +416,6 @@ export default function DonorDonationForm() {
                     formData={formData}
                     handleInputChange={handleInputChange}
                 />
-
-                {/* Pickup Address Input - Only shown when pickup is selected */}
-                {formData.deliveryMethod === 'pickup' && (
-                    <div className="space-y-2">
-                        <label htmlFor="pickupAddress" className="block text-sm font-medium text-gray-700">
-                            Pickup Address <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                            id="pickupAddress"
-                            name="pickupAddress"
-                            value={formData.pickupAddress}
-                            onChange={handleInputChange}
-                            placeholder="Enter your complete address for pickup (e.g., House/Unit No., Street, Barangay, City, Province)"
-                            rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary resize-none"
-                            required
-                        />
-                        <p className="text-xs text-gray-500">
-                            Please provide your complete address where we will pick up the donation items.
-                        </p>
-                        
-                        {/* Display saved address below the textarea */}
-                        {formData.address && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
-                                <div className="flex items-start">
-                                    <HiLocationMarker className="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-green-800 mb-1">Saved Address:</p>
-                                        <p className="text-sm text-green-700">{formData.address}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
 
                 {/* Submit Section */}
                 <SubmitSection

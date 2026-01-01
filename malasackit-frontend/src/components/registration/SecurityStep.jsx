@@ -22,13 +22,9 @@ const SecurityStep = ({
                 ? 'transform translate-x-0 opacity-100' 
                 : 'transform translate-x-full opacity-0'
         }`}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="text-center mb-4">
-                    <h3 className="text-white text-lg font-bold">Security</h3>
-                </div>
-
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                 {/* Password Fields */}
-                <div className="space-y-4">
+                <div className="space-y-2.5 sm:space-y-3">
                     <FloatingInput
                         label="Password"
                         type="password"
@@ -51,42 +47,42 @@ const SecurityStep = ({
 
                 {/* Error Message */}
                 {submitError && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4">
+                    <div className="bg-white/10 border border-white/30 text-white px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm">
                         {submitError}
                     </div>
                 )}
 
                 {/* Navigation buttons */}
-                <div className="flex space-x-4 pt-4">
+                <div className="flex gap-2.5 sm:gap-3 pt-2 sm:pt-3">
                     <button
                         type="button"
                         onClick={onBack}
-                        className="w-full bg-red-400 text-white font-bold py-3 px-4 rounded hover:bg-red-500 transition duration-200"
+                        className="w-full bg-white/20 text-white font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-white/30 transition duration-200 text-sm sm:text-base"
                     >
                         ← Back
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className={`w-full font-bold py-3 px-4 rounded transition duration-200 ${
+                        className={`w-full font-semibold py-3 sm:py-3.5 rounded-lg transition duration-200 text-sm sm:text-base ${
                             isSubmitting 
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                ? 'bg-white/50 text-red-300 cursor-not-allowed'
                                 : 'bg-white text-red-600 hover:bg-red-50'
                         }`}
                     >
-                        {isSubmitting ? 'Registering...' : 'Register'}
+                        {isSubmitting ? 'Creating...' : 'Create Account'}
                     </button>
                 </div>
 
                 {/* Login link */}
-                <div className="text-center pt-3">
-                    <span className="text-white text-base">Already have an account? </span>
+                <div className="text-center pt-1.5 sm:pt-2">
+                    <span className="text-white text-xs sm:text-sm">Already have an account? </span>
                     <button 
                         type="button"
                         onClick={onSwitchToLogin}
-                        className="text-blue-200 hover:text-blue-100 underline font-semibold text-sm"
+                        className="text-white font-semibold underline hover:text-red-100 transition-colors text-xs sm:text-sm"
                     >
-                        Login Here!
+                        Sign In
                     </button>
                 </div>
             </form>

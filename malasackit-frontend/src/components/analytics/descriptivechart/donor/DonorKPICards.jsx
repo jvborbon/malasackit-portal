@@ -55,7 +55,6 @@ export default function DonorKPICards() {
         fetchStatistics();
     }, []);
 
-    // Calculate donation status data with separate pending and failed
     const successRateData = {
         labels: ['Successful', 'Pending', 'Failed'],
         datasets: [
@@ -79,83 +78,131 @@ export default function DonorKPICards() {
             legend: {
                 position: 'bottom',
                 labels: {
-                    padding: 15,
+                    padding: 12,
                     usePointStyle: true,
+                    font: {
+                        size: 11
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
                 }
             }
-        }
+        },
+        cutout: '65%'
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-5 sm:mb-6 md:mb-7 lg:mb-8">
             {/* Total Worth of Response */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-red-600 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-red-600 font-semibold mb-2">Total Worth of Response</h3>
-                        <div className="flex items-center">
-                            <HiCurrencyDollar className="text-3xl text-red-600 mr-2" />
-                            <span className="text-2xl font-bold text-gray-900">
-                                {loading ? '...' : `₱${statistics.totalWorth.toLocaleString()}`}
-                            </span>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {loading ? 'Loading...' : statistics.totalWorth === 0 ? 'No data available' : 'From approved/completed donations'}
-                        </p>
-                    </div>
-                    <div className="bg-red-100 p-3 rounded-full">
-                        <HiTrendingUp className="w-6 h-6 text-red-600" />
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-red-600 hover:shadow-md transition-shadow">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-red-600 font-semibold text-sm sm:text-base">Total Worth of Response</h3>
+                    <div className="bg-red-100 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
+                        <HiTrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                     </div>
                 </div>
+                
+                {/* Main Value */}
+                <div className="flex items-center mb-2">
+                    <HiCurrencyDollar className="text-2xl sm:text-3xl text-red-600 mr-1.5 sm:mr-2 flex-shrink-0" />
+                    <span className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                        {loading ? '...' : `₱${statistics.totalWorth.toLocaleString()}`}
+                    </span>
+                </div>
+                
+                {/* Description */}
+                <p className="text-xs sm:text-sm text-gray-500">
+                    {loading ? 'Loading...' : statistics.totalWorth === 0 ? 'No data available' : 'From approved/completed donations'}
+                </p>
             </div>
 
             {/* Donation Status Overview with Chart */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-600 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 className="text-green-600 font-semibold mb-2">Donation Status Overview</h3>
-                        <div className="flex items-center">
-                            <span className="text-2xl font-bold text-gray-900">
-                                {loading ? '...' : statistics.successfulDonations}
-                            </span>
-                            <span className="text-sm text-gray-500 ml-2">successful</span>
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                            {loading ? 'Loading...' : 
-                             `${statistics.pendingDonations || 0} pending • ${statistics.failedDonations || 0} failed`}
-                        </div>
-                    </div>
-                    <div className="bg-green-100 p-3 rounded-full">
-                        <HiCheckCircle className="w-6 h-6 text-green-600" />
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-green-600 hover:shadow-md transition-shadow">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-green-600 font-semibold text-sm sm:text-base">Donation Status</h3>
+                    <div className="bg-green-100 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
+                        <HiCheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                     </div>
                 </div>
-                <div className="h-24">
-                    <Doughnut data={successRateData} options={doughnutOptions} />
+                
+                {/* Total count */}
+                <div className="text-center mb-3">
+                    <div className="flex items-baseline justify-center gap-1.5">
+                        <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                            {loading ? '...' : statistics.totalDonations}
+                        </span>
+                        <span className="text-xs sm:text-sm text-gray-500">total</span>
+                    </div>
+                </div>
+                
+                {/* Chart with stats */}
+                <div className="flex items-center gap-4">
+                    <div className="flex-1 h-32 sm:h-36 md:h-40">
+                        <Doughnut data={successRateData} options={doughnutOptions} />
+                    </div>
+                    
+                    <div className="flex flex-col gap-3 pr-2">
+                        <div className="text-center">
+                            <div className="text-xl sm:text-2xl font-bold text-green-600">
+                                {loading ? '...' : statistics.successfulDonations}
+                            </div>
+                            <div className="text-xs text-gray-500">Successful</div>
+                        </div>
+                        <div className="h-px bg-gray-200"></div>
+                        <div className="text-center">
+                            <div className="text-lg sm:text-xl font-semibold text-amber-600">
+                                {loading ? '...' : statistics.pendingDonations}
+                            </div>
+                            <div className="text-xs text-gray-500">Pending</div>
+                        </div>
+                        <div className="h-px bg-gray-200"></div>
+                        <div className="text-center">
+                            <div className="text-lg sm:text-xl font-semibold text-red-600">
+                                {loading ? '...' : statistics.failedDonations}
+                            </div>
+                            <div className="text-xs text-gray-500">Failed</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Total Items Given */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-600 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-blue-600 font-semibold mb-2">Total Items Given</h3>
-                        <div className="flex items-center">
-                            <span className="text-2xl font-bold text-gray-900">
-                                {loading ? '...' : statistics.totalItems}
-                            </span>
-                            <span className="text-sm text-gray-500 ml-2">items</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {loading ? 'Loading...' : statistics.categories.length === 0 ? 'No categories yet' : 
-                             `${statistics.categories.length} categories donated`}
-                        </p>
-                    </div>
-                    <div className="bg-blue-100 p-3 rounded-full">
-                        <HiGift className="w-6 h-6 text-blue-600" />
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-blue-600 hover:shadow-md transition-shadow">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-blue-600 font-semibold text-sm sm:text-base">Total Items Given</h3>
+                    <div className="bg-blue-100 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
+                        <HiGift className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     </div>
                 </div>
-                {/* Category breakdown - shows actual categories or placeholder */}
-                <div className="mt-4 space-y-1">
+                
+                {/* Main Value */}
+                <div className="flex items-center mb-2">
+                    <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                        {loading ? '...' : statistics.totalItems}
+                    </span>
+                    <span className="text-xs sm:text-sm text-gray-500 ml-1.5 sm:ml-2">items</span>
+                </div>
+                
+                {/* Description */}
+                <p className="text-xs sm:text-sm text-gray-500 mb-3">
+                    {loading ? 'Loading...' : statistics.categories.length === 0 ? 'No categories yet' : 
+                     `${statistics.categories.length} categories donated`}
+                </p>
+                
+                {/* Category breakdown */}
+                <div>
                     {loading ? (
                         <div className="text-center text-sm text-gray-400 py-4">
                             <p>Loading categories...</p>

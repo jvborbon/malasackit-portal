@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { HiLocationMarker } from 'react-icons/hi';
 import { getAvailableSlots } from '../../../services/donationService';
-import { formatTime } from '../../utilities/donationHelpers';
+import { formatTime } from '../../../utils/donationHelpers';
 
 export function DonationDetails({ formData, handleInputChange }) {
     const [availableSlots, setAvailableSlots] = useState([]);
@@ -31,7 +32,7 @@ export function DonationDetails({ formData, handleInputChange }) {
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 md:p-5 lg:p-6">
             <SectionHeader />
             <DetailsGrid 
                 formData={formData}
@@ -46,7 +47,7 @@ export function DonationDetails({ formData, handleInputChange }) {
 // Section Header Component
 function SectionHeader() {
     return (
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             Do you need any of these?
         </h2>
     );
@@ -55,8 +56,8 @@ function SectionHeader() {
 // Details Grid Component
 function DetailsGrid({ formData, handleInputChange, availableSlots, loadingSlots }) {
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-4 sm:space-y-5 md:space-y-6">
+            <div className="grid grid-cols-1 md:lg:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                 <DeliveryMethodSection 
                     formData={formData}
                     handleInputChange={handleInputChange}
@@ -76,6 +77,14 @@ function DetailsGrid({ formData, handleInputChange, availableSlots, loadingSlots
                 />
             )}
             
+            {/* Pickup Address - Only shown when pickup is selected */}
+            {formData.deliveryMethod === 'pickup' && (
+                <PickupAddressSection 
+                    formData={formData}
+                    handleInputChange={handleInputChange}
+                />
+            )}
+            
             <AdditionalNotesSection 
                 formData={formData}
                 handleInputChange={handleInputChange}
@@ -88,7 +97,7 @@ function DetailsGrid({ formData, handleInputChange, availableSlots, loadingSlots
 function DeliveryMethodSection({ formData, handleInputChange }) {
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                 Delivery Method
             </label>
             <div className="space-y-2">
@@ -112,7 +121,7 @@ function DeliveryMethodSection({ formData, handleInputChange }) {
 // Delivery Method Option Component
 function DeliveryMethodOption({ value, label, checked, onChange }) {
     return (
-        <label className="flex items-center">
+        <label className="flex items-center cursor-pointer">
             <input
                 type="radio"
                 name="deliveryMethod"
@@ -121,7 +130,7 @@ function DeliveryMethodOption({ value, label, checked, onChange }) {
                 onChange={onChange}
                 className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300"
             />
-            <span className="ml-2 text-sm text-gray-700">{label}</span>
+            <span className="ml-2 text-xs sm:text-sm text-gray-700">{label}</span>
         </label>
     );
 }
@@ -130,7 +139,7 @@ function DeliveryMethodOption({ value, label, checked, onChange }) {
 function AdditionalNotesSection({ formData, handleInputChange }) {
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                 Additional Notes
             </label>
             <textarea
@@ -139,7 +148,7 @@ function AdditionalNotesSection({ formData, handleInputChange }) {
                 onChange={handleInputChange}
                 placeholder="Any additional information..."
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors resize-none bg-gray-50 text-sm"
+                className="w-full px-3 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary resize-none"
             />
         </div>
     );
@@ -251,5 +260,42 @@ function TimeSlotOption({ slot, selected, onChange }) {
                 {slot.booked}/{slot.capacity}
             </div>
         </button>
+    );
+}
+
+// Pickup Address Section
+function PickupAddressSection({ formData, handleInputChange }) {
+    return (
+        <div className="space-y-2">
+            <label htmlFor="pickupAddress" className="block text-xs sm:text-sm font-medium text-gray-700">
+                Pickup Address <span className="text-red-500">*</span>
+            </label>
+            <textarea
+                id="pickupAddress"
+                name="pickupAddress"
+                value={formData.pickupAddress}
+                onChange={handleInputChange}
+                placeholder="Enter your complete address for pickup (e.g., House/Unit No., Street, Barangay, City, Province)"
+                rows={3}
+                className="w-full px-3 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary resize-none"
+                required
+            />
+            <p className="text-xs text-gray-500">
+                Please provide your complete address where we will pick up the donation items.
+            </p>
+            
+            {/* Display saved address below the textarea */}
+            {formData.address && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
+                    <div className="flex items-start">
+                        <HiLocationMarker className="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-green-800 mb-1">Saved Address:</p>
+                            <p className="text-sm text-green-700">{formData.address}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

@@ -17,7 +17,7 @@ import {
   getLowStockItems,
   getCategories 
 } from "../services/inventoryService";
-import { formatCurrency } from "./utilities/donationHelpers";
+import { formatCurrency } from "../utils/donationHelpers";
 
 function Inventory() {
   const [search, setSearch] = useState("");
