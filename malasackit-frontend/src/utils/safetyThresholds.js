@@ -56,7 +56,7 @@ export const fetchSafetyThresholds = async () => {
 /**
  * Get safety threshold for a specific item type (with caching)
  * @param {string} itemTypeName - The name of the item type
- * @returns {Promise<number>} The safety threshold
+ * @returns {Promise<Object>} The safety threshold object { max, reorder, critical }
  */
 export const getSafetyThreshold = async (itemTypeName) => {
   // Check if cache is valid
@@ -64,7 +64,17 @@ export const getSafetyThreshold = async (itemTypeName) => {
     await fetchSafetyThresholds();
   }
 
-  return thresholdsCache?.[itemTypeName] || FRONTEND_SAFETY_THRESHOLDS[itemTypeName] || 10;
+  return thresholdsCache?.[itemTypeName] || FRONTEND_SAFETY_THRESHOLDS[itemTypeName] || { max: 1000, reorder: 300, critical: 100 };
+};
+
+/**
+ * Get critical threshold value for backward compatibility
+ * @param {string} itemTypeName - The name of the item type
+ * @returns {Promise<number>} The critical threshold value
+ */
+export const getCriticalThreshold = async (itemTypeName) => {
+  const threshold = await getSafetyThreshold(itemTypeName);
+  return typeof threshold === 'object' ? threshold.critical : threshold;
 };
 
 /**
@@ -88,22 +98,43 @@ export const getAllSafetyThresholds = async () => {
  */
 export const validateSafetyThreshold = async (itemTypeName, currentStock) => {
   const threshold = await getSafetyThreshold(itemTypeName);
-  const safeToDistribute = Math.max(0, currentStock - threshold);
   
-  let status = 'safe';
-  if (currentStock <= threshold) {
-    status = 'critical';
-  } else if (currentStock <= threshold * 2) {
+  // Handle both old (number) and new (object) threshold formats
+  const thresholds = typeof threshold === 'object' 
+    ? threshold 
+    : { max: threshold * 10, reorder: threshold * 2, critical: threshold };
+  
+  const safeToDistribute = Math.max(0, currentStock - thresholds.critical);
+  
+  let status = 'optimal';
+  let statusColor = 'green';
+  
+  if (currentStock > thresholds.max) {
+    status = 'overstocked';
+    statusColor = 'orange';
+  } else if (currentStock >= thresholds.reorder) {
+    status = 'optimal';
+    statusColor = 'green';
+  } else if (currentStock >= thresholds.critical) {
     status = 'low';
+    statusColor = 'yellow';
+  } else {
+    status = 'critical';
+    statusColor = 'red';
   }
   
   return {
     status,
-    threshold,
+    statusColor,
+    thresholds,
+    threshold: thresholds.critical, // For backward compatibility
     currentStock,
     safeToDistribute,
-    isAboveThreshold: currentStock > threshold,
-    message: `${itemTypeName}: ${currentStock} units (threshold: ${threshold})`
+    isAboveThreshold: currentStock > thresholds.critical,
+    isBelowReorder: currentStock < thresholds.reorder,
+    isOverstocked: currentStock > thresholds.max,
+    percentOfMax: thresholds.max > 0 ? Math.round((currentStock / thresholds.max) * 100) : 0,
+    message: `${itemTypeName}: ${currentStock} units (Critical: ${thresholds.critical}, Reorder: ${thresholds.reorder}, Max: ${thresholds.max})`
   };
 };
 
@@ -111,10 +142,26 @@ export const validateSafetyThreshold = async (itemTypeName, currentStock) => {
  * Synchronous version for when you already have thresholds loaded
  * @param {Object} thresholds - Pre-loaded thresholds object
  * @param {string} itemTypeName - The name of the item type
- * @returns {number} The safety threshold
+ * @returns {number} The critical safety threshold
  */
 export const getSafetyThresholdSync = (thresholds, itemTypeName) => {
-  return thresholds?.[itemTypeName] || FRONTEND_SAFETY_THRESHOLDS[itemTypeName] || 10;
+  const threshold = thresholds?.[itemTypeName] || FRONTEND_SAFETY_THRESHOLDS[itemTypeName] || { max: 1000, reorder: 300, critical: 100 };
+  // Return critical value for backward compatibility
+  return typeof threshold === 'object' ? threshold.critical : threshold;
+};
+
+/**
+ * Synchronous version that returns full threshold object
+ * @param {Object} thresholds - Pre-loaded thresholds object
+ * @param {string} itemTypeName - The name of the item type
+ * @returns {Object} The threshold object { max, reorder, critical }
+ */
+export const getFullThresholdSync = (thresholds, itemTypeName) => {
+  const threshold = thresholds?.[itemTypeName] || FRONTEND_SAFETY_THRESHOLDS[itemTypeName] || { max: 1000, reorder: 300, critical: 100 };
+  // Handle both old (number) and new (object) formats
+  return typeof threshold === 'object' 
+    ? threshold 
+    : { max: threshold * 10, reorder: threshold * 2, critical: threshold };
 };
 
 

@@ -1,4 +1,3 @@
-// src/index.js
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser'; // Add this
@@ -61,62 +60,18 @@ app.use('/api/dashboard', dashboardRoutes);
 // Backend - Add to your server.js
 app.post("/api/generate-insights", async (req, res) => {
   try {
-    const { chartType, data, context } = req.body;
+    const { data } = req.body;
 
-    if (!chartType || !data || !context) {
+    if (!data) {
       return res.status(400).json({
-        error: "Missing required fields: chartType, data, or context",
+        error: "Missing required field: data",
       });
     }
 
-    const prompt = `Analyze this ${chartType} data briefly:
+    console.log('📊 Generating rule-based insights for', data.length, 'items');
+    const insights = generateRuleBasedInsights(data);
+    res.json({ insights, success: true });
 
-${JSON.stringify(data, null, 2)}
-
-Context: ${context}
-
-Give me 3-4 SHORT insights using simple words. Make each point 1 sentence only. Focus on what's important and what to do for prescriptive analytics.`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 250,
-            candidateCount: 1,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.candidates && result.candidates.length > 0) {
-      const candidate = result.candidates[0];
-
-      if (
-        candidate.content &&
-        candidate.content.parts &&
-        candidate.content.parts.length > 0
-      ) {
-        const insights = candidate.content.parts[0].text;
-        res.json({ insights, success: true });
-      } else {
-        throw new Error("No content generated");
-      }
-    } else {
-      throw new Error("No insights generated");
-    }
   } catch (error) {
     console.error("Generate Insights Error:", error);
     res.status(500).json({
@@ -126,9 +81,80 @@ Give me 3-4 SHORT insights using simple words. Make each point 1 sentence only. 
   }
 });
 
+// Rule-based insights generator
+function generateRuleBasedInsights(data) {
+  const insights = [];
+  
+  // Count critical and low stock items
+  const criticalItems = data.filter(item => item.status === 'critical');
+  const lowItems = data.filter(item => item.status === 'low');
+  const okItems = data.filter(item => item.status === 'ok');
+  
+  // Calculate percentages
+  const criticalPercent = Math.round((criticalItems.length / data.length) * 100);
+  const lowPercent = Math.round((lowItems.length / data.length) * 100);
+  
+  // Group by category
+  const categoryMap = {};
+  data.forEach(item => {
+    if (!categoryMap[item.category]) {
+      categoryMap[item.category] = { critical: 0, low: 0, total: 0 };
+    }
+    categoryMap[item.category].total++;
+    if (item.status === 'critical') categoryMap[item.category].critical++;
+    if (item.status === 'low') categoryMap[item.category].low++;
+  });
+  
+  // Find most affected category
+  let worstCategory = null;
+  let worstScore = 0;
+  Object.entries(categoryMap).forEach(([category, stats]) => {
+    const score = (stats.critical * 2) + stats.low;
+    if (score > worstScore) {
+      worstScore = score;
+      worstCategory = category;
+    }
+  });
+
+  // Generate 4 insights with item names
+  if (criticalItems.length > 0) {
+    const criticalNames = criticalItems.slice(0, 3).map(item => item.name).join(', ');
+    const moreText = criticalItems.length > 3 ? ` and ${criticalItems.length - 3} more` : '';
+    insights.push(`1. ${criticalItems.length} items critically low (${criticalPercent}%): ${criticalNames}${moreText} need immediate restocking.`);
+  } else {
+    insights.push(`1. No critical stock issues detected, inventory levels are stable.`);
+  }
+
+  if (lowItems.length > 0) {
+    const lowNames = lowItems.slice(0, 3).map(item => item.name).join(', ');
+    const moreText = lowItems.length > 3 ? ` and ${lowItems.length - 3} more` : '';
+    insights.push(`2. ${lowItems.length} items running low (${lowPercent}%): ${lowNames}${moreText} require attention soon.`);
+  } else {
+    insights.push(`2. All items maintain healthy stock levels above minimum thresholds.`);
+  }
+
+  if (worstCategory && (categoryMap[worstCategory].critical > 0 || categoryMap[worstCategory].low > 0)) {
+    const categoryIssues = data.filter(item => 
+      item.category === worstCategory && (item.status === 'critical' || item.status === 'low')
+    );
+    const issueNames = categoryIssues.slice(0, 3).map(item => item.name).join(', ');
+    const moreText = categoryIssues.length > 3 ? ` and ${categoryIssues.length - 3} more` : '';
+    insights.push(`3. ${worstCategory} category has ${categoryIssues.length} items needing replenishment: ${issueNames}${moreText}.`);
+  } else {
+    insights.push(`3. Stock distribution across categories is well-balanced and optimal.`);
+  }
+
+  if (okItems.length > 0) {
+    const okPercent = Math.round((okItems.length / data.length) * 100);
+    insights.push(`4. ${okItems.length} items (${okPercent}%) have adequate stock for operations.`);
+  } else {
+    insights.push(`4. Review all safety thresholds to prevent future stock shortages.`);
+  }
+
+  return insights.join('\n');
+}
+
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
-
-

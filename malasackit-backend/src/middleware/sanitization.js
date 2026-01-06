@@ -43,7 +43,7 @@ const sanitizeObject = (obj) => {
     if (typeof obj === 'object') {
         const sanitized = {};
         for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
                 sanitized[key] = sanitizeObject(obj[key]);
             }
         }
@@ -66,14 +66,18 @@ export const sanitizeMiddleware = (req, res, next) => {
             req.body = sanitizeObject(req.body);
         }
         
-        // Sanitize query parameters
+        // Sanitize query parameters (modify in place since req.query is a getter)
         if (req.query && typeof req.query === 'object') {
-            req.query = sanitizeObject(req.query);
+            const sanitized = sanitizeObject(req.query);
+            Object.keys(req.query).forEach(key => delete req.query[key]);
+            Object.assign(req.query, sanitized);
         }
         
-        // Sanitize URL parameters
+        // Sanitize URL parameters (modify in place since req.params is a getter)
         if (req.params && typeof req.params === 'object') {
-            req.params = sanitizeObject(req.params);
+            const sanitized = sanitizeObject(req.params);
+            Object.keys(req.params).forEach(key => delete req.params[key]);
+            Object.assign(req.params, sanitized);
         }
         
         next();

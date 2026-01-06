@@ -1,124 +1,127 @@
 /**
  * Frontend Safety Thresholds Configuration
- * This mirrors the backend configuration for when API calls fail
+ * This mirrors the backend configuration for realistic 240 sq.m warehouse capacity
+ * 
+ * Structure: { max, reorder, critical }
+ * - max: Maximum realistic storage capacity
+ * - reorder: Trigger for requesting donations (60% of max)
+ * - critical: Emergency minimum buffer (30% of max)
  */
 
 export const FRONTEND_SAFETY_THRESHOLDS = {
-  // ====================================
-  // CATEGORY 1 - Food Items (HIGH CRITICALITY)
-  // ====================================
-  'Canned Goods': 300,
-  'Rice (10kg)': 20,
-  'Rice (25kg)': 10,
-  'Noodles': 200,
-  'Cooking Oil': 40,
-  'Sugar': 30,
-  'Salt': 20,
-  'Coffee': 50,
-  'Milk Powder': 40,
-  'Biscuits (Pack)': 150,
-  'Dried Fish': 40,
-  'Bread': 20,
-  'Pasta': 80,
-  'Cereals': 40,
-  'Other Food Items': 15,
+  // FOOD ITEMS (35% warehouse space)
+  'Rice (10kg)': { max: 500, reorder: 300, critical: 150 },
+  'Rice (25kg)': { max: 200, reorder: 120, critical: 60 },
+  'Canned Goods': { max: 3000, reorder: 1800, critical: 900 },
+  'Sardines': { max: 2000, reorder: 1200, critical: 600 },
+  'Corned Beef': { max: 1500, reorder: 900, critical: 450 },
+  'Noodles': { max: 2500, reorder: 1500, critical: 750 },
+  'Instant Noodles': { max: 2500, reorder: 1500, critical: 750 },
+  'Cooking Oil': { max: 400, reorder: 240, critical: 120 },
+  'Sugar': { max: 600, reorder: 360, critical: 180 },
+  'Salt': { max: 500, reorder: 300, critical: 150 },
+  'Coffee': { max: 1000, reorder: 600, critical: 300 },
+  'Milk Powder': { max: 400, reorder: 240, critical: 120 },
+  'Biscuits (Pack)': { max: 1200, reorder: 720, critical: 360 },
+  'Dried Fish': { max: 300, reorder: 180, critical: 90 },
+  'Bread': { max: 150, reorder: 90, critical: 45 },
+  'Pasta': { max: 800, reorder: 480, critical: 240 },
+  'Cereals': { max: 500, reorder: 300, critical: 150 },
+  'Other Food Items': { max: 600, reorder: 360, critical: 180 },
 
-  // ====================================
-  // CATEGORY 2 - Household Essentials/Hygiene
-  // ====================================
-  'Soap': 150,
-  'Shampoo': 80,
-  'Toothpaste': 100,
-  'Toothbrush': 100,
-  'Toilet Paper': 50,
-  'Detergent': 60,
-  'Sanitary Pads': 100,
-  'Diapers': 60,
-  'Face Masks': 200,
-  'Alcohol': 80,
-  'Hand Sanitizer': 60,
-  'Tissues': 80,
-  'Other Hygiene Items': 15,
+  // HYGIENE & HOUSEHOLD (25% warehouse space)
+  'Bath Soap': { max: 2400, reorder: 1440, critical: 720 },
+  'Soap': { max: 2400, reorder: 1440, critical: 720 },
+  'Laundry Soap': { max: 1200, reorder: 720, critical: 360 },
+  'Detergent': { max: 1200, reorder: 720, critical: 360 },
+  'Shampoo': { max: 1500, reorder: 900, critical: 450 },
+  'Toothpaste': { max: 800, reorder: 480, critical: 240 },
+  'Toothbrush': { max: 1000, reorder: 600, critical: 300 },
+  'Toilet Paper': { max: 600, reorder: 360, critical: 180 },
+  'Sanitary Pads': { max: 800, reorder: 480, critical: 240 },
+  'Hygiene Napkin': { max: 800, reorder: 480, critical: 240 },
+  'Diapers': { max: 600, reorder: 360, critical: 180 },
+  'Face Masks': { max: 2000, reorder: 1200, critical: 600 },
+  'Alcohol': { max: 500, reorder: 300, critical: 150 },
+  'Hand Sanitizer': { max: 500, reorder: 300, critical: 150 },
+  'Tissues': { max: 600, reorder: 360, critical: 180 },
+  'Face Towel': { max: 800, reorder: 480, critical: 240 },
+  'Other Hygiene Items': { max: 500, reorder: 300, critical: 150 },
 
-  // ====================================
-  // CATEGORY 3 - Clothing
-  // ====================================
-  'T-Shirts': 100,
-  'Pants': 60,
-  'Dresses': 40,
-  'Shorts': 50,
-  'Underwear (New Only)': 80,
-  'Socks': 100,
-  'Shoes': 40,
-  'Jackets': 40,
-  'School Uniforms': 30,
-  'Baby Clothes': 80,
-  'Sleepwear': 50,
-  'Other Clothing': 10,
+  // BEDDING & SHELTER (10% warehouse space)
+  'Blankets': { max: 600, reorder: 360, critical: 180 },
+  'Blanket': { max: 600, reorder: 360, critical: 180 },
+  'Sleeping Mat': { max: 500, reorder: 300, critical: 150 },
+  'Mats': { max: 500, reorder: 300, critical: 150 },
+  'Tents': { max: 50, reorder: 30, critical: 15 },
+  'Tarpaulins': { max: 300, reorder: 180, critical: 90 },
+  'Pillows': { max: 400, reorder: 240, critical: 120 },
+  'Bed Sheets': { max: 500, reorder: 300, critical: 150 },
+  'Mosquito Nets': { max: 300, reorder: 180, critical: 90 },
+  'Jerry Cans': { max: 400, reorder: 240, critical: 120 },
+  'Jerry Can': { max: 400, reorder: 240, critical: 120 },
+  'Plastic Containers': { max: 500, reorder: 300, critical: 150 },
+  'Emergency Kits': { max: 300, reorder: 180, critical: 90 },
+  'Sleeping Bags': { max: 250, reorder: 150, critical: 75 },
+  'Other Shelter Items': { max: 300, reorder: 180, critical: 90 },
 
-  // ====================================
-  // CATEGORY 4 - Shelter Materials
-  // ====================================
-  'Blankets': 80,
-  'Tents': 10,
-  'Tarpaulins': 20,
-  'Pillows': 40,
-  'Bed Sheets': 40,
-  'Mosquito Nets': 40,
-  'Jerry Cans': 20,
-  'Plastic Containers': 30,
-  'Emergency Kits': 20,
-  'Sleeping Bags': 20,
-  'Mats': 30,
-  'Other Shelter Items': 15,
+  // CLOTHING (20% warehouse space)
+  'T-Shirts': { max: 1000, reorder: 600, critical: 300 },
+  'Pants': { max: 600, reorder: 360, critical: 180 },
+  'Dresses': { max: 400, reorder: 240, critical: 120 },
+  'Shorts': { max: 500, reorder: 300, critical: 150 },
+  'Underwear (New Only)': { max: 800, reorder: 480, critical: 240 },
+  'Socks': { max: 1000, reorder: 600, critical: 300 },
+  'Shoes': { max: 400, reorder: 240, critical: 120 },
+  'Jackets': { max: 300, reorder: 180, critical: 90 },
+  'School Uniforms': { max: 400, reorder: 240, critical: 120 },
+  'Baby Clothes': { max: 600, reorder: 360, critical: 180 },
+  'Sleepwear': { max: 500, reorder: 300, critical: 150 },
+  'Other Clothing': { max: 500, reorder: 300, critical: 150 },
 
-  // ====================================
-  // CATEGORY 5 - Educational Materials
-  // ====================================
-  'Notebooks': 50,
-  'Ballpens': 100,
-  'Pencils': 100,
-  'Crayons (12 pcs)': 30,
-  'Coloring Materials (Markers/Paints)': 20,
-  'Ruler/Compass/Protractor Set': 30,
-  'Backpacks/School Bags': 20,
-  'Textbooks': 10,
-  'Storybooks': 15,
-  'Paper Reams (Bond Paper)': 10,
-  'Folders/Binder Sets': 20,
-  'Chalk/Whiteboard Markers': 15,
-  'Educational Toys (Preschool)': 10,
-  'Tablet/Basic Laptop (for learning)': 3,
-  'Other Educational Materials': 10,
+  // EDUCATIONAL MATERIALS (5% warehouse space)
+  'Notebooks': { max: 500, reorder: 300, critical: 150 },
+  'Ballpens': { max: 600, reorder: 360, critical: 180 },
+  'Pencils': { max: 600, reorder: 360, critical: 180 },
+  'Crayons (12 pcs)': { max: 300, reorder: 180, critical: 90 },
+  'Coloring Materials (Markers/Paints)': { max: 200, reorder: 120, critical: 60 },
+  'Ruler/Compass/Protractor Set': { max: 300, reorder: 180, critical: 90 },
+  'Backpacks/School Bags': { max: 200, reorder: 120, critical: 60 },
+  'School Supplies': { max: 400, reorder: 240, critical: 120 },
+  'Textbooks': { max: 300, reorder: 180, critical: 90 },
+  'Storybooks': { max: 300, reorder: 180, critical: 90 },
+  'Paper Reams (Bond Paper)': { max: 150, reorder: 90, critical: 45 },
+  'Folders/Binder Sets': { max: 250, reorder: 150, critical: 75 },
+  'Chalk/Whiteboard Markers': { max: 300, reorder: 180, critical: 90 },
+  'Educational Toys (Preschool)': { max: 150, reorder: 90, critical: 45 },
+  'Tablet/Basic Laptop (for learning)': { max: 30, reorder: 18, critical: 9 },
+  'Other Educational Materials': { max: 250, reorder: 150, critical: 75 },
 
-  // ====================================
-  // CATEGORY 6 - Kitchen Items
-  // ====================================
-  'Cooking Pots (medium)': 20,
-  'Frying Pan': 20,
-  'Cooking Utensil Set (spoon, ladle, etc.)': 30,
-  'Cutlery Set (forks, spoons, knives)': 40,
-  'Plates (set of 6)': 40,
-  'Bowls (set of 6)': 40,
-  'Cups/Glasses (set)': 40,
-  'Cooking Knife': 40,
-  'Chopping Board': 30,
-  'Rice Cooker': 10,
-  'Water Jug/Pitcher': 30,
-  'Thermos Flask': 20,
-  'Serving Tray': 30,
-  'Plastic Containers (food storage)': 40,
-  'Other Kitchen Items': 10,
+  // KITCHEN ITEMS (3% warehouse space)
+  'Cooking Pots (medium)': { max: 150, reorder: 90, critical: 45 },
+  'Frying Pan': { max: 150, reorder: 90, critical: 45 },
+  'Cooking Utensil Set (spoon, ladle, etc.)': { max: 200, reorder: 120, critical: 60 },
+  'Cutlery Set (forks, spoons, knives)': { max: 250, reorder: 150, critical: 75 },
+  'Plates (set of 6)': { max: 200, reorder: 120, critical: 60 },
+  'Bowls (set of 6)': { max: 200, reorder: 120, critical: 60 },
+  'Cups/Glasses (set)': { max: 250, reorder: 150, critical: 75 },
+  'Cooking Knife': { max: 150, reorder: 90, critical: 45 },
+  'Chopping Board': { max: 150, reorder: 90, critical: 45 },
+  'Rice Cooker': { max: 80, reorder: 48, critical: 24 },
+  'Water Jug/Pitcher': { max: 200, reorder: 120, critical: 60 },
+  'Thermos Flask': { max: 150, reorder: 90, critical: 45 },
+  'Serving Tray': { max: 150, reorder: 90, critical: 45 },
+  'Plastic Containers (food storage)': { max: 250, reorder: 150, critical: 75 },
+  'Other Kitchen Items': { max: 200, reorder: 120, critical: 60 },
 
-  // ====================================
-  // CATEGORY 7 - Medical Supplies
-  // ====================================
-  'First Aid Kit': 20,
-  'Bandages': 200,
-  'Antiseptic Solution': 40,
-  'Basic Medicines': 50,
-  'Gloves (Disposable)': 200,
-  'Thermometer': 20,
-  'Stethoscope': 5,
-  'Other Medical Supplies': 15
+  // MEDICAL SUPPLIES (2% warehouse space)
+  'Medicine': { max: 500, reorder: 300, critical: 150 },
+  'First Aid Kit': { max: 200, reorder: 120, critical: 60 },
+  'Bandages': { max: 800, reorder: 480, critical: 240 },
+  'Antiseptic Solution': { max: 300, reorder: 180, critical: 90 },
+  'Basic Medicines': { max: 500, reorder: 300, critical: 150 },
+  'Gloves (Disposable)': { max: 1000, reorder: 600, critical: 300 },
+  'Thermometer': { max: 100, reorder: 60, critical: 30 },
+  'Stethoscope': { max: 25, reorder: 15, critical: 8 },
+  'Other Medical Supplies': { max: 300, reorder: 180, critical: 90 }
 };

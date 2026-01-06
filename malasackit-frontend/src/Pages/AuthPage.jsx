@@ -13,6 +13,11 @@ const WELCOME_MESSAGES = [
     "Enlarge the Space of Your Tent."
 ];
 
+const REGISTER_MESSAGES = [
+    "Join us to make a difference!",
+    "Together, we can do more."
+];
+
 // Display duration/loop
 const MESSAGE_DISPLAY_DURATION = 4000;
 const FADE_OUT_DURATION = 300;
@@ -26,18 +31,24 @@ export default function AuthPage() {
     const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
     const [isMessageTransitioning, setIsMessageTransitioning] = useState(false);
 
+    // Get the appropriate message array based on current view
+    const getCurrentMessages = () => {
+        return currentView === 'register' ? REGISTER_MESSAGES : WELCOME_MESSAGES;
+    };
+
     // Prevent unnecessary re-renders
     const rotateMessage = useCallback(() => {
         setIsMessageTransitioning(true);
         
         setTimeout(() => {
-            setCurrentMessageIndex(prev => (prev + 1) % WELCOME_MESSAGES.length);
+            const messages = getCurrentMessages();
+            setCurrentMessageIndex(prev => (prev + 1) % messages.length);
             
             setTimeout(() => {
                 setIsMessageTransitioning(false);
             }, FADE_IN_DURATION);
         }, FADE_OUT_DURATION);
-    }, []);
+    }, [currentView]);
 
     useEffect(() => {
        
@@ -53,12 +64,21 @@ export default function AuthPage() {
         
         setIsTransitioning(true);
         
-        // Wait for fade out animation
+        // Fade out the message first
+        setIsMessageTransitioning(true);
+        
+        // Wait for message fade out, then switch view
         setTimeout(() => {
             setCurrentView(newView);
-            // Small delay before fade in
+            setCurrentMessageIndex(0);
+            
+            // Small delay before fading everything back in
             setTimeout(() => {
                 setIsTransitioning(false);
+                // Fade message back in after view transition completes
+                setTimeout(() => {
+                    setIsMessageTransitioning(false);
+                }, 100);
             }, 50);
         }, 300);
     };
@@ -67,16 +87,12 @@ export default function AuthPage() {
         <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row relative overflow-hidden">
             <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`fixed top-3 left-3 sm:top-4 sm:left-4 z-50 p-2 rounded-md transition-all duration-300 ${
-                    currentView === 'register' 
-                        ? 'bg-white/20 hover:bg-white/30 backdrop-blur-sm' 
-                        : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
-                }`}
+                className="fixed top-3 left-3 sm:top-4 sm:left-4 z-50 p-2 rounded-md transition-all duration-300 bg-white/20 hover:bg-white/30 backdrop-blur-sm"
             >
                 {isMenuOpen ? (
-                    <HiX className={`w-5 h-5 sm:w-6 sm:h-6 ${currentView === 'register' ? 'text-white' : 'text-white lg:text-red-600'}`} />
+                    <HiX className="w-5 h-5 sm:w-6 sm:h-6 text-white lg:text-red-600" />
                 ) : (
-                    <HiMenu className={`w-5 h-5 sm:w-6 sm:h-6 ${currentView === 'register' ? 'text-white' : 'text-white lg:text-red-600'}`} />
+                    <HiMenu className="w-5 h-5 sm:w-6 sm:h-6 text-white lg:text-red-600" />
                 )}
             </button>
 
@@ -134,12 +150,12 @@ export default function AuthPage() {
                 />
             )}
 
-            {/* Left side - Welcome message - Hidden on mobile and when in registration */}
+            {/* Left side - Welcome message - Hidden on mobile, visible on desktop */}
             <div 
-                className={`w-full lg:w-2/5 min-h-[40vh] lg:min-h-screen min-w-0 items-center justify-center p-6 lg:p-12 flex-shrink-0 relative bg-gray-100 transition-all duration-700 ease-in-out ${
+                className={`w-full min-h-[40vh] lg:min-h-screen min-w-0 items-center justify-center p-6 lg:p-12 flex-shrink-0 relative bg-gray-100 transition-all duration-700 ease-in-out ${
                     currentView === 'register' 
-                        ? 'hidden lg:flex lg:opacity-0 lg:w-0 lg:min-w-0 lg:p-0 lg:scale-95 lg:pointer-events-none' 
-                        : 'hidden lg:flex opacity-100 lg:scale-100'
+                        ? 'hidden lg:flex lg:w-2/5' 
+                        : 'hidden lg:flex lg:w-2/5 lg:scale-100'
                 }`}
                 style={{
                     backgroundImage: `url(${kasaloImage})`,
@@ -152,23 +168,21 @@ export default function AuthPage() {
                 <div className="absolute inset-0 bg-white bg-opacity-85"></div>
                 
                 {/* Content */}
-                <div className={`max-w-md w-full text-center lg:text-left relative z-10 transition-opacity duration-500 ${
-                    currentView === 'register' ? 'opacity-0' : 'opacity-100'
-                }`}>
+                <div className="max-w-md w-full text-center lg:text-left relative z-10 transition-opacity duration-500 opacity-100">
                     <div className="mb-6 lg:mb-8">
                         <img src={lasacLogo} alt="LASAC Logo" className="w-16 h-16 lg:w-20 lg:h-20 mx-auto lg:mx-0" />
                     </div>
                     <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold text-red-600 leading-tight transition-all duration-300 transform ${
                         isMessageTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
                     }`}>
-                        {WELCOME_MESSAGES[currentMessageIndex]}
+                        {getCurrentMessages()[currentMessageIndex]}
                     </h1>
                 </div>
             </div>
 
-            {/* Right side - Dynamic Forms - Expands to full width for registration */}
+            {/* Right side - Dynamic Forms */}
             <div className={`flex-1 bg-red-600 flex flex-col min-h-screen overflow-y-auto scrollbar-hide transition-all duration-700 ease-in-out ${
-                currentView === 'register' ? 'w-full' : ''
+                currentView === 'register' ? 'lg:w-3/5' : ''
             }`}>
                 <div className="flex-1 flex items-center justify-center px-4 py-6 sm:p-6 md:p-8 lg:p-10">
                     <div className={`w-full transition-all duration-700 ease-in-out ${

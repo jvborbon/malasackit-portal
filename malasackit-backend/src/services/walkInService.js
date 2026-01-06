@@ -102,9 +102,58 @@ const createWalkInDonation = async (donationData, staffUserId) => {
   try {
     await client.query('BEGIN');
     
-    // Create auto-account for donor
-    const accountResult = await createWalkInAccount(donationData.donor, staffUserId);
-    const donorUserId = accountResult.user.user_id;
+    // Check if donor with same phone number already exists
+    const existingDonorQuery = `
+      SELECT u.user_id, u.full_name, u.email, u.is_walkin_generated, r.role_name
+      FROM Users u
+      JOIN Roles r ON u.role_id = r.role_id
+      WHERE u.contact_num = $1 AND r.role_name = 'Donor'
+      LIMIT 1
+    `;
+    
+    const existingDonorResult = await client.query(existingDonorQuery, [donationData.donor.contact]);
+    
+    let donorUserId;
+    let accountResult;
+    let isExistingDonor = false;
+    
+    if (existingDonorResult.rows.length > 0) {
+      // Reuse existing donor account
+      const existingDonor = existingDonorResult.rows[0];
+      donorUserId = existingDonor.user_id;
+      isExistingDonor = true;
+      
+      // Get credentials for existing account (if walk-in generated)
+      if (existingDonor.is_walkin_generated) {
+        accountResult = {
+          user: existingDonor,
+          tempPassword: generateWalkInPassword(donationData.donor.contact),
+          tempEmail: existingDonor.email
+        };
+      } else {
+        // Regular donor account (not walk-in generated)
+        accountResult = {
+          user: existingDonor,
+          tempPassword: null, // Don't expose password for regular accounts
+          tempEmail: existingDonor.email
+        };
+      }
+      
+      // Update name if it has changed (in case of typos or name changes)
+      if (existingDonor.full_name !== donationData.donor.name) {
+        await client.query(
+          'UPDATE Users SET full_name = $1 WHERE user_id = $2',
+          [donationData.donor.name, donorUserId]
+        );
+      }
+      
+      console.log(`Reusing existing donor account: ${donorUserId} for contact: ${donationData.donor.contact}`);
+    } else {
+      // Create new auto-account for new donor
+      accountResult = await createWalkInAccount(donationData.donor, staffUserId);
+      donorUserId = accountResult.user.user_id;
+      console.log(`Created new walk-in donor account: ${donorUserId}`);
+    }
     
     // Create a dummy appointment for walk-in donations (to satisfy NOT NULL constraint)
     const appointmentQuery = `
@@ -214,11 +263,12 @@ const createWalkInDonation = async (donationData, staffUserId) => {
       donation: donationResult.rows[0],
       donor: {
         user_id: accountResult.user.user_id,
-        email: accountResult.user.email,
+        email: accountResult.user.email || accountResult.tempEmail,
         temp_password: accountResult.tempPassword
       },
       account: accountResult,
-      donorUserId: donorUserId
+      donorUserId: donorUserId,
+      isExistingDonor: isExistingDonor
     };
     
   } catch (error) {

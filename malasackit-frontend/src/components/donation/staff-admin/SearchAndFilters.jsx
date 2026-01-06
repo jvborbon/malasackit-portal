@@ -1,7 +1,26 @@
 import React from 'react';
 import { HiSearch, HiUserAdd, HiRefresh } from 'react-icons/hi';
 
-function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter, onWalkInClick, userRole, onRefresh, loading }) {
+function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter, yearFilter, setYearFilter, monthFilter, setMonthFilter, onWalkInClick, userRole, onRefresh, loading }) {
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
+  
+  const months = [
+    { value: '', label: 'All Months' },
+    { value: '01', label: 'January' },
+    { value: '02', label: 'February' },
+    { value: '03', label: 'March' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'May' },
+    { value: '06', label: 'June' },
+    { value: '07', label: 'July' },
+    { value: '08', label: 'August' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' }
+  ];
+
   return (
     <div className="flex items-center space-x-4">
       <div className="relative flex-1">
@@ -14,6 +33,27 @@ function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter, on
           className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
         />
       </div>
+      
+      <select
+        value={yearFilter}
+        onChange={e => setYearFilter(e.target.value)}
+        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+      >
+        <option value="">All Years</option>
+        {years.map(year => (
+          <option key={year} value={year}>{year}</option>
+        ))}
+      </select>
+
+      <select
+        value={monthFilter}
+        onChange={e => setMonthFilter(e.target.value)}
+        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+      >
+        {months.map(month => (
+          <option key={month.value} value={month.value}>{month.label}</option>
+        ))}
+      </select>
       
       <select
         value={statusFilter}

@@ -16,6 +16,8 @@ function StaffDonationManagement({ onWalkInClick, userRole = 'staff' }) {
     error,
     search,
     statusFilter,
+    yearFilter,
+    monthFilter,
     selectedDonation,
     showDetailsModal,
     showStatusModal,
@@ -24,6 +26,8 @@ function StaffDonationManagement({ onWalkInClick, userRole = 'staff' }) {
     filteredDonations,
     setSearch,
     setStatusFilter,
+    setYearFilter,
+    setMonthFilter,
     setError,
     loadDonations,
     handleViewDetails,
@@ -69,6 +73,10 @@ function StaffDonationManagement({ onWalkInClick, userRole = 'staff' }) {
         setSearch={setSearch}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        yearFilter={yearFilter}
+        setYearFilter={setYearFilter}
+        monthFilter={monthFilter}
+        setMonthFilter={setMonthFilter}
         onWalkInClick={onWalkInClick}
         userRole={userRole}
         onRefresh={loadDonations}

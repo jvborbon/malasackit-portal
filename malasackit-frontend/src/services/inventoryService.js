@@ -16,6 +16,20 @@ export const getInventory = async (params = {}) => {
 };
 
 /**
+ * Get ALL item categories from database (regardless of inventory status)
+ * @returns {Promise} Promise that resolves to the API response
+ */
+export const getAllCategories = async () => {
+    try {
+        const response = await api.get('/api/inventory/all-categories');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching all categories:', error);
+        throw error;
+    }
+};
+
+/**
  * Get item categories for walk-in form
  * @returns {Promise} Promise that resolves to the API response
  */

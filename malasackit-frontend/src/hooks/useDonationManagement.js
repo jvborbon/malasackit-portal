@@ -7,6 +7,8 @@ export const useDonationManagement = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -24,7 +26,7 @@ export const useDonationManagement = () => {
 
   useEffect(() => {
     loadDonations();
-  }, [pagination.offset, statusFilter]);
+  }, [pagination.offset, statusFilter, yearFilter, monthFilter]);
 
   const loadDonations = async () => {
     try {
@@ -40,6 +42,14 @@ export const useDonationManagement = () => {
 
       if (statusFilter) {
         params.status = statusFilter;
+      }
+
+      if (yearFilter) {
+        params.year = yearFilter;
+      }
+
+      if (monthFilter) {
+        params.month = monthFilter;
       }
 
       const response = await getAllDonationRequests(params);
@@ -138,6 +148,8 @@ export const useDonationManagement = () => {
     error,
     search,
     statusFilter,
+    yearFilter,
+    monthFilter,
     selectedItems,
     selectedDonation,
     showDetailsModal,
@@ -149,6 +161,8 @@ export const useDonationManagement = () => {
     // Actions
     setSearch,
     setStatusFilter,
+    setYearFilter,
+    setMonthFilter,
     setError,
     loadDonations,
     handleViewDetails,

@@ -19,7 +19,8 @@ export const submitDonationRequest = async (req, res) => {
             deliveryMethod, 
             description, 
             scheduleDate,
-            appointmentTime 
+            appointmentTime,
+            pickupAddress
         } = req.body;
         const userId = req.user.userId; // From auth middleware
 
@@ -35,6 +36,14 @@ export const submitDonationRequest = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Valid delivery method is required (pickup or dropoff)'
+            });
+        }
+
+        // Validate pickup address if delivery method is pickup
+        if (deliveryMethod === 'pickup' && (!pickupAddress || !pickupAddress.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Pickup address is required when delivery method is pickup'
             });
         }
 
@@ -79,15 +88,16 @@ export const submitDonationRequest = async (req, res) => {
 
             // Create donation request
             const donationQuery = `
-                INSERT INTO DonationRequests (user_id, status, notes, delivery_method, appointment_id)
-                VALUES ($1, 'Pending', $2, $3, $4)
+                INSERT INTO DonationRequests (user_id, status, notes, delivery_method, appointment_id, pickup_address)
+                VALUES ($1, 'Pending', $2, $3, $4, $5)
                 RETURNING donation_id
             `;
             const donationResult = await query(donationQuery, [
                 userId,
                 description || 'Donation request submitted online',
                 deliveryMethod,
-                appointmentId
+                appointmentId,
+                deliveryMethod === 'pickup' ? pickupAddress : null
             ]);
 
             const donationId = donationResult.rows[0].donation_id;
@@ -215,6 +225,7 @@ export const getDonorDonations = async (req, res) => {
                 dr.status,
                 dr.notes,
                 dr.delivery_method,
+                dr.pickup_address,
                 dr.created_at,
                 a.appointment_date,
                 a.appointment_time,
@@ -225,7 +236,7 @@ export const getDonorDonations = async (req, res) => {
                 STRING_AGG(DISTINCT it.itemtype_name, ', ' ORDER BY it.itemtype_name) as items_summary,
                 CASE 
                     WHEN a.appointment_date IS NOT NULL THEN 
-                        CONCAT(u.full_name, '''s residence')
+                        COALESCE(dr.pickup_address, CONCAT(u.full_name, '''s residence'))
                     ELSE 'LASAC Office'
                 END as pickup_location
             FROM DonationRequests dr
@@ -234,7 +245,7 @@ export const getDonorDonations = async (req, res) => {
             LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
             LEFT JOIN Users u ON dr.user_id = u.user_id
             ${whereClause}
-            GROUP BY dr.donation_id, dr.status, dr.notes, dr.delivery_method, dr.created_at,
+            GROUP BY dr.donation_id, dr.status, dr.notes, dr.delivery_method, dr.pickup_address, dr.created_at,
                      a.appointment_date, a.appointment_time, a.status, u.full_name
             ORDER BY dr.created_at DESC
             LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
@@ -471,9 +482,9 @@ export const updateDonationRequest = async (req, res) => {
     try {
         const { donationId } = req.params;
         const userId = req.user.userId;
-        const { delivery_method, notes, items } = req.body;
+        const { delivery_method, notes, items, pickup_address } = req.body;
 
-        console.log('Update request received:', { donationId, userId, delivery_method, notes, items });
+        console.log('Update request received:', { donationId, userId, delivery_method, notes, items, pickup_address });
 
         // Items are optional for this simplified update (only updating delivery method and notes)
         // if (!items || !Array.isArray(items) || items.length === 0) {
@@ -508,17 +519,32 @@ export const updateDonationRequest = async (req, res) => {
             });
         }
 
+        // Validate pickup address if delivery method is pickup
+        if (delivery_method === 'pickup' && pickup_address && !pickup_address.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Pickup address cannot be empty when delivery method is pickup'
+            });
+        }
+
         // Start transaction
         await query('BEGIN');
 
         try {
-            // Update donation request basic info only (delivery method and notes)
+            // Update donation request basic info (delivery method, notes, and pickup_address)
             const updateDonationQuery = `
                 UPDATE DonationRequests 
-                SET delivery_method = $1, notes = $2
-                WHERE donation_id = $3
+                SET delivery_method = $1, 
+                    notes = $2, 
+                    pickup_address = $3
+                WHERE donation_id = $4
             `;
-            await query(updateDonationQuery, [delivery_method, notes, donationId]);
+            await query(updateDonationQuery, [
+                delivery_method, 
+                notes, 
+                delivery_method === 'pickup' ? pickup_address : null,
+                donationId
+            ]);
 
             // Commit transaction
             await query('COMMIT');
@@ -587,7 +613,9 @@ export const getAllDonationRequests = async (req, res) => {
             status, 
             deliveryMethod, 
             dateFrom, 
-            dateTo, 
+            dateTo,
+            year,
+            month,
             limit = 20, 
             offset = 0,
             sortBy = 'created_at',
@@ -619,6 +647,18 @@ export const getAllDonationRequests = async (req, res) => {
             params.push(dateTo);
         }
 
+        // Year filter
+        if (year) {
+            whereConditions.push(`EXTRACT(YEAR FROM a.appointment_date) = $${paramCount++}`);
+            params.push(year);
+        }
+
+        // Month filter
+        if (month) {
+            whereConditions.push(`EXTRACT(MONTH FROM a.appointment_date) = $${paramCount++}`);
+            params.push(parseInt(month));
+        }
+
         const whereClause = whereConditions.length > 0 
             ? `WHERE ${whereConditions.join(' AND ')}` 
             : '';
@@ -636,6 +676,7 @@ export const getAllDonationRequests = async (req, res) => {
                 dr.status,
                 dr.notes,
                 dr.delivery_method,
+                dr.pickup_address,
                 a.created_at as request_created_at,
                 u.full_name as donor_name,
                 u.email as donor_email,
@@ -654,7 +695,7 @@ export const getAllDonationRequests = async (req, res) => {
             LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
             LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
             ${whereClause}
-            GROUP BY dr.donation_id, dr.user_id, dr.status, dr.notes, dr.delivery_method, 
+            GROUP BY dr.donation_id, dr.user_id, dr.status, dr.notes, dr.delivery_method, dr.pickup_address,
                      a.created_at, u.full_name, u.email, u.contact_num,
                      a.appointment_date, a.appointment_time, a.status
             ORDER BY ${validSortBy === 'total_value' ? 'total_value' : 
@@ -1399,6 +1440,7 @@ export const getCalendarAppointments = async (req, res) => {
                 SELECT 
                     dr.donation_id,
                     dr.delivery_method,
+                    dr.pickup_address,
                     u.full_name as donor_name,
                     u.email as donor_email,
                     u.contact_num as donor_phone,
@@ -1419,7 +1461,7 @@ export const getCalendarAppointments = async (req, res) => {
                   AND a.appointment_date BETWEEN $1 AND $2
                   AND dr.user_id = $3
                   AND (dr.is_walkin = false OR dr.is_walkin IS NULL)
-                GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
+                GROUP BY dr.donation_id, dr.delivery_method, dr.pickup_address, u.full_name, u.email, u.contact_num,
                          a.appointment_date, a.appointment_time
                 ORDER BY a.appointment_date, a.appointment_time
             `;
@@ -1430,6 +1472,7 @@ export const getCalendarAppointments = async (req, res) => {
                 SELECT 
                     dr.donation_id,
                     dr.delivery_method,
+                    dr.pickup_address,
                     u.full_name as donor_name,
                     u.email as donor_email,
                     u.contact_num as donor_phone,
@@ -1449,7 +1492,7 @@ export const getCalendarAppointments = async (req, res) => {
                   AND a.appointment_date IS NOT NULL
                   AND a.appointment_date BETWEEN $1 AND $2
                   AND (dr.is_walkin = false OR dr.is_walkin IS NULL)
-                GROUP BY dr.donation_id, dr.delivery_method, u.full_name, u.email, u.contact_num,
+                GROUP BY dr.donation_id, dr.delivery_method, dr.pickup_address, u.full_name, u.email, u.contact_num,
                          a.appointment_date, a.appointment_time
                 ORDER BY a.appointment_date, a.appointment_time
             `;
@@ -1466,7 +1509,7 @@ export const getCalendarAppointments = async (req, res) => {
             time: row.appointment_time,
             type: row.delivery_method.toLowerCase(),
             deliveryMethod: row.delivery_method.toLowerCase(),
-            location: row.delivery_method === 'pickup' ? 'Donor Location' : 'LASAC Office',
+            location: row.delivery_method === 'pickup' ? (row.pickup_address || 'Donor Location') : 'LASAC Office',
             status: 'approved',
             participants: 1,
             description: `${row.total_quantity} items (${row.item_types} types) - ${row.categories}`,
@@ -1479,7 +1522,8 @@ export const getCalendarAppointments = async (req, res) => {
                 id: row.donation_id,
                 totalValue: row.total_value,
                 totalQuantity: row.total_quantity,
-                categories: row.categories
+                categories: row.categories,
+                pickupAddress: row.pickup_address
             }
         }));
         

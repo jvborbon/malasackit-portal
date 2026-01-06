@@ -40,6 +40,7 @@ function Inventory() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,7 +62,7 @@ function Inventory() {
   };
   
   // Load data functions
-  const loadInventoryData = async () => {
+  const loadInventoryData = async (includeStats = true) => {
     try {
       setLoading(true);
       setError(null);
@@ -74,15 +75,23 @@ function Inventory() {
         limit: itemsPerPage
       };
       
-      const [inventoryResponse, statsResponse] = await Promise.all([
-        getInventory(params),
-        getInventoryStats()
-      ]);
-      
-      setInventory(inventoryResponse.data.inventory || []);
-      setTotalPages(inventoryResponse.data.pagination.pages || 1);
-      setTotalItems(inventoryResponse.data.pagination.total || 0);
-      setStats(statsResponse.data || stats);
+      if (includeStats) {
+        const [inventoryResponse, statsResponse] = await Promise.all([
+          getInventory(params),
+          getInventoryStats()
+        ]);
+        
+        setInventory(inventoryResponse.data.inventory || []);
+        setTotalPages(inventoryResponse.data.pagination.pages || 1);
+        setTotalItems(inventoryResponse.data.pagination.total || 0);
+        setStats(statsResponse.data || stats);
+      } else {
+        const inventoryResponse = await getInventory(params);
+        
+        setInventory(inventoryResponse.data.inventory || []);
+        setTotalPages(inventoryResponse.data.pagination.pages || 1);
+        setTotalItems(inventoryResponse.data.pagination.total || 0);
+      }
       
     } catch (err) {
       console.error('Error loading inventory:', err);
@@ -109,6 +118,7 @@ function Inventory() {
         setLoading(true);
         await loadCategories();
         await loadInventoryData();
+        setInitialLoadComplete(true); // Mark initial load as complete
       } catch (err) {
         console.error('Error initializing inventory data:', err);
         setError('Failed to load inventory data');
@@ -120,25 +130,27 @@ function Inventory() {
   
   // Debounced effect for search and filters
   useEffect(() => {
-    // Skip if this is the initial render (no search/filter values set yet)
-    if (search === '' && selectedCategory === '' && selectedStatus === '') {
+    // Skip only on the very first render before initial load completes
+    if (!initialLoadComplete) {
       return;
     }
     
     const timeoutId = setTimeout(() => {
       setCurrentPage(1); // Reset to page 1
-      loadInventoryData(); // Load new data
+      loadInventoryData(false); // Load table data only, not stats
     }, 500); // Debounce search
     
     return () => clearTimeout(timeoutId);
-  }, [search, selectedCategory, selectedStatus]);
+  }, [search, selectedCategory, selectedStatus, initialLoadComplete]);
   
   // Effect for page changes (pagination only)
   useEffect(() => {
-    // Only load if currentPage > 1 (user clicked pagination)
-    if (currentPage > 1) {
-      loadInventoryData();
+    // Skip on initial load (page 1 before initialLoadComplete)
+    if (!initialLoadComplete) {
+      return;
     }
+    // Load data whenever page changes (including back to page 1)
+    loadInventoryData(false); // Load table data only, not stats
   }, [currentPage]);
   
   // Helper functions
@@ -172,7 +184,7 @@ function Inventory() {
   };
   
   const handleRefresh = () => {
-    loadInventoryData();
+    loadInventoryData(false); // Refresh table only, not stats
   };
   
 

@@ -33,22 +33,26 @@ const createWalkIn = async (req, res) => {
     
     res.status(201).json({
       success: true,
-      message: 'Walk-in donation recorded successfully',
+      message: result.isExistingDonor 
+        ? 'Walk-in donation recorded successfully (existing donor)'
+        : 'Walk-in donation recorded successfully (new donor account created)',
       donation: {
         donation_id: result.donation.donation_id
       },
       donor: {
         user_id: result.donorUserId,
-        email: result.account.tempEmail,
-        temp_password: result.account.tempPassword
+        email: result.donor.email,
+        temp_password: result.donor.temp_password,
+        is_existing_donor: result.isExistingDonor
       },
       data: {
         donation_id: result.donation.donation_id,
         donor_user_id: result.donorUserId,
-        login_credentials: {
-          email: result.account.tempEmail,
-          password: result.account.tempPassword
-        }
+        is_existing_donor: result.isExistingDonor,
+        login_credentials: result.donor.temp_password ? {
+          email: result.donor.email,
+          password: result.donor.temp_password
+        } : null
       }
     });
     

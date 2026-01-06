@@ -22,12 +22,12 @@ import {
   HiChartBar,
 } from "react-icons/hi";
 import beneficiaryService from "../services/beneficiaryService";
-import { getAllInventory } from "../services/inventoryService";
+import { getAllInventory, getAllCategories } from "../services/inventoryService";
 import distributionService from "../services/distributionService";
 import { HiSparkles } from "react-icons/hi";
 import SuccessModal from "./common/SuccessModal";
 import { useSuccessModal } from "../hooks/useSuccessModal";
-import { getAllSafetyThresholds, getSafetyThresholdSync } from "../utils/safetyThresholds";
+import { getAllSafetyThresholds, getSafetyThresholdSync, getFullThresholdSync } from "../utils/safetyThresholds";
 
 ChartJS.register(
   CategoryScale,
@@ -47,6 +47,8 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [availableCategories, setAvailableCategories] = useState([]);
+  const [chartPage, setChartPage] = useState(1);
+  const [itemsPerPage] = useState(20);
   const [formData, setFormData] = useState({
     selectedRequests: [],
     distributionDate: "",
@@ -91,6 +93,17 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     selectedCategory === "all"
       ? safeInventoryData
       : safeInventoryData.filter((item) => item.category === selectedCategory);
+  
+  // Calculate pagination for chart
+  const totalPages = Math.ceil(filteredInventoryData.length / itemsPerPage);
+  const startIndex = (chartPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedInventoryData = filteredInventoryData.slice(startIndex, endIndex);
+  
+  // Reset to page 1 when category changes
+  useEffect(() => {
+    setChartPage(1);
+  }, [selectedCategory]);
 
   // Load data when modal opens
   useEffect(() => {
@@ -99,6 +112,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
       loadSafetyThresholds().then(() => {
         loadPendingRequests();
         loadInventoryData();
+        loadCategories(); // Load all categories from database
       });
     } else {
       setStep(1);
@@ -167,7 +181,8 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   const loadInventoryData = async () => {
     try {
       setInventoryLoading(true);
-      const response = await getAllInventory();
+      // Request ALL inventory items (no pagination) for distribution planning
+      const response = await getAllInventory({ limit: 1000 });
       console.log("Inventory API response:", response); // Debug log
       console.log("Raw inventory items:", response.data?.inventory); // Debug raw data
 
@@ -175,14 +190,24 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
         // Transform inventory data to include status and safe distribution amounts
         const transformedData = response.data.inventory.map((item) => {
           const current = parseInt(item.quantity_available) || 0;
-          const threshold = getSafetyThresholdSync(safetyThresholds, item.itemtype_name);
-          const safeToDistribute = Math.max(0, current - threshold);
+          const thresholds = getFullThresholdSync(safetyThresholds, item.itemtype_name);
+          const safeToDistribute = Math.max(0, current - thresholds.critical);
 
           let status = "optimal";
-          if (current <= threshold) {
-            status = "advisory"; // Below threshold but can still distribute
-          } else if (current <= threshold * 2) {
-            status = "caution"; // Approaching threshold
+          let statusColor = "green";
+          
+          if (current > thresholds.max) {
+            status = "overstocked";
+            statusColor = "orange";
+          } else if (current >= thresholds.reorder && current <= thresholds.max) {
+            status = "optimal";
+            statusColor = "green";
+          } else if (current >= thresholds.critical && current < thresholds.reorder) {
+            status = "low";
+            statusColor = "yellow";
+          } else {
+            status = "critical";
+            statusColor = "red";
           }
 
           return {
@@ -198,24 +223,18 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
             // Add display fields for UI
             name: item.itemtype_name || item.name,
             current: current,
-            threshold: threshold,
+            threshold: thresholds.critical,
+            thresholds: thresholds,
             safeToDistribute: safeToDistribute,
             status: status,
+            statusColor: statusColor,
+            percentOfMax: thresholds.max > 0 ? Math.round((current / thresholds.max) * 100) : 0,
             category: item.category_name,
           };
         });
         setInventoryData(transformedData);
 
-        // Extract unique categories for filter
-        const categories = [
-          ...new Set(
-            transformedData.map((item) => item.category).filter(Boolean)
-          ),
-        ];
-        setAvailableCategories(categories);
-
         console.log("Transformed inventory data:", transformedData); // Debug log
-        console.log("Available categories:", categories); // Debug log
       } else {
         console.log("No inventory data found in response:", response);
         setInventoryData([]);
@@ -226,6 +245,21 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
       setInventoryData([]);
     } finally {
       setInventoryLoading(false);
+    }
+  };
+
+  // Load all categories from database (including categories with items that have 0 quantity)
+  const loadCategories = async () => {
+    try {
+      const response = await getAllCategories();
+      if (response.success && response.data && response.data.categories) {
+        // Extract category names from the categories array
+        const categories = response.data.categories.map(cat => cat.category_name);
+        setAvailableCategories(categories.sort());
+        console.log("Available categories:", categories); // Debug log
+      }
+    } catch (error) {
+      console.error("Error loading categories:", error);
     }
   };
 
@@ -310,8 +344,8 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
   // Inventory data is now loaded from state
 
   // Ensure data is valid for charts
-  // Ensure data is valid for charts - Use filteredInventoryData instead of inventoryData
-  const chartInventoryData = filteredInventoryData.filter(
+  // Use paginated data for chart display
+  const chartInventoryData = paginatedInventoryData.filter(
     (item) =>
       item &&
       typeof item.current === "number" &&
@@ -324,28 +358,42 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
       {
         label: "Current Stock",
         data: chartInventoryData.map((item) => item.current || 0),
-        backgroundColor: chartInventoryData.map((item) =>
-          item.status === "optimal"
-            ? "rgba(34, 197, 94, 0.8)"
-            : item.status === "caution"
-            ? "rgba(251, 191, 36, 0.8)"
-            : "rgba(59, 130, 246, 0.8)" // Blue for advisory (not red - not blocked)
-        ),
-        borderColor: chartInventoryData.map((item) =>
-          item.status === "optimal"
-            ? "rgba(34, 197, 94, 1)"
-            : item.status === "caution"
-            ? "rgba(251, 191, 36, 1)"
-            : "rgba(59, 130, 246, 1)" // Blue for advisory
-        ),
+        backgroundColor: chartInventoryData.map((item) => {
+          if (item.status === "overstocked") {
+            return "rgba(249, 115, 22, 0.8)"; // Orange for overstocked
+          } else if (item.status === "optimal") {
+            return "rgba(34, 197, 94, 0.85)"; // Green for optimal
+          } else if (item.status === "low") {
+            return "rgba(251, 191, 36, 0.8)"; // Yellow for low
+          } else {
+            return "rgba(239, 68, 68, 0.8)"; // Red for critical
+          }
+        }),
+        borderColor: chartInventoryData.map((item) => {
+          if (item.status === "overstocked") {
+            return "rgba(249, 115, 22, 1)";
+          } else if (item.status === "optimal") {
+            return "rgba(34, 197, 94, 1)";
+          } else if (item.status === "low") {
+            return "rgba(251, 191, 36, 1)";
+          } else {
+            return "rgba(239, 68, 68, 1)";
+          }
+        }),
         borderWidth: 2,
+        borderRadius: 4,
+        barThickness: 'flex',
+        maxBarThickness: 40
       },
       {
-        label: "Minimum Threshold",
+        label: "Critical Threshold",
         data: chartInventoryData.map((item) => item.threshold || 0),
-        backgroundColor: "rgba(107, 114, 128, 0.5)",
-        borderColor: "rgba(107, 114, 128, 1)",
+        backgroundColor: "rgba(107, 114, 128, 0.3)",
+        borderColor: "rgba(107, 114, 128, 0.8)",
         borderWidth: 2,
+        borderRadius: 4,
+        barThickness: 'flex',
+        maxBarThickness: 40
       },
     ],
   };
@@ -405,31 +453,132 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top",
+        position: 'top',
+        labels: {
+          font: {
+            size: 13,
+            weight: '500'
+          },
+          padding: 15,
+          usePointStyle: true,
+          pointStyle: 'rect'
+        }
       },
       tooltip: {
-        callbacks: {
-          label: function (context) {
-            return `${context.dataset.label}: ${context.parsed.y} units`;
-          },
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleFont: {
+          size: 14,
+          weight: 'bold'
         },
-      },
+        bodyFont: {
+          size: 13
+        },
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: {
+          title: function(context) {
+            return context[0].label;
+          },
+          label: function(context) {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y;
+            return `${label}: ${value.toLocaleString()} units`;
+          },
+          afterBody: function(context) {
+            const dataIndex = context[0].dataIndex;
+            const item = chartInventoryData[dataIndex];
+            
+            if (!item) return '';
+            
+            const thresholds = item.thresholds || {};
+            const currentStock = item.current || 0;
+            
+            let statusText = '';
+            if (item.status === 'overstocked') {
+              statusText = '\n⚠️ Overstocked - Exceeds warehouse capacity';
+            } else if (item.status === 'optimal') {
+              statusText = '\n✓ Optimal Stock Level';
+            } else if (item.status === 'low') {
+              statusText = '\n⚠ Low Stock - Below reorder point';
+            } else if (item.status === 'critical') {
+              statusText = '\n🔴 Critical - Below safety buffer';
+            }
+            
+            if (thresholds.max) {
+              statusText += `\nCapacity: ${item.percentOfMax || 0}% of max (${thresholds.max})`;
+            }
+            
+            return statusText;
+          }
+        }
+      }
     },
     scales: {
       y: {
         beginAtZero: true,
+        ticks: {
+          font: {
+            size: 12,
+            weight: '500'
+          },
+          color: '#374151',
+          stepSize: 200,
+          callback: function(value) {
+            return value.toLocaleString();
+          }
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+          drawBorder: false
+        },
         title: {
           display: true,
-          text: "Quantity (units)",
-        },
+          text: 'Quantity (units)',
+          font: {
+            size: 13,
+            weight: '600'
+          },
+          color: '#111827',
+          padding: { top: 10, bottom: 10 }
+        }
       },
       x: {
+        ticks: {
+          font: {
+            size: 10,
+            weight: '500'
+          },
+          color: '#374151',
+          maxRotation: 90,
+          minRotation: 90,
+          autoSkip: true,
+          maxTicksLimit: 50,
+          padding: 5
+        },
+        grid: {
+          display: false,
+          drawBorder: false
+        },
         title: {
           display: true,
-          text: "Item Categories",
-        },
-      },
+          text: 'Item Categories',
+          font: {
+            size: 13,
+            weight: '600'
+          },
+          color: '#111827',
+          padding: { top: 10 }
+        }
+      }
     },
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    animation: {
+      duration: 750,
+      easing: 'easeInOutQuart'
+    }
   };
 
   const getPriorityColor = (priority) => {
@@ -534,8 +683,11 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
       
       Please provide practical distribution recommendations focusing on optimization and alternatives rather than threshold adjustments. Assume distributions can proceed and focus on suggesting the most effective allocation strategies.`;
 
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      console.log('🔵 Generating insights - API URL:', apiUrl);
+      
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/generate-insights`,
+        `${apiUrl}/api/generate-insights`,
         {
           method: "POST",
           headers: {
@@ -549,13 +701,21 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
         }
       );
 
-      if (!response.ok) throw new Error("Failed to generate insights");
+      console.log('🔵 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ API Error:', errorData);
+        throw new Error(errorData.error || errorData.details || "Failed to generate insights");
+      }
 
       const result = await response.json();
+      console.log('✅ Insights generated successfully');
       setInventoryInsights(result.insights);
     } catch (error) {
-      console.error("Error generating inventory insights:", error);
-      setInventoryInsights("Failed to generate insights. Please try again.");
+      console.error("❌ Error generating inventory insights:", error);
+      const errorMessage = error.message || "Failed to generate insights. Please try again.";
+      setInventoryInsights(`Failed to generate insights: ${errorMessage}`);
     } finally {
       setLoadingInventoryInsights(false);
     }
@@ -1054,8 +1214,39 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                   </div>
                 </div>
 
+                {/* Pagination Info */}
+                {filteredInventoryData.length > 0 && (
+                  <div className="mb-4 flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 border border-gray-200">
+                    <div className="text-sm text-gray-600">
+                      Showing <span className="font-semibold">{startIndex + 1}</span> to{" "}
+                      <span className="font-semibold">{Math.min(endIndex, filteredInventoryData.length)}</span> of{" "}
+                      <span className="font-semibold">{filteredInventoryData.length}</span> items
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setChartPage((prev) => Math.max(1, prev - 1))}
+                        disabled={chartPage === 1}
+                        className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        ← Previous
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Page <span className="font-semibold">{chartPage}</span> of{" "}
+                        <span className="font-semibold">{totalPages}</span>
+                      </span>
+                      <button
+                        onClick={() => setChartPage((prev) => Math.min(totalPages, prev + 1))}
+                        disabled={chartPage === totalPages}
+                        className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Chart */}
-                <div className="h-64 flex items-center justify-center">
+                <div className="h-80 flex items-center justify-center">
                   {inventoryLoading ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
@@ -1102,30 +1293,45 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
 
                 {/* Inventory Legend */}
                 <div className="mt-6 pt-4 border-t border-gray-200">
-                  <div className="flex flex-wrap gap-4 text-xs">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                      <span className="text-gray-600">
-                        Optimal Stock (Above safety threshold)
+                  <h5 className="text-sm font-semibold text-gray-700 mb-3">Stock Status Guide</h5>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <div className="flex items-center bg-green-50 px-3 py-2 rounded-lg">
+                      <div className="w-4 h-4 bg-green-500 rounded mr-2 flex-shrink-0"></div>
+                      <span className="text-gray-700">
+                        <strong>Optimal:</strong> Between reorder & max
                       </span>
                     </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
-                      <span className="text-gray-600">
-                        Caution Level (Approaching threshold)
+                    <div className="flex items-center bg-yellow-50 px-3 py-2 rounded-lg">
+                      <div className="w-4 h-4 bg-yellow-500 rounded mr-2 flex-shrink-0"></div>
+                      <span className="text-gray-700">
+                        <strong>Low:</strong> Below reorder point
                       </span>
                     </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-                      <span className="text-gray-600">
-                        Advisory Level (Below threshold - proceed with caution)
+                    <div className="flex items-center bg-red-50 px-3 py-2 rounded-lg">
+                      <div className="w-4 h-4 bg-red-500 rounded mr-2 flex-shrink-0"></div>
+                      <span className="text-gray-700">
+                        <strong>Critical:</strong> Below safety buffer
                       </span>
                     </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-gray-500 rounded mr-2"></div>
-                      <span className="text-gray-600">Minimum Threshold</span>
+                    <div className="flex items-center bg-orange-50 px-3 py-2 rounded-lg">
+                      <div className="w-4 h-4 bg-orange-500 rounded mr-2 flex-shrink-0"></div>
+                      <span className="text-gray-700">
+                        <strong>Overstocked:</strong> Exceeds capacity
+                      </span>
                     </div>
                   </div>
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-xs text-blue-800 flex items-start">
+                      <span className="mr-2 mt-0.5">💡</span>
+                      <span>
+                        <strong>Tip:</strong> Hover over bars for detailed information. Green bars indicate healthy stock levels, 
+                        yellow suggests approaching reorder point, and red indicates urgent restocking needed.
+                      </span>
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">
+                    📦 Warehouse Capacity: 240 sq.m | Based on realistic storage constraints and emergency response needs
+                  </p>
                 </div>
               </div>
             )}

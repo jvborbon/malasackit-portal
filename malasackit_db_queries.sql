@@ -61,7 +61,8 @@ CREATE TABLE DonationRequests (
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
  	approved_by VARCHAR(25) REFERENCES Users(user_id),
 	approved_at TIMESTAMP,
-	is_walkin BOOLEAN DEFAULT FALSE;
+	is_walkin BOOLEAN DEFAULT FALSE,
+    pickup_address TEXT;
 );
 
 CREATE TABLE DonationItems (

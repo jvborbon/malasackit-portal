@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     getAllInventory,
+    getAllCategories,
     getInventoryStats,
     getInventoryItem,
     updateInventoryItem,
@@ -15,6 +16,9 @@ const router = express.Router();
 
 // GET /api/inventory - Get all inventory items with filtering and pagination
 router.get('/', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getAllInventory);
+
+// GET /api/inventory/all-categories - Get ALL item categories from database
+router.get('/all-categories', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getAllCategories);
 
 // GET /api/inventory/stats - Get inventory statistics for dashboard
 router.get('/stats', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getInventoryStats);

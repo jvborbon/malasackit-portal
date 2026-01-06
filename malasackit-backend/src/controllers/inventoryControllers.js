@@ -1,4 +1,41 @@
 import { query } from '../db.js';
+import { getSafetyThreshold, validateSafetyThreshold } from '../config/safetyThresholds.js';
+
+/**
+ * Get all item categories
+ */
+export const getAllCategories = async (req, res) => {
+    try {
+        const categoriesQuery = `
+            SELECT 
+                ic.itemcategory_id,
+                ic.category_name,
+                ic.description,
+                COUNT(it.itemtype_id) as item_type_count
+            FROM ItemCategory ic
+            LEFT JOIN ItemType it ON ic.itemcategory_id = it.itemcategory_id
+            GROUP BY ic.itemcategory_id, ic.category_name, ic.description
+            ORDER BY ic.category_name
+        `;
+        
+        const result = await query(categoriesQuery);
+        
+        res.json({
+            success: true,
+            data: {
+                categories: result.rows,
+                total: result.rows.length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch categories',
+            error: error.message
+        });
+    }
+};
 
 /**
  * Initialize inventory table if it doesn't exist
@@ -157,11 +194,10 @@ export const getInventoryStats = async (req, res) => {
             )
         `;
         
-        // Get total products (item types with stock)
+        // Get total products (all inventory records regardless of stock level)
         const productsQuery = `
             SELECT COALESCE(COUNT(*), 0) as total_products
             FROM Inventory i
-            WHERE i.quantity_available > 0
         `;
         
         // Get top donated items (most quantity)
@@ -339,9 +375,9 @@ export const updateInventoryItem = async (req, res) => {
                 const itemTypeQuery = 'SELECT itemtype_name FROM ItemType WHERE itemtype_id = $1';
                 const itemTypeResult = await query(itemTypeQuery, [itemtype_id]);
                 const itemTypeName = itemTypeResult.rows[0]?.itemtype_name || 'Unknown';
-                const threshold = getSafetyThreshold(itemTypeName);
+                const thresholds = getSafetyThreshold(itemTypeName);
                 
-                if (quantity_available <= threshold) {
+                if (quantity_available <= thresholds.critical) {
                     newStatus = 'Low Stock';
                 } else {
                     newStatus = 'Available';
@@ -707,16 +743,25 @@ export const getLowStockItems = async (req, res) => {
         
         // Filter results based on item-specific thresholds
         const lowStockItems = result.rows.filter(item => {
-            const itemThreshold = threshold ? parseInt(threshold) : getSafetyThreshold(item.itemtype_name);
+            const thresholds = getSafetyThreshold(item.itemtype_name);
+            const itemThreshold = threshold ? parseInt(threshold) : thresholds.critical;
             return item.quantity_available <= itemThreshold;
         });
         
         res.json({
             success: true,
-            data: lowStockItems.map(item => ({
-                ...item,
-                safety_threshold: threshold ? parseInt(threshold) : getSafetyThreshold(item.itemtype_name)
-            })),
+            data: lowStockItems.map(item => {
+                const thresholds = getSafetyThreshold(item.itemtype_name);
+                const validation = validateSafetyThreshold(item.itemtype_name, item.quantity_available);
+                return {
+                    ...item,
+                    thresholds: thresholds,
+                    status: validation.status,
+                    statusColor: validation.statusColor,
+                    percentOfMax: validation.percentOfMax,
+                    safety_threshold: threshold ? parseInt(threshold) : thresholds.critical
+                };
+            }),
             message: `Found ${lowStockItems.length} items below their safety thresholds`
         });
         
