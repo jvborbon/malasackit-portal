@@ -32,7 +32,7 @@ const DonationReportsChart = () => {
         setError(null);
         
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/donations/category-trends?year=${selectedYear}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/donations/category-trends?year=${selectedYear}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

@@ -15,7 +15,7 @@ const TopIndividualDonors = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/donations/top-individual-donors?limit=5', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/donations/top-individual-donors?limit=5`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -67,7 +67,7 @@ const TopIndividualDonors = () => {
     try {
       setModalLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/donations/top-individual-donors?limit=100', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/donations/top-individual-donors?limit=100`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
