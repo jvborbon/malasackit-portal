@@ -4,6 +4,7 @@ import Authentication from './auth/Authentication'
 import RouteProtection from './components/utilities/RouteProtection'
 import Login from './auth/login'
 import ResetPasswordForm from './components/ResetPasswordForm'
+import VerifyEmail from './Pages/VerifyEmail'
 import DonorDashboard from './Pages/DonorDashboard'
 import StaffDashboard from './Pages/StaffDashboard'
 import AdminDashboard from './Pages/AdminDashboard'
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/reset-password" element={<ResetPasswordForm />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             
             <Route 
               path="/donor-dashboard" 

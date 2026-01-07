@@ -170,8 +170,8 @@ const createWalkInDonation = async (donationData, staffUserId) => {
     const donationQuery = `
       INSERT INTO DonationRequests (
         user_id, status, notes, delivery_method, appointment_id,
-        is_walkin
-      ) VALUES ($1, $2, $3, $4, $5, $6)
+        is_walkin, donation_method, container_type, container_count
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
     
@@ -181,28 +181,67 @@ const createWalkInDonation = async (donationData, staffUserId) => {
       donationData.notes || 'Walk-in donation',
       'Walk-in',
       appointmentId, // use dummy appointment
-      true
+      true,
+      donationData.donation_method || 'Individual',
+      donationData.container_type || null,
+      donationData.container_count || null
     ]);
     
     const donationId = donationResult.rows[0].donation_id;
     
     // Add donation items
     for (const item of donationData.items) {
-      // Insert into DonationItems table
+      // Get item type details for FMV calculation
+      const itemTypeQuery = `
+        SELECT avg_retail_price, 
+               condition_factor_new, condition_factor_good, 
+               condition_factor_fair, condition_factor_poor
+        FROM ItemType WHERE itemtype_id = $1
+      `;
+      const itemTypeResult = await client.query(itemTypeQuery, [item.itemtype_id]);
+      const itemType = itemTypeResult.rows[0];
+      
+      // Determine condition multiplier
+      const condition = item.condition || 'Good';
+      let conditionMultiplier = 0.75; // default for 'Good'
+      switch (condition.toLowerCase()) {
+        case 'new':
+          conditionMultiplier = itemType.condition_factor_new || 1.00;
+          break;
+        case 'good':
+          conditionMultiplier = itemType.condition_factor_good || 0.75;
+          break;
+        case 'fair':
+          conditionMultiplier = itemType.condition_factor_fair || 0.50;
+          break;
+        case 'poor':
+          conditionMultiplier = itemType.condition_factor_poor || 0.25;
+          break;
+      }
+      
+      // Calculate FMV: quantity × avg_retail_price × condition_multiplier
+      const calculatedFMV = item.quantity * parseFloat(itemType.avg_retail_price) * conditionMultiplier;
+      
+      // Insert into DonationItems table with calculated FMV
       const itemQuery = `
         INSERT INTO DonationItems (
           donation_id, itemtype_id, quantity, declared_value,
-          description, selected_condition, date_added
-        ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+          description, selected_condition, condition_multiplier, calculated_fmv,
+          quantity_per_container, is_estimated, date_added
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
       `;
       
       await client.query(itemQuery, [
         donationId,
         item.itemtype_id,
         item.quantity,
-        item.declared_value,
+        item.declared_value || calculatedFMV, // Use calculated FMV as declared value if not provided
         item.description || '',
-        item.condition || 'New'
+        condition,
+        conditionMultiplier,
+        calculatedFMV,
+        item.quantity_per_container || null,
+        item.is_estimated || false
       ]);
 
       // Add to inventory (walk-in donations are immediately received)
@@ -215,11 +254,11 @@ const createWalkInDonation = async (donationData, staffUserId) => {
       
       const existingInventory = await client.query(checkInventoryQuery, [
         item.itemtype_id,
-        'LASAC Warehouse'
+        'LASAC Warehouse - 240 sq.m'
       ]);
       
       if (existingInventory.rows.length > 0) {
-        // Update existing inventory record
+        // Update existing inventory record using calculated FMV
         const updateInventoryQuery = `
           UPDATE Inventory 
           SET quantity_available = quantity_available + $1,
@@ -235,11 +274,11 @@ const createWalkInDonation = async (donationData, staffUserId) => {
         
         await client.query(updateInventoryQuery, [
           item.quantity,
-          item.declared_value * item.quantity,
+          calculatedFMV, // Use calculated FMV instead of declared_value
           existingInventory.rows[0].inventory_id
         ]);
       } else {
-        // Insert new inventory record
+        // Insert new inventory record using calculated FMV
         const insertInventoryQuery = `
           INSERT INTO Inventory (
             itemtype_id, quantity_available, total_fmv_value, location, 
@@ -250,8 +289,8 @@ const createWalkInDonation = async (donationData, staffUserId) => {
         await client.query(insertInventoryQuery, [
           item.itemtype_id,
           item.quantity,
-          item.declared_value * item.quantity,
-          'LASAC Warehouse',
+          calculatedFMV, // Use calculated FMV instead of declared_value
+          'LASAC Warehouse - 240 sq.m',
           item.quantity > 20 ? 'Available' : 'Low Stock'
         ]);
       }

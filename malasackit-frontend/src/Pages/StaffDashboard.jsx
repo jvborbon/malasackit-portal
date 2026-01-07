@@ -1,14 +1,13 @@
 import DashboardLayout from '../components/DashboardLayout';
 import StaffKPICards from '../components/analytics/descriptivechart/staff/StaffKPICards';
 import DonationReportsChart from '../components/analytics/descriptivechart/staff/DonationReportsChart';
-import TopDonorsSection from '../components/analytics/descriptivechart/staff/TopDonorsSection';
-import TopParishesSection from '../components/analytics/descriptivechart/staff/TopParishesSection';
-import TopMunicipalitySection from '../components/analytics/descriptivechart/staff/TopMunicipalitySection';
+import TopIndividualDonors from '../components/analytics/descriptivechart/staff/TopIndividualDonors';
+import TopOrganizationDonors from '../components/analytics/descriptivechart/staff/TopOrganizationDonors';
 import DonatedItemsChart from '../components/analytics/descriptivechart/staff/DonatedItemsChart';
 import Inventory from '../components/Inventory';
 import DonationRequests from '../components/DonationRequests';
-import BeneficiaryLogs from '../components/DistributionLogs';
-import BeneficiaryManagement from '../components/BeneficiaryManagement';
+import BeneficiaryLogs from '../components/DistributionLogsNew';
+import BeneficiaryManagement from '../components/BeneficiaryManagementNew';
 import UserProfileSettings from '../components/UserProfileSettings';
 import Calendar from '../components/Calendar';
 import Notifs from '../components/Notifs';
@@ -31,13 +30,13 @@ export default function StaffDashboard() {
                             return <BeneficiaryManagement />;
 
                         case 'Distribution Logs':
-                            return <BeneficiaryLogs />;
+                            return <BeneficiaryLogs userRole="staff" />;
 
                         case 'Notifications':
                             return <Notifs />;
 
                         case 'Calendar':
-                            return <Calendar />;
+                            return <Calendar userRole="staff" />;
 
                         case 'Settings':
                             return <UserProfileSettings userInfo={userInfo} />;
@@ -61,55 +60,16 @@ export default function StaffDashboard() {
                                         </div>
                                     </div>
 
-                                    {/* Second Row - KPI Sections with Top Donors */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
-                                        {/* Top Parishes Section */}
+                                    {/* Second Row - Top Donors */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                                        {/* Top Individual Donors Section */}
                                         <div className="min-h-0">
-                                            <TopParishesSection />
+                                            <TopIndividualDonors />
                                         </div>
 
-                                        {/* Top Municipality Section */}
+                                        {/* Top Organizations Section */}
                                         <div className="min-h-0">
-                                            <TopMunicipalitySection />
-                                        </div>
-                                        
-                                        {/* Top Donors Section - Takes 1 column */}
-                                        <div className="min-h-0">
-                                            <TopDonorsSection />
-                                        </div>
-                                    </div>
-
-                                    {/* Third Row - Recent Activities */}
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <h3 className="text-sm font-semibold text-gray-800">Recent Activities</h3>
-                                            <button className="text-red-600 hover:text-red-700 text-xs font-medium px-1.5 py-0.5 rounded hover:bg-red-50">
-                                                View All
-                                            </button>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
-                                            <div className="flex items-center p-1.5 bg-gray-50 rounded text-xs">
-                                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5 flex-shrink-0"></div>
-                                                <span className="text-gray-700 truncate">New donation - ₱25,000</span>
-                                            </div>
-                                            <div className="flex items-center p-1.5 bg-gray-50 rounded text-xs">
-                                                <div className="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5 flex-shrink-0"></div>
-                                                <span className="text-gray-700 truncate">Verification completed</span>
-                                            </div>
-                                            <div className="flex items-center p-1.5 bg-gray-50 rounded text-xs">
-                                                <div className="w-1.5 h-1.5 bg-red-600 rounded-full mr-1.5 flex-shrink-0"></div>
-                                                <span className="text-gray-700 truncate">Report generated</span>
-                                            </div>
-
-                                            <div className="flex items-center p-1.5 bg-gray-50 rounded text-xs">
-                                                <div className="w-1.5 h-1.5 bg-red-700 rounded-full mr-1.5 flex-shrink-0"></div>
-                                                <span className="text-gray-700 truncate">Request approved</span>
-                                            </div>
-                                            <div className="flex items-center p-1.5 bg-gray-50 rounded text-xs">
-                                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5 flex-shrink-0"></div>
-                                                <span className="text-gray-700 truncate">Meeting scheduled</span>
-                                            </div>
+                                            <TopOrganizationDonors />
                                         </div>
                                     </div>
                                 </div>

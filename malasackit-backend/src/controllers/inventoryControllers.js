@@ -225,10 +225,11 @@ export const getInventoryStats = async (req, res) => {
             ORDER BY total_stock DESC
         `;
         
-        // Get total value
+        // Get total value (calculated from quantity * price, not stored total_fmv_value)
         const totalValueQuery = `
-            SELECT COALESCE(SUM(i.total_fmv_value), 0) as total_value
+            SELECT COALESCE(SUM(i.quantity_available * it.avg_retail_price), 0) as total_value
             FROM Inventory i
+            JOIN ItemType it ON i.itemtype_id = it.itemtype_id
             WHERE i.quantity_available > 0
         `;
         
@@ -485,7 +486,7 @@ export const addToInventoryFromDonation = async (donationId, inventoryStatus = '
             
             // Check if inventory entry exists for this item type and location
             const existingQuery = 'SELECT inventory_id, quantity_available, total_fmv_value FROM Inventory WHERE itemtype_id = $1 AND location = $2';
-            const existingResult = await query(existingQuery, [itemtype_id, 'LASAC Warehouse']);
+            const existingResult = await query(existingQuery, [itemtype_id, 'LASAC Warehouse - 240 sq.m']);
             
             if (existingResult.rows.length > 0) {
                 // Update existing inventory
@@ -532,7 +533,7 @@ export const addToInventoryFromDonation = async (donationId, inventoryStatus = '
                     itemtype_id,
                     quantity,
                     valueToUse,
-                    'LASAC Warehouse', // default location
+                    'LASAC Warehouse - 240 sq.m', // default location
                     finalStatus
                 ]);
             }

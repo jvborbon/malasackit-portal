@@ -2,7 +2,8 @@ import express from 'express';
 import { 
     login, 
     logout, 
-    getProfile, 
+    getProfile,
+    updateProfile,
     register, 
     getPendingUsersController, 
     approveUserController, 
@@ -11,7 +12,9 @@ import {
     getActivityLogsController,
     forgotPasswordController,
     verifyResetTokenController,
-    resetPasswordController
+    resetPasswordController,
+    sendVerificationEmailController,
+    verifyEmailController
 } from '../controllers/userControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 import { 
@@ -26,13 +29,18 @@ const router = express.Router();
 // Apply specific rate limiters to critical endpoints
 router.post('/register', accountCreationLimiter, register); // Registration endpoint enabled but logic disabled
 router.post('/login', loginLimiter, login);
-router.post('/logout', logout);
+router.post('/logout', authenticateToken, logout); // Require authentication to properly track logout
 router.get('/profile', authenticateToken, getProfile);
+router.put('/profile', authenticateToken, writeOperationLimiter, updateProfile);
 
 // Password reset routes (public - no authentication required)
 router.post('/forgot-password', passwordResetLimiter, forgotPasswordController);
 router.get('/verify-reset-token/:token', verifyResetTokenController);
 router.post('/reset-password/:token', passwordResetLimiter, resetPasswordController);
+
+// Email verification routes
+router.post('/send-verification-email', authenticateToken, writeOperationLimiter, sendVerificationEmailController);
+router.get('/verify-email/:token', verifyEmailController);
 
 // Admin user management routes
 router.get('/pending', authenticateToken, requireRole(['Executive Admin']), getPendingUsersController);

@@ -227,6 +227,7 @@ export const getDonorDonations = async (req, res) => {
                 dr.delivery_method,
                 dr.pickup_address,
                 dr.created_at,
+                u.full_name as donor_name,
                 a.appointment_date,
                 a.appointment_time,
                 a.status as appointment_status,
@@ -723,9 +724,31 @@ export const getAllDonationRequests = async (req, res) => {
         const countResult = await query(countQuery, params.slice(0, -2)); // Remove limit and offset
         const total = parseInt(countResult.rows[0].total);
 
+        // Get summary statistics for the filtered data (KPIs)
+        const statsQuery = `
+            SELECT 
+                COUNT(DISTINCT CASE WHEN dr.status = 'Completed' THEN dr.donation_id END) as completed_count,
+                COUNT(DISTINCT CASE WHEN dr.status = 'Pending' THEN dr.donation_id END) as pending_count,
+                COUNT(DISTINCT CASE WHEN dr.status = 'Approved' THEN dr.donation_id END) as approved_count,
+                COALESCE(SUM(di.declared_value * di.quantity), 0) as total_value
+            FROM DonationRequests dr
+            JOIN Users u ON dr.user_id = u.user_id
+            LEFT JOIN Appointments a ON dr.appointment_id = a.appointment_id
+            LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
+            ${whereClause}
+        `;
+
+        const statsResult = await query(statsQuery, params.slice(0, -2)); // Remove limit and offset
+
         res.json({
             success: true,
             data: result.rows,
+            statistics: {
+                completed: parseInt(statsResult.rows[0].completed_count) || 0,
+                pending: parseInt(statsResult.rows[0].pending_count) || 0,
+                approved: parseInt(statsResult.rows[0].approved_count) || 0,
+                totalValue: parseFloat(statsResult.rows[0].total_value) || 0
+            },
             pagination: {
                 total,
                 limit: parseInt(limit),
@@ -1448,7 +1471,7 @@ export const getCalendarAppointments = async (req, res) => {
                     a.appointment_time,
                     COUNT(di.item_id) as item_types,
                     SUM(di.quantity) as total_quantity,
-                    SUM(di.declared_value * di.quantity) as total_value,
+                    SUM(di.calculated_fmv) as total_value,
                     STRING_AGG(DISTINCT ic.category_name, ', ') as categories
                 FROM DonationRequests dr
                 JOIN Users u ON dr.user_id = u.user_id
@@ -1456,7 +1479,7 @@ export const getCalendarAppointments = async (req, res) => {
                 LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
                 LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
                 LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
-                WHERE dr.status IN ('Approved', 'Completed')
+                WHERE dr.status = 'Approved'
                   AND a.appointment_date IS NOT NULL
                   AND a.appointment_date BETWEEN $1 AND $2
                   AND dr.user_id = $3
@@ -1480,7 +1503,7 @@ export const getCalendarAppointments = async (req, res) => {
                     a.appointment_time,
                     COUNT(di.item_id) as item_types,
                     SUM(di.quantity) as total_quantity,
-                    SUM(di.declared_value * di.quantity) as total_value,
+                    SUM(di.calculated_fmv) as total_value,
                     STRING_AGG(DISTINCT ic.category_name, ', ') as categories
                 FROM DonationRequests dr
                 JOIN Users u ON dr.user_id = u.user_id
@@ -1488,7 +1511,7 @@ export const getCalendarAppointments = async (req, res) => {
                 LEFT JOIN DonationItems di ON dr.donation_id = di.donation_id
                 LEFT JOIN ItemType it ON di.itemtype_id = it.itemtype_id
                 LEFT JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
-                WHERE dr.status IN ('Approved', 'Completed')
+                WHERE dr.status = 'Approved'
                   AND a.appointment_date IS NOT NULL
                   AND a.appointment_date BETWEEN $1 AND $2
                   AND (dr.is_walkin = false OR dr.is_walkin IS NULL)
@@ -1501,37 +1524,81 @@ export const getCalendarAppointments = async (req, res) => {
         
         const result = await query(calendarQuery, queryParams);
         
-        // Transform to calendar event format
-        const events = result.rows.map(row => ({
-            id: `donation-${row.donation_id}`,
-            title: `${row.donor_name} - ${row.delivery_method}`,
+        // Also get standalone appointments (events without donation requests)
+        const standaloneEventsQuery = `
+            SELECT 
+                a.appointment_id,
+                a.appointment_date,
+                a.appointment_time,
+                a.description,
+                a.status,
+                a.remarks
+            FROM Appointments a
+            WHERE a.appointment_date IS NOT NULL
+              AND a.appointment_date BETWEEN $1 AND $2
+              AND a.appointment_id NOT IN (
+                  SELECT appointment_id FROM DonationRequests WHERE appointment_id IS NOT NULL
+              )
+              AND (a.remarks NOT LIKE '%Walk-in donation%' OR a.remarks IS NULL)
+              AND (a.description NOT LIKE '%Walk-in%' OR a.description IS NULL)
+            ORDER BY a.appointment_date, a.appointment_time
+        `;
+        
+        const standaloneResult = await query(standaloneEventsQuery, [start, end]);
+        
+        // Transform donation appointments to calendar event format
+        const events = result.rows.map(row => {
+            const deliveryMethod = row.delivery_method || 'dropoff'; // Default to dropoff if null
+            return {
+                id: `donation-${row.donation_id}`,
+                title: `${row.donor_name} - ${deliveryMethod}`,
+                date: row.appointment_date,
+                time: row.appointment_time,
+                type: deliveryMethod.toLowerCase(),
+                deliveryMethod: deliveryMethod.toLowerCase(),
+                location: deliveryMethod === 'pickup' ? (row.pickup_address || 'Donor Location') : 'LASAC Office',
+                status: 'approved',
+                participants: 1,
+                description: `${row.total_quantity || 0} items (${row.item_types || 0} types) - ${row.categories || 'N/A'}`,
+                donor: {
+                    name: row.donor_name,
+                    email: row.donor_email,
+                    phone: row.donor_phone
+                },
+                donation: {
+                    id: row.donation_id,
+                    totalValue: row.total_value || 0,
+                    totalQuantity: row.total_quantity || 0,
+                    categories: row.categories || '',
+                    pickupAddress: row.pickup_address
+                }
+            };
+        });
+        
+        // Transform standalone appointments to calendar event format
+        const standaloneEvents = standaloneResult.rows.map(row => ({
+            id: `event-${row.appointment_id}`,
+            title: row.description || 'Event',
             date: row.appointment_date,
             time: row.appointment_time,
-            type: row.delivery_method.toLowerCase(),
-            deliveryMethod: row.delivery_method.toLowerCase(),
-            location: row.delivery_method === 'pickup' ? (row.pickup_address || 'Donor Location') : 'LASAC Office',
-            status: 'approved',
-            participants: 1,
-            description: `${row.total_quantity} items (${row.item_types} types) - ${row.categories}`,
-            donor: {
-                name: row.donor_name,
-                email: row.donor_email,
-                phone: row.donor_phone
-            },
-            donation: {
-                id: row.donation_id,
-                totalValue: row.total_value,
-                totalQuantity: row.total_quantity,
-                categories: row.categories,
-                pickupAddress: row.pickup_address
-            }
+            type: 'event',
+            deliveryMethod: 'event',
+            location: 'LASAC Office',
+            status: row.status?.toLowerCase() || 'scheduled',
+            participants: 0,
+            description: row.remarks || row.description || '',
+            donor: null,
+            donation: null
         }));
+        
+        // Combine donation appointments and standalone events
+        const allEvents = [...events, ...standaloneEvents];
         
         res.json({
             success: true,
             data: {
-                events,
-                count: events.length,
+                events: allEvents,
+                count: allEvents.length,
                 dateRange: { start, end }
             }
         });
@@ -1541,6 +1608,194 @@ export const getCalendarAppointments = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch calendar appointments',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get donation trends by category per month (for grouped bar chart)
+ */
+export const getCategoryTrends = async (req, res) => {
+    try {
+        const { year = new Date().getFullYear() } = req.query;
+
+        const trendsQuery = `
+            SELECT 
+                ic.category_name,
+                EXTRACT(MONTH FROM dr.created_at) as month,
+                SUM(di.quantity) as total_quantity
+            FROM DonationItems di
+            INNER JOIN DonationRequests dr ON di.donation_id = dr.donation_id
+            INNER JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+            INNER JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+            WHERE dr.status IN ('Approved', 'Completed')
+            AND EXTRACT(YEAR FROM dr.created_at) = $1
+            GROUP BY ic.category_name, EXTRACT(MONTH FROM dr.created_at)
+            ORDER BY month, ic.category_name
+        `;
+
+        const result = await query(trendsQuery, [year]);
+
+        res.json({
+            success: true,
+            data: result.rows,
+            message: 'Category trends retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting category trends:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve category trends',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get total items by category (for pie chart)
+ */
+export const getCategoryDistribution = async (req, res) => {
+    try {
+        const { year = new Date().getFullYear() } = req.query;
+
+        const distributionQuery = `
+            SELECT 
+                ic.category_name,
+                SUM(di.quantity) as total_quantity,
+                COUNT(DISTINCT dr.donation_id) as donation_count
+            FROM DonationItems di
+            INNER JOIN DonationRequests dr ON di.donation_id = dr.donation_id
+            INNER JOIN ItemType it ON di.itemtype_id = it.itemtype_id
+            INNER JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+            WHERE dr.status IN ('Approved', 'Completed')
+            AND EXTRACT(YEAR FROM dr.created_at) = $1
+            GROUP BY ic.category_name
+            ORDER BY total_quantity DESC
+        `;
+
+        const result = await query(distributionQuery, [year]);
+
+        res.json({
+            success: true,
+            data: result.rows,
+            message: 'Category distribution retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting category distribution:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve category distribution',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get top individual donors
+ */
+export const getTopIndividualDonors = async (req, res) => {
+    try {
+        const { limit = 5, year } = req.query;
+
+        let topDonorsQuery = `
+            SELECT 
+                u.user_id,
+                u.full_name,
+                COUNT(DISTINCT dr.donation_id) as total_donations,
+                COALESCE(
+                    SUM(CASE WHEN di.calculated_fmv > 0 THEN di.calculated_fmv ELSE di.quantity * di.declared_value END),
+                    0
+                ) as total_value
+            FROM Users u
+            INNER JOIN DonationRequests dr ON u.user_id = dr.user_id
+            INNER JOIN DonationItems di ON dr.donation_id = di.donation_id
+            WHERE dr.status IN ('Approved', 'Completed')
+            AND u.account_type = 'INDIVIDUAL'
+        `;
+
+        const params = [];
+        if (year) {
+            params.push(year);
+            topDonorsQuery += ` AND EXTRACT(YEAR FROM dr.created_at) = $1`;
+        }
+
+        topDonorsQuery += `
+            GROUP BY u.user_id, u.full_name
+            ORDER BY total_value DESC
+            LIMIT $${params.length + 1}
+        `;
+        params.push(limit);
+
+        const result = await query(topDonorsQuery, params);
+
+        res.json({
+            success: true,
+            data: result.rows,
+            message: 'Top individual donors retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting top individual donors:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve top individual donors',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get top organization donors
+ */
+export const getTopOrganizationDonors = async (req, res) => {
+    try {
+        const { limit = 5, year } = req.query;
+
+        let topOrgsQuery = `
+            SELECT 
+                u.user_id,
+                u.full_name as organization_name,
+                COUNT(DISTINCT dr.donation_id) as total_donations,
+                COALESCE(
+                    SUM(CASE WHEN di.calculated_fmv > 0 THEN di.calculated_fmv ELSE di.quantity * di.declared_value END),
+                    0
+                ) as total_value
+            FROM Users u
+            INNER JOIN DonationRequests dr ON u.user_id = dr.user_id
+            INNER JOIN DonationItems di ON dr.donation_id = di.donation_id
+            WHERE dr.status IN ('Approved', 'Completed')
+            AND u.account_type = 'ORGANIZATION'
+        `;
+
+        const params = [];
+        if (year) {
+            params.push(year);
+            topOrgsQuery += ` AND EXTRACT(YEAR FROM dr.created_at) = $1`;
+        }
+
+        topOrgsQuery += `
+            GROUP BY u.user_id, u.full_name
+            ORDER BY total_value DESC
+            LIMIT $${params.length + 1}
+        `;
+        params.push(limit);
+
+        const result = await query(topOrgsQuery, params);
+
+        res.json({
+            success: true,
+            data: result.rows,
+            message: 'Top organization donors retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting top organization donors:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve top organization donors',
             error: error.message
         });
     }

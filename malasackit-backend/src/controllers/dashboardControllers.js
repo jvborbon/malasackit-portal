@@ -27,21 +27,33 @@ const getStaffKPIMetrics = async (req, res) => {
     const donorsEngagedResult = await query(donorsEngagedQuery);
     const donorsEngaged = parseInt(donorsEngagedResult.rows[0].donors_engaged) || 0;
 
-    // Beneficiaries Served - count of executed distribution plans
+    // Beneficiaries Served - sum of individuals served from completed distribution plans
     const beneficiariesServedQuery = `
-      SELECT COUNT(*) as beneficiaries_served
-      FROM DistributionPlans 
-      WHERE status = 'Completed'
+      SELECT COALESCE(SUM(br.individuals_served), 0) as beneficiaries_served
+      FROM DistributionPlans dp
+      INNER JOIN BeneficiaryRequests br ON dp.request_id = br.request_id
+      WHERE dp.status = 'Completed'
     `;
     const beneficiariesServedResult = await query(beneficiariesServedQuery);
     const beneficiariesServed = parseInt(beneficiariesServedResult.rows[0].beneficiaries_served) || 0;
+
+    // Total Worth of Response - sum of allocated values from distribution plans
+    const totalWorthResponseQuery = `
+      SELECT COALESCE(SUM(dpi.allocated_value), 0) as total_worth_response
+      FROM DistributionPlanItems dpi
+      INNER JOIN DistributionPlans dp ON dpi.plan_id = dp.plan_id
+      WHERE dp.status = 'Completed'
+    `;
+    const totalWorthResponseResult = await query(totalWorthResponseQuery);
+    const totalWorthResponse = parseFloat(totalWorthResponseResult.rows[0].total_worth_response) || 0;
 
     res.json({
       success: true,
       data: {
         totalWorth: totalWorth,
         donorsEngaged: donorsEngaged,
-        beneficiariesServed: beneficiariesServed
+        beneficiariesServed: beneficiariesServed,
+        totalWorthResponse: totalWorthResponse
       }
     });
 

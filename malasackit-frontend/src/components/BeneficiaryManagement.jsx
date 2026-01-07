@@ -277,34 +277,36 @@ const BeneficiaryManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" draggable="false" onDragStart={(e) => e.preventDefault()}>
 
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200" draggable="false">
+        <nav className="-mb-px flex space-x-8" draggable="false" onDragStart={(e) => e.preventDefault()}>
           <button
             onClick={() => setActiveTab('beneficiaries')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            draggable="false"
+            className={`py-2 px-1 border-b-2 font-medium text-sm select-none ${
               activeTab === 'beneficiaries'
                 ? 'border-red-500 text-red-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <div className="flex items-center">
+            <div className="flex items-center" draggable="false">
               <HiUsers className="w-5 h-5 mr-2" />
               Beneficiaries
             </div>
           </button>
           <button
             onClick={() => setActiveTab('requests')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            draggable="false"
+            className={`py-2 px-1 border-b-2 font-medium text-sm select-none ${
               activeTab === 'requests'
                 ? 'border-red-500 text-red-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <div className="flex items-center">
+            <div className="flex items-center" draggable="false">
               <HiClipboardList className="w-5 h-5 mr-2" />
               Requests
             </div>
@@ -341,7 +343,7 @@ const BeneficiaryManagement = () => {
                     placeholder="Search beneficiaries..."
                     value={searchTerm}
                     onChange={handleSearch}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full pl-10 pr-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   />
                 </div>
                 
@@ -350,13 +352,14 @@ const BeneficiaryManagement = () => {
                   <select
                     value={filterType}
                     onChange={handleFilterChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
+                    className="w-full pl-10 pr-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 appearance-none"
                   >
                     <option value="">All Types</option>
                     <option value="Individual">Individual</option>
                     <option value="Family">Family</option>
                     <option value="Community">Community</option>
                     <option value="Institution">Institution</option>
+                    <option value="Parish/Religious Organization">Parish/Religious Organization</option>
                   </select>
                 </div>
               </div>
@@ -374,12 +377,10 @@ const BeneficiaryManagement = () => {
           </div>
 
           {/* Beneficiaries Table */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            {/* Table container with fixed height and scrolling */}
-            <div className="overflow-x-auto">
-              <div className="max-h-[600px] overflow-y-auto">
-                <table className="w-full">
-            <thead className="bg-gray-50">
+          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="overflow-y-auto max-h-[600px]">
+              <table className="min-w-full">
+            <thead className="bg-gray-50 sticky top-0">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Beneficiary
@@ -426,7 +427,8 @@ const BeneficiaryManagement = () => {
                       beneficiary.type === 'Individual' ? 'bg-blue-100 text-blue-800' :
                       beneficiary.type === 'Family' ? 'bg-green-100 text-green-800' :
                       beneficiary.type === 'Community' ? 'bg-purple-100 text-purple-800' :
-                      'bg-gray-100 text-gray-800'
+                      beneficiary.type === 'Parish/Religious Organization' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-orange-100 text-orange-800'
                     }`}>
                       {beneficiary.type}
                     </span>
@@ -453,7 +455,6 @@ const BeneficiaryManagement = () => {
                     <div className="space-y-1">
                       <div>Total: {beneficiary.total_requests || 0}</div>
                       <div className="text-xs text-gray-500">
-                        Pending: {beneficiary.pending_requests || 0} | 
                         Approved: {beneficiary.approved_requests || 0}
                       </div>
                     </div>
@@ -488,8 +489,6 @@ const BeneficiaryManagement = () => {
               ))}
             </tbody>
           </table>
-
-              </div>
             </div>
             
             {/* Pagination */}
@@ -557,7 +556,8 @@ const BeneficiaryManagement = () => {
                           selectedBeneficiary?.type === 'Individual' ? 'bg-blue-100 text-blue-800' :
                           selectedBeneficiary?.type === 'Family' ? 'bg-green-100 text-green-800' :
                           selectedBeneficiary?.type === 'Community' ? 'bg-purple-100 text-purple-800' :
-                          'bg-gray-100 text-gray-800'
+                          selectedBeneficiary?.type === 'Parish/Religious Organization' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-orange-100 text-orange-800'
                         }`}>
                           {selectedBeneficiary?.type}
                         </span>
@@ -602,7 +602,7 @@ const BeneficiaryManagement = () => {
                           required
                           value={formData.name}
                           onChange={(e) => handleInputChange('name', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="Enter beneficiary name"
                         />
                       </div>
@@ -615,13 +615,14 @@ const BeneficiaryManagement = () => {
                           required
                           value={formData.type}
                           onChange={(e) => handleInputChange('type', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                         >
                           <option value="">Select type</option>
                           <option value="Individual">Individual</option>
                           <option value="Family">Family</option>
                           <option value="Community">Community</option>
                           <option value="Institution">Institution</option>
+                          <option value="Parish/Religious Organization">Parish/Religious Organization</option>
                         </select>
                       </div>
                       
@@ -633,7 +634,7 @@ const BeneficiaryManagement = () => {
                           type="text"
                           value={formData.contact_person}
                           onChange={(e) => handleInputChange('contact_person', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="Enter contact person name"
                         />
                       </div>
@@ -646,7 +647,7 @@ const BeneficiaryManagement = () => {
                           type="tel"
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="Enter phone number"
                         />
                       </div>
@@ -659,7 +660,7 @@ const BeneficiaryManagement = () => {
                           type="email"
                           value={formData.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="Enter email address"
                         />
                       </div>
@@ -672,7 +673,7 @@ const BeneficiaryManagement = () => {
                           rows="3"
                           value={formData.address}
                           onChange={(e) => handleInputChange('address', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="Enter complete address"
                         />
                       </div>
@@ -685,7 +686,7 @@ const BeneficiaryManagement = () => {
                           rows="3"
                           value={formData.notes}
                           onChange={(e) => handleInputChange('notes', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="Additional notes about the beneficiary"
                         />
                       </div>

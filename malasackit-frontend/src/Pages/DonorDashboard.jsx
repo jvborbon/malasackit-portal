@@ -23,7 +23,7 @@ export default function DonorDashboard() {
                 return <Notifs />;
 
             case 'Calendar':
-                return <Calendar />;
+                return <Calendar userRole="donor" />;
 
             case 'Settings':
                 return <UserProfileSettings userInfo={userInfo} />;

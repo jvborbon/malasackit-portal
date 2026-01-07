@@ -747,6 +747,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
             itemAggregation[itemName] = {
               itemtype_name: itemName,
               total_requested: 0,
+              total_individuals_served: 0,
               urgency_levels: [],
               beneficiaries: [],
               item_details: item,
@@ -755,6 +756,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
           }
 
           itemAggregation[itemName].total_requested += quantity;
+          itemAggregation[itemName].total_individuals_served += (parseInt(request.individuals_served) || 1);
           itemAggregation[itemName].urgency_levels.push(request.urgency);
           itemAggregation[itemName].beneficiaries.push(
             request.beneficiary_name
@@ -764,6 +766,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
             quantity: quantity,
             urgency: request.urgency,
             request_id: request.request_id,
+            individuals_served: parseInt(request.individuals_served) || 1,
           });
         });
       }
@@ -799,10 +802,79 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
 
     setAggregatedRequestItems(aggregatedItems);
 
-    // Pre-populate the requests form data with aggregated quantities
+    // Smart optimization: Calculate optimal distribution based on stock and individuals served
     const newRequests = {};
     aggregatedItems.forEach((item) => {
-      newRequests[item.itemtype_name] = item.total_requested;
+      // Find current stock for this item
+      const inventoryItem = inventoryData?.find(
+        (inv) => inv.itemtype_name === item.itemtype_name
+      );
+      const currentStock = inventoryItem?.quantity_available || 0;
+      const criticalThreshold = inventoryItem?.critical_threshold || 10;
+      const safeStock = Math.max(0, currentStock - criticalThreshold); // Keep some safety stock
+      
+      // Calculate optimal distribution
+      let optimizedQuantity = item.total_requested;
+      let optimizationReason = 'as_requested';
+      
+      if (item.total_individuals_served > 0) {
+        const requestedPerPerson = item.total_requested / item.total_individuals_served;
+        
+        if (currentStock < item.total_requested) {
+          // SCENARIO 1: Not enough stock - distribute fairly with what's available
+          const availablePerPerson = safeStock / item.total_individuals_served;
+          const fairPerPerson = Math.floor(Math.min(requestedPerPerson, availablePerPerson));
+          optimizedQuantity = fairPerPerson * item.total_individuals_served;
+          optimizationReason = 'limited_stock';
+          
+        } else {
+          // SCENARIO 2: Enough stock - optimize for better distribution
+          
+          // Round to whole units per person if fractional
+          const ceiledPerPerson = Math.ceil(requestedPerPerson);
+          const flooredPerPerson = Math.floor(requestedPerPerson);
+          
+          // Check if we can give more for better distribution
+          const ceiledTotal = ceiledPerPerson * item.total_individuals_served;
+          const flooredTotal = flooredPerPerson * item.total_individuals_served;
+          
+          if (flooredPerPerson > 0 && requestedPerPerson !== flooredPerPerson) {
+            // Fractional request - decide whether to round up or down
+            
+            if (ceiledTotal <= safeStock && ceiledPerPerson <= requestedPerPerson * 1.5) {
+              // Can afford to round UP (give more) - within 150% of request and have stock
+              optimizedQuantity = ceiledTotal;
+              optimizationReason = 'rounded_up';
+            } else {
+              // Round DOWN to whole units
+              optimizedQuantity = flooredTotal;
+              optimizationReason = 'rounded_down';
+            }
+          } else if (flooredPerPerson === 0 && safeStock >= item.total_individuals_served) {
+            // Very small request per person - give at least 1 per person if possible
+            optimizedQuantity = item.total_individuals_served;
+            optimizationReason = 'minimum_one_per_person';
+          }
+          
+          // BONUS: If stock is abundant and request is very low, suggest more
+          if (currentStock > item.total_requested * 3 && requestedPerPerson < 2) {
+            const suggestedPerPerson = Math.min(
+              Math.floor(safeStock / item.total_individuals_served),
+              Math.ceil(requestedPerPerson * 2) // Max 2x the original request
+            );
+            if (suggestedPerPerson > ceiledPerPerson) {
+              optimizedQuantity = suggestedPerPerson * item.total_individuals_served;
+              optimizationReason = 'abundant_stock';
+            }
+          }
+        }
+      } else {
+        // Fallback for no individuals_served data
+        optimizedQuantity = Math.min(item.total_requested, safeStock);
+        optimizationReason = 'no_individuals_data';
+      }
+      
+      newRequests[item.itemtype_name] = Math.max(0, optimizedQuantity);
     });
 
     setFormData((prev) => ({ ...prev, requests: newRequests }));
@@ -1449,6 +1521,14 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                                   <strong>Beneficiary Type:</strong>{" "}
                                   {request.beneficiary_type || "N/A"}
                                 </div>
+                                <div>
+                                  <strong>Individuals to be Served:</strong>{" "}
+                                  <span className="text-blue-600 font-semibold">
+                                    {request.individuals_served || 1}
+                                  </span>
+                                  {" "}
+                                  {request.beneficiary_type === "Individual" ? "person" : "people/families"}
+                                </div>
                                 {request.items && request.items.length > 0 ? (
                                   <div>
                                     <strong>Requested Items:</strong>
@@ -1522,18 +1602,20 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                         </p>
                       </div>
                     ) : (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                        <p className="text-sm text-green-800 flex items-center">
-                          <HiCheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-                          Showing aggregated needs from selected beneficiary
-                          requests. You can adjust quantities based on your
-                          assessment.
-                        </p>
+                      <div className="space-y-3">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <p className="text-sm text-green-800 flex items-center">
+                            <HiCheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                            Showing aggregated needs from selected beneficiary
+                            requests. You can adjust quantities based on your
+                            assessment.
+                          </p>
+                        </div>
                       </div>
                     )}
 
                     {formData.selectedRequests?.length > 0 && (
-                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                      <div className="space-y-4 max-h-96 overflow-y-auto mt-6">
                         {aggregatedRequestItems.length > 0 ? (
                         aggregatedRequestItems.map((requestItem, index) => {
                           // Find matching inventory item for current stock info
@@ -1623,12 +1705,47 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                                       e.target.value
                                     )
                                   }
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-transparent"
                                 />
                                 <span className="text-sm text-gray-500 w-16">
                                   units
                                 </span>
                               </div>
+
+                              {/* Quantity adjustment note */}
+                              {(() => {
+                                const assessedQty = formData.requests?.[requestItem.itemtype_name];
+                                const requestedQty = requestItem.total_requested;
+                                const perPerson = requestItem.total_individuals_served > 0 
+                                  ? (assessedQty / requestItem.total_individuals_served).toFixed(2)
+                                  : 0;
+                                const requestedPerPerson = requestItem.total_individuals_served > 0
+                                  ? (requestedQty / requestItem.total_individuals_served).toFixed(2)
+                                  : 0;
+                                
+                                if (assessedQty === requestedQty || !assessedQty) return null;
+                                
+                                return (
+                                  <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-700">
+                                    {assessedQty > requestedQty ? (
+                                      <div>
+                                        <strong>Note:</strong> Quantity increased from {requestedQty} to {assessedQty} units 
+                                        ({requestedPerPerson} → {perPerson} per person) based on available stock.
+                                      </div>
+                                    ) : currentStock < requestedQty ? (
+                                      <div>
+                                        <strong>Note:</strong> Quantity adjusted to {assessedQty} units ({perPerson} per person) 
+                                        due to limited inventory.
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        <strong>Note:</strong> Quantity rounded to {assessedQty} units 
+                                        for easier distribution.
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
 
                               {/* Request Details */}
                               <div className="mt-3 pt-3 border-t border-gray-100">
@@ -1642,15 +1759,24 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                                       .map((ctx, ctxIndex) => (
                                         <div
                                           key={ctxIndex}
-                                          className="flex justify-between"
+                                          className="space-y-0.5"
                                         >
-                                          <span>
-                                            {ctx.beneficiary} (#{ctx.request_id}
-                                            )
-                                          </span>
-                                          <span className="font-medium">
-                                            {ctx.quantity} units
-                                          </span>
+                                          <div className="flex justify-between">
+                                            <span>
+                                              {ctx.beneficiary} (#{ctx.request_id})
+                                            </span>
+                                            <span className="font-medium">
+                                              {ctx.quantity} units
+                                            </span>
+                                          </div>
+                                          {ctx.individuals_served && ctx.individuals_served > 1 && (
+                                            <div className="flex justify-between text-blue-600 pl-2">
+                                              <span>↳ Serves {ctx.individuals_served} individuals</span>
+                                              <span className="font-medium">
+                                                ~{(ctx.quantity / ctx.individuals_served).toFixed(1)} per person
+                                              </span>
+                                            </div>
+                                          )}
                                         </div>
                                       ))}
                                     {requestItem.context.length > 2 && (
@@ -1660,12 +1786,35 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                                       </div>
                                     )}
                                   </div>
-                                  <div className="mt-2 pt-2 border-t border-gray-50 font-medium">
-                                    Total Requested:{" "}
-                                    {requestItem.total_requested} units
+                                  <div className="mt-2 pt-2 border-t border-gray-50">
+                                    <div className="flex justify-between font-medium">
+                                      <span>Total Requested:</span>
+                                      <span>{requestItem.total_requested} units</span>
+                                    </div>
+                                    {requestItem.total_individuals_served && requestItem.total_individuals_served > 0 && (
+                                      <div className="flex justify-between text-blue-600 mt-1">
+                                        <span>Total Individuals:</span>
+                                        <span>{requestItem.total_individuals_served} people</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Per-person allocation helper */}
+                              {requestItem.total_individuals_served && requestItem.total_individuals_served > 1 && (
+                                <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
+                                  <div className="flex justify-between text-blue-800">
+                                    <span>📊 If distributing assessed amount equally:</span>
+                                    <span className="font-semibold">
+                                      ~{(
+                                        (formData.requests?.[requestItem.itemtype_name] || requestItem.total_requested) / 
+                                        requestItem.total_individuals_served
+                                      ).toFixed(2)} per person
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
 
                               <div className="mt-2 text-xs">
                                 {currentStock >= requestItem.total_requested ? (
@@ -1826,7 +1975,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
                       <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                         <HiLightBulb className="w-5 h-5 text-purple-600 mr-2" />
-                        AI Optimization Recommendations
+                        Distribution Recommendation
                         <span className="ml-2 text-sm font-normal text-gray-600">
                           (Based on assessed needs)
                         </span>
@@ -1944,17 +2093,186 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       </div>
                     </div>
 
-                    {/* Visual Chart */}
+                    {/* Distribution Impact Chart */}
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-6">
-                        Stock vs Distribution Plan
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                        Distribution Impact
                       </h4>
-                      <div className="h-64 flex items-center justify-center">
-                        <Bar
-                          data={currentInventory}
-                          options={barChartOptions}
-                          key="inventory-bar-chart"
-                        />
+                      <p className="text-sm text-gray-600 mb-6">
+                        Measuring how effectively this plan addresses beneficiary needs
+                      </p>
+                      
+                      {/* Impact Metrics */}
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-blue-700 uppercase">Need Fulfillment</span>
+                            <span className="text-2xl font-bold text-blue-700">
+                              {(() => {
+                                const totalRequested = aggregatedRequestItems.reduce((sum, item) => sum + (item.total_requested || 0), 0);
+                                const totalRecommended = aggregatedRequestItems.reduce((sum, item) => {
+                                  const recommended = formData.requests[item.itemtype_name] || item.total_requested;
+                                  return sum + recommended;
+                                }, 0);
+                                const percentage = totalRequested > 0 ? Math.round((totalRecommended / totalRequested) * 100) : 0;
+                                return percentage > 100 ? `${percentage}%` : `${percentage}%`;
+                              })()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-blue-600">
+                            {(() => {
+                              const totalRequested = aggregatedRequestItems.reduce((sum, item) => sum + (item.total_requested || 0), 0);
+                              const totalRecommended = aggregatedRequestItems.reduce((sum, item) => {
+                                const recommended = formData.requests[item.itemtype_name] || item.total_requested;
+                                return sum + recommended;
+                              }, 0);
+                              const percentage = totalRequested > 0 ? Math.round((totalRecommended / totalRequested) * 100) : 0;
+                              if (percentage > 100) {
+                                return `Exceeding needs by ${percentage - 100}% (abundant stock)`;
+                              } else if (percentage === 100) {
+                                return 'Fully meeting all requested needs';
+                              } else {
+                                return `Fulfilling ${percentage}% of requested items`;
+                              }
+                            })()}
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-green-700 uppercase">Beneficiary Reach</span>
+                            <span className="text-2xl font-bold text-green-700">
+                              {(() => {
+                                const selectedRequests = pendingRequests.filter(req => 
+                                  formData.selectedRequests?.includes(req.request_id)
+                                );
+                                return selectedRequests.reduce((sum, req) => 
+                                  sum + (parseInt(req.individuals_served) || 1), 0
+                                );
+                              })()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            Individuals receiving assistance
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-purple-700 uppercase">Avg Per Person</span>
+                            <span className="text-2xl font-bold text-purple-700">
+                              {(() => {
+                                const totalUnits = aggregatedRequestItems.reduce((sum, item) => {
+                                  const recommended = formData.requests[item.itemtype_name] || item.total_requested;
+                                  return sum + recommended;
+                                }, 0);
+                                const selectedRequests = pendingRequests.filter(req => 
+                                  formData.selectedRequests?.includes(req.request_id)
+                                );
+                                const totalIndividuals = selectedRequests.reduce((sum, req) => 
+                                  sum + (parseInt(req.individuals_served) || 1), 0
+                                );
+                                return totalIndividuals > 0 ? (totalUnits / totalIndividuals).toFixed(1) : 0;
+                              })()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-purple-600">
+                            Items per individual served
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-orange-700 uppercase">Priority Items</span>
+                            <span className="text-2xl font-bold text-orange-700">
+                              {aggregatedRequestItems.filter(item => 
+                                item.max_urgency === 'Critical' || item.max_urgency === 'High'
+                              ).length}/{aggregatedRequestItems.length}
+                            </span>
+                          </div>
+                          <p className="text-xs text-orange-600">
+                            High-priority needs addressed
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Item Distribution Breakdown */}
+                      <div className="h-64">
+                        {aggregatedRequestItems.length > 0 ? (
+                          <Doughnut
+                            data={{
+                              labels: aggregatedRequestItems.map(item => item.itemtype_name),
+                              datasets: [{
+                                label: 'Distribution Quantity',
+                                data: aggregatedRequestItems.map(item => formData.requests[item.itemtype_name] || item.total_requested),
+                                backgroundColor: [
+                                  'rgba(59, 130, 246, 0.8)',
+                                  'rgba(34, 197, 94, 0.8)',
+                                  'rgba(168, 85, 247, 0.8)',
+                                  'rgba(251, 191, 36, 0.8)',
+                                  'rgba(249, 115, 22, 0.8)',
+                                  'rgba(236, 72, 153, 0.8)',
+                                  'rgba(14, 165, 233, 0.8)',
+                                  'rgba(132, 204, 22, 0.8)',
+                                  'rgba(245, 158, 11, 0.8)',
+                                  'rgba(239, 68, 68, 0.8)',
+                                ],
+                                borderColor: [
+                                  'rgba(59, 130, 246, 1)',
+                                  'rgba(34, 197, 94, 1)',
+                                  'rgba(168, 85, 247, 1)',
+                                  'rgba(251, 191, 36, 1)',
+                                  'rgba(249, 115, 22, 1)',
+                                  'rgba(236, 72, 153, 1)',
+                                  'rgba(14, 165, 233, 1)',
+                                  'rgba(132, 204, 22, 1)',
+                                  'rgba(245, 158, 11, 1)',
+                                  'rgba(239, 68, 68, 1)',
+                                ],
+                                borderWidth: 2,
+                              }]
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              plugins: {
+                                legend: {
+                                  position: 'right',
+                                  labels: {
+                                    font: { size: 11 },
+                                    padding: 10,
+                                    boxWidth: 12
+                                  }
+                                },
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      const item = aggregatedRequestItems[context.dataIndex];
+                                      const quantity = context.parsed;
+                                      const individuals = item.total_individuals_served || 0;
+                                      const perPerson = individuals > 0 ? (quantity / individuals).toFixed(2) : 0;
+                                      const requested = item.total_requested;
+                                      const fulfillment = requested > 0 ? Math.round((quantity / requested) * 100) : 100;
+                                      return [
+                                        `${context.label}: ${quantity} units`,
+                                        `Fulfillment: ${fulfillment}% of need`,
+                                        `Serves: ${individuals} individuals`,
+                                        `Impact: ${perPerson} units/person`
+                                      ];
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-500">
+                            <div className="text-center">
+                              <p className="text-sm">No items selected for distribution</p>
+                              <p className="text-xs mt-1">Select beneficiary requests to see impact analysis</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1987,7 +2305,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                         onChange={(e) =>
                           handleInputChange("distributionDate", e.target.value)
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
                       />
                     </div>
                     <div>
@@ -2118,7 +2436,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                     value={formData.notes}
                     onChange={(e) => handleInputChange("notes", e.target.value)}
                     placeholder="Add any special instructions or notes for the distribution..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 bg-white text-gray-900"
                   />
                 </div>
 

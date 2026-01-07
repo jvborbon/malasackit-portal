@@ -13,6 +13,7 @@ CREATE TABLE Users (
     barangay_id INTEGER REFERENCES table_barangay(barangay_id),
     parish_id INT REFERENCES Parishes(parish_id),
 	vicariate_id INT REFERENCES Vicariates(vicariate_id),
+    streetAddress TEXT,
     email_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	created_by VARCHAR(25) REFERENCES Users(user_id),
@@ -62,7 +63,10 @@ CREATE TABLE DonationRequests (
  	approved_by VARCHAR(25) REFERENCES Users(user_id),
 	approved_at TIMESTAMP,
 	is_walkin BOOLEAN DEFAULT FALSE,
-    pickup_address TEXT;
+    pickup_address TEXT,
+    donation_method VARCHAR(20) DEFAULT 'Individual' CHECK (donation_method IN ('Individual', 'Bulk')),
+	container_type VARCHAR(50),
+	container_count INT;
 );
 
 CREATE TABLE DonationItems (
@@ -122,11 +126,12 @@ CREATE TABLE BeneficiaryRequests (
     status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending','Approved','Fulfilled','Rejected')),
 	urgency VARCHAR(50) CHECK (urgency IN ('Low', 'Medium', 'High')),
     purpose TEXT,     -- Reason for request or project
-    notes TEXT
+    notes TEXT,
+	individuals_served INT DEFAULT 1,  -- Number of individuals/families who will receive aid
 	created_by VARCHAR(25) REFERENCES Users(user_id),
 	updated_by VARCHAR(25) REFERENCES Users(user_id),
-	created_at VARCHAR(25) TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at VARCHAR(25) TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE BeneficiaryRequestItems (

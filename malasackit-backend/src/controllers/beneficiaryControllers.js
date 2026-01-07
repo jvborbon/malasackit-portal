@@ -6,9 +6,11 @@ import { query } from '../db.js';
 async function getBeneficiaryRequestDetails(requestId) {
     const requestQuery = `
         SELECT br.*, b.name as beneficiary_name, b.type as beneficiary_type,
-               b.contact_person, b.phone, b.address
+               b.contact_person, b.phone, b.address,
+               u.full_name as created_by_name
         FROM BeneficiaryRequests br
         JOIN Beneficiaries b ON br.beneficiary_id = b.beneficiary_id
+        LEFT JOIN Users u ON br.created_by = u.user_id
         WHERE br.request_id = $1
     `;
 
@@ -334,6 +336,7 @@ export const createBeneficiaryRequest = async (req, res) => {
             urgency,
             purpose,
             notes,
+            individuals_served, // Number of people/families who will benefit
             items = [] // Array of {itemtype_id, quantity_requested, notes}
         } = req.body;
 
@@ -342,6 +345,14 @@ export const createBeneficiaryRequest = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Beneficiary ID and purpose are required'
+            });
+        }
+
+        // Validate individuals_served if provided
+        if (individuals_served && (individuals_served < 1 || !Number.isInteger(Number(individuals_served)))) {
+            return res.status(400).json({
+                success: false,
+                message: 'Individuals served must be a positive integer'
             });
         }
 
@@ -364,10 +375,18 @@ export const createBeneficiaryRequest = async (req, res) => {
         try {
             // Create the request with automatic approval (beneficiaries are pre-verified)
             const result = await query(
-                `INSERT INTO BeneficiaryRequests (beneficiary_id, urgency, purpose, notes, status)
-                 VALUES ($1, $2, $3, $4, 'Approved')
+                `INSERT INTO BeneficiaryRequests 
+                 (beneficiary_id, urgency, purpose, notes, individuals_served, status, created_by, created_at)
+                 VALUES ($1, $2, $3, $4, $5, 'Approved', $6, NOW())
                  RETURNING *`,
-                [beneficiary_id, urgency || 'Medium', purpose, notes]
+                [
+                    beneficiary_id, 
+                    urgency || 'Medium', 
+                    purpose, 
+                    notes,
+                    individuals_served || 1, // Default to 1 if not provided
+                    req.user?.user_id // The staff member creating the request
+                ]
             );
 
             const requestId = result.rows[0].request_id;
@@ -619,6 +638,100 @@ export const getBeneficiaryRequestById = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve beneficiary request',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Update beneficiary request details (purpose, urgency, notes, individuals_served)
+ */
+export const updateBeneficiaryRequest = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { purpose, urgency, notes, individuals_served } = req.body;
+
+        // Validate individuals_served if provided
+        if (individuals_served !== undefined && (individuals_served < 1 || !Number.isInteger(Number(individuals_served)))) {
+            return res.status(400).json({
+                success: false,
+                message: 'Individuals served must be a positive integer'
+            });
+        }
+
+        // Check if request exists
+        const existingRequest = await query(
+            'SELECT request_id, status FROM BeneficiaryRequests WHERE request_id = $1',
+            [requestId]
+        );
+
+        if (existingRequest.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Beneficiary request not found'
+            });
+        }
+
+        // Build dynamic UPDATE query
+        let updateFields = [];
+        let params = [];
+        let paramCount = 1;
+
+        if (purpose !== undefined) {
+            updateFields.push(`purpose = $${paramCount++}`);
+            params.push(purpose);
+        }
+        if (urgency !== undefined) {
+            updateFields.push(`urgency = $${paramCount++}`);
+            params.push(urgency);
+        }
+        if (notes !== undefined) {
+            updateFields.push(`notes = $${paramCount++}`);
+            params.push(notes);
+        }
+        if (individuals_served !== undefined) {
+            updateFields.push(`individuals_served = $${paramCount++}`);
+            params.push(individuals_served);
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No fields to update'
+            });
+        }
+
+        // Add updated_by and updated_at
+        updateFields.push(`updated_by = $${paramCount++}`);
+        params.push(req.user?.user_id);
+        updateFields.push(`updated_at = NOW()`);
+
+        // Add request_id as last parameter
+        params.push(requestId);
+
+        const updateQuery = `
+            UPDATE BeneficiaryRequests 
+            SET ${updateFields.join(', ')}
+            WHERE request_id = $${paramCount}
+            RETURNING *
+        `;
+
+        const result = await query(updateQuery, params);
+
+        // Get updated request with full details
+        const updatedRequest = await getBeneficiaryRequestDetails(requestId);
+
+        res.json({
+            success: true,
+            data: updatedRequest,
+            message: 'Beneficiary request updated successfully'
+        });
+
+    } catch (error) {
+        console.error('Error updating beneficiary request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update beneficiary request',
             error: error.message
         });
     }

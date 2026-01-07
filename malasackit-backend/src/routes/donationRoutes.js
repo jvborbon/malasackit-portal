@@ -11,7 +11,11 @@ import {
     getDonationStatistics,
     getDonorStatistics,
     getDonationDetails,
-    getCalendarAppointments
+    getCalendarAppointments,
+    getCategoryTrends,
+    getCategoryDistribution,
+    getTopIndividualDonors,
+    getTopOrganizationDonors
 } from '../controllers/donationControllers.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
@@ -48,6 +52,18 @@ router.put('/requests/:donationId/status', authenticateToken, requireRole(['Reso
 
 // GET /api/donations/statistics - Get donation statistics for dashboard
 router.get('/statistics', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getDonationStatistics);
+
+// GET /api/donations/category-trends - Get donation trends by category per month
+router.get('/category-trends', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getCategoryTrends);
+
+// GET /api/donations/category-distribution - Get total items by category (for pie chart)
+router.get('/category-distribution', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getCategoryDistribution);
+
+// GET /api/donations/top-individual-donors - Get top individual donors
+router.get('/top-individual-donors', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getTopIndividualDonors);
+
+// GET /api/donations/top-organization-donors - Get top organization donors
+router.get('/top-organization-donors', authenticateToken, requireRole(['Resource Staff', 'Executive Admin']), getTopOrganizationDonors);
 
 // GET /api/donations/donor-statistics - Get donor-specific statistics for donor dashboard
 router.get('/donor-statistics', authenticateToken, getDonorStatistics);

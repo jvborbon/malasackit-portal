@@ -163,6 +163,9 @@ export const getAllDistributionPlans = async (req, res) => {
             status,
             dateFrom,
             dateTo,
+            year,
+            month,
+            search,
             created_by,
             limit = 20,
             offset = 0,
@@ -184,6 +187,30 @@ export const getAllDistributionPlans = async (req, res) => {
             params.push(created_by);
         }
 
+        // Handle search
+        if (search) {
+            whereConditions.push(`(
+                b.name ILIKE $${paramCount} OR 
+                br.purpose ILIKE $${paramCount} OR 
+                dp.plan_id::text ILIKE $${paramCount} OR
+                u1.full_name ILIKE $${paramCount}
+            )`);
+            params.push(`%${search}%`);
+            paramCount++;
+        }
+
+        // Handle year and month filters
+        if (year) {
+            whereConditions.push(`EXTRACT(YEAR FROM dp.planned_date) = $${paramCount++}`);
+            params.push(parseInt(year));
+        }
+
+        if (month) {
+            whereConditions.push(`EXTRACT(MONTH FROM dp.planned_date) = $${paramCount++}`);
+            params.push(parseInt(month));
+        }
+
+        // Handle legacy date range filters
         if (dateFrom) {
             whereConditions.push(`DATE(dp.created_at) >= $${paramCount++}`);
             params.push(dateFrom);
@@ -197,8 +224,14 @@ export const getAllDistributionPlans = async (req, res) => {
         const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
         // Validate sort column
-        const allowedSortColumns = ['created_at', 'planned_date', 'status'];
-        const validSortBy = allowedSortColumns.includes(sortBy) ? `dp.${sortBy}` : 'dp.created_at';
+        const sortColumnMap = {
+            'created_at': 'dp.created_at',
+            'planned_date': 'dp.planned_date',
+            'distribution_date': 'dp.planned_date',
+            'status': 'dp.status',
+            'beneficiary_name': 'b.name'
+        };
+        const validSortBy = sortColumnMap[sortBy] || 'dp.created_at';
         const validSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
         const plansQuery = `
@@ -232,6 +265,7 @@ export const getAllDistributionPlans = async (req, res) => {
             FROM DistributionPlans dp
             JOIN BeneficiaryRequests br ON dp.request_id = br.request_id
             JOIN Beneficiaries b ON br.beneficiary_id = b.beneficiary_id
+            LEFT JOIN Users u1 ON dp.created_by = u1.user_id
             ${whereClause}
         `;
 
@@ -734,6 +768,101 @@ export const getDistributionStatistics = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve distribution statistics',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get distribution summary for report generation
+ */
+export const getDistributionSummary = async (req, res) => {
+    try {
+        const { year, month, status, search } = req.query;
+
+        // Build WHERE conditions
+        let whereConditions = [];
+        let queryParams = [];
+        let paramCounter = 1;
+
+        if (year) {
+            whereConditions.push(`EXTRACT(YEAR FROM dp.planned_date) = $${paramCounter}`);
+            queryParams.push(year);
+            paramCounter++;
+        }
+
+        if (month) {
+            whereConditions.push(`EXTRACT(MONTH FROM dp.planned_date) = $${paramCounter}`);
+            queryParams.push(month);
+            paramCounter++;
+        }
+
+        if (status) {
+            whereConditions.push(`dp.status = $${paramCounter}`);
+            queryParams.push(status);
+            paramCounter++;
+        }
+
+        if (search) {
+            whereConditions.push(`(b.name ILIKE $${paramCounter} OR br.purpose ILIKE $${paramCounter})`);
+            queryParams.push(`%${search}%`);
+            paramCounter++;
+        }
+
+        const whereClause = whereConditions.length > 0 
+            ? 'WHERE ' + whereConditions.join(' AND ')
+            : '';
+
+        // Get summary statistics
+        const summaryQuery = `
+            SELECT 
+                COUNT(DISTINCT dp.plan_id) as total_plans,
+                COUNT(DISTINCT CASE WHEN dp.status = 'Draft' THEN dp.plan_id END) as draft_count,
+                COUNT(DISTINCT CASE WHEN dp.status = 'Approved' THEN dp.plan_id END) as approved_count,
+                COUNT(DISTINCT CASE WHEN dp.status = 'Completed' THEN dp.plan_id END) as completed_count,
+                COUNT(DISTINCT CASE WHEN dp.status = 'Cancelled' THEN dp.plan_id END) as cancelled_count,
+                COUNT(DISTINCT br.beneficiary_id) as unique_beneficiaries,
+                COALESCE(SUM(COALESCE(br.individuals_served, 1)), 0) as total_individuals_served,
+                COALESCE(SUM(
+                    (SELECT COALESCE(SUM(dpi.quantity), 0) 
+                     FROM DistributionPlanItems dpi 
+                     WHERE dpi.plan_id = dp.plan_id)
+                ), 0) as total_items,
+                COALESCE(SUM(
+                    (SELECT COALESCE(SUM(dpi.allocated_value), 0) 
+                     FROM DistributionPlanItems dpi 
+                     WHERE dpi.plan_id = dp.plan_id)
+                ), 0) as total_value
+            FROM DistributionPlans dp
+            LEFT JOIN BeneficiaryRequests br ON dp.request_id = br.request_id
+            LEFT JOIN Beneficiaries b ON br.beneficiary_id = b.beneficiary_id
+            ${whereClause}
+        `;
+
+        const result = await query(summaryQuery, queryParams);
+        const summary = result.rows[0];
+
+        res.json({
+            success: true,
+            data: {
+                totalPlans: parseInt(summary.total_plans) || 0,
+                draftCount: parseInt(summary.draft_count) || 0,
+                approvedCount: parseInt(summary.approved_count) || 0,
+                completedCount: parseInt(summary.completed_count) || 0,
+                cancelledCount: parseInt(summary.cancelled_count) || 0,
+                uniqueBeneficiaries: parseInt(summary.unique_beneficiaries) || 0,
+                totalIndividualsServed: parseInt(summary.total_individuals_served) || 0,
+                totalItems: parseInt(summary.total_items) || 0,
+                totalValue: parseFloat(summary.total_value) || 0
+            },
+            message: 'Distribution summary retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting distribution summary:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve distribution summary',
             error: error.message
         });
     }

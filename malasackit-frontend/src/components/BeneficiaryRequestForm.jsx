@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HiX, HiUser, HiLocationMarker, HiClipboardList, HiExclamationCircle, HiPlus, HiTrash } from 'react-icons/hi';
+import { HiX, HiUser, HiLocationMarker, HiClipboardList, HiExclamationCircle, HiPlus, HiTrash, HiSearch } from 'react-icons/hi';
 import beneficiaryService from '../services/beneficiaryService';
 import { getCategories } from '../services/inventoryService';
 import { getItemTypesByCategory } from '../services/donationService';
@@ -14,6 +14,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
   const [showCreateBeneficiary, setShowCreateBeneficiary] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Item selection state
   const [categories, setCategories] = useState([]);
@@ -34,7 +35,8 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
   const [requestForm, setRequestForm] = useState({
     purpose: "",
     urgency: "Medium",
-    notes: ""
+    notes: "",
+    individuals_served: ""
   });
 
   // Success modal hook
@@ -165,6 +167,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
         purpose: requestForm.purpose,
         urgency: requestForm.urgency,
         notes: requestForm.notes,
+        individuals_served: parseInt(requestForm.individuals_served) || 1,
         items: validItems.map(item => ({
           itemtype_id: item.itemtype_id,
           quantity_requested: item.requested_quantity
@@ -181,6 +184,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
           beneficiary: selectedBeneficiary.name,
           purpose: requestForm.purpose,
           urgency: requestForm.urgency,
+          individuals_served: requestForm.individuals_served,
           items_requested: validItems.length,
           status: 'Approved'
         },
@@ -199,8 +203,8 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
         });
       }
       
-      // Reset and close
-      handleClose();
+      // Don't close immediately - let user see the success modal
+      // handleClose will be called when they click the modal button
     } catch (err) {
       setError(err.message);
     } finally {
@@ -224,7 +228,8 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
     setRequestForm({
       purpose: "",
       urgency: "Medium",
-      notes: ""
+      notes: "",
+      individuals_served: ""
     });
     // Reset item selection state
     setSelectedCategory('');
@@ -322,13 +327,46 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                       </button>
                     </div>
 
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <HiSearch className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search by name, type, or address..."
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                      />
+                    </div>
+
                     {loading ? (
                       <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
                       </div>
                     ) : (
                       <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
-                        {beneficiaries.map((beneficiary) => (
+                        {(() => {
+                          const filteredBeneficiaries = beneficiaries.filter(beneficiary => 
+                            beneficiary.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            beneficiary.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (beneficiary.address && beneficiary.address.toLowerCase().includes(searchTerm.toLowerCase()))
+                          );
+                          
+                          if (filteredBeneficiaries.length === 0) {
+                            return (
+                              <div className="p-8 text-center text-gray-500">
+                                <HiSearch className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                                <p>No beneficiaries found</p>
+                                {searchTerm && (
+                                  <p className="text-sm mt-1">Try a different search term</p>
+                                )}
+                              </div>
+                            );
+                          }
+                          
+                          return filteredBeneficiaries.map((beneficiary) => (
                           <div
                             key={beneficiary.beneficiary_id}
                             className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 ${
@@ -353,7 +391,8 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                               </div>
                             </div>
                           </div>
-                        ))}
+                        ));
+                        })()}
                       </div>
                     )}
 
@@ -392,7 +431,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           required
                           value={beneficiaryForm.name}
                           onChange={(e) => handleBeneficiaryChange('name', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
                           placeholder="Enter beneficiary name"
                         />
                       </div>
@@ -405,7 +444,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           required
                           value={beneficiaryForm.type}
                           onChange={(e) => handleBeneficiaryChange('type', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
                         >
                           <option value="">Select type</option>
                           <option value="Individual">Individual</option>
@@ -421,7 +460,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           type="text"
                           value={beneficiaryForm.contact_person}
                           onChange={(e) => handleBeneficiaryChange('contact_person', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
                           placeholder="Enter contact person"
                         />
                       </div>
@@ -432,7 +471,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           type="tel"
                           value={beneficiaryForm.phone}
                           onChange={(e) => handleBeneficiaryChange('phone', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
                           placeholder="Enter phone number"
                         />
                       </div>
@@ -443,7 +482,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           rows="2"
                           value={beneficiaryForm.address}
                           onChange={(e) => handleBeneficiaryChange('address', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
                           placeholder="Enter address"
                         />
                       </div>
@@ -492,7 +531,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     required
                     value={requestForm.purpose}
                     onChange={(e) => handleRequestChange('purpose', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     placeholder="Describe the purpose or reason for this request in detail..."
                   />
                 </div>
@@ -505,12 +544,30 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     required
                     value={requestForm.urgency}
                     onChange={(e) => handleRequestChange('urgency', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   >
                     <option value="Low">Low - Routine assistance</option>
                     <option value="Medium">Medium - Standard need</option>
                     <option value="High">High - Urgent assistance required</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Individuals/Families to be Served <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={requestForm.individuals_served}
+                    onChange={(e) => handleRequestChange('individuals_served', e.target.value)}
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="e.g., 50 families, 100 individuals"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Enter the total number of people/families who will benefit from this assistance
+                  </p>
                 </div>
 
                 <div>
@@ -521,7 +578,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     rows="3"
                     value={requestForm.notes}
                     onChange={(e) => handleRequestChange('notes', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     placeholder="Any additional information about the request..."
                   />
                 </div>
@@ -575,7 +632,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     >
                       <option value="">Select a category to add items</option>
                       {categories.map((category) => (
@@ -608,7 +665,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                             <select
                               value={item.itemtype_id}
                               onChange={(e) => updateSelectedItem(item.id, 'itemtype_id', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
                               required
                             >
                               <option value="">Select item type</option>
@@ -625,7 +682,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                               min="1"
                               value={item.requested_quantity}
                               onChange={(e) => updateSelectedItem(item.id, 'requested_quantity', parseInt(e.target.value) || 1)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
                               placeholder="Qty"
                             />
                           </div>
@@ -684,7 +741,10 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
       {/* Common Success Modal */}
       <SuccessModal
         isOpen={isSuccessOpen}
-        onClose={hideSuccess}
+        onClose={() => {
+          hideSuccess();
+          handleClose();
+        }}
         title={successData.title}
         message={successData.message}
         details={successData.details}

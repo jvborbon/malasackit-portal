@@ -206,7 +206,7 @@ const EditDonationModal = ({ donationId, onClose, onSuccess }) => {
                             value={formData.notes}
                             onChange={(e) => handleInputChange('notes', e.target.value)}
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white text-gray-900"
                             placeholder="Any additional information..."
                         />
                     </div>

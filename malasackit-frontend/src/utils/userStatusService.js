@@ -5,53 +5,11 @@ export const useUserStatusUpdater = (users, setUsers, intervalMs = 60000) => { /
     const intervalRef = useRef(null);
     
     useEffect(() => {
-        // Function to update user statuses based on last login
-        const updateUserStatuses = () => {
-            const now = new Date();
-            
-            const updatedUsers = users.map(user => {
-                if (user.lastLogin === 'Never') {
-                    return { ...user, status: 'inactive' };
-                }
-                
-                try {
-                    const lastLoginDate = new Date(user.lastLogin);
-                    const minutesSinceLogin = (now - lastLoginDate) / (1000 * 60);
-                    const daysSinceLogin = minutesSinceLogin / (60 * 24);
-                    
-                    let newStatus;
-                    if (daysSinceLogin > 30) {
-                        newStatus = 'inactive';
-                    } else if (minutesSinceLogin <= 15) {
-                        newStatus = 'online';
-                    } else {
-                        newStatus = 'offline';
-                    }
-                    
-                    // Only update if status changed
-                    if (user.status !== newStatus) {
-                        return { ...user, status: newStatus };
-                    }
-                    return user;
-                } catch (error) {
-                    console.error('Error parsing last login date:', error);
-                    return { ...user, status: 'inactive' };
-                }
-            });
-            
-            // Check if any status actually changed
-            const hasChanges = updatedUsers.some((user, index) => user.status !== users[index]?.status);
-            if (hasChanges) {
-                setUsers(updatedUsers);
-            }
-        };
+        // Status is now managed by backend based on actual login/logout
+        // No need to recalculate on frontend
+        // This hook is kept for compatibility but does nothing
         
-        // Set up interval for real-time updates
-        if (users.length > 0) {
-            intervalRef.current = setInterval(updateUserStatuses, intervalMs);
-        }
-        
-        // Cleanup interval on unmount or users change
+        // Cleanup interval on unmount
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -81,15 +39,17 @@ export const getStatusPriority = (status) => {
 };
 
 // Helper function to format time since last activity
-export const getTimeSinceActivity = (lastLogin) => {
+export const getTimeSinceActivity = (lastLogin, status, lastLogout = null) => {
     if (lastLogin === 'Never') {
         return 'Never logged in';
     }
     
     try {
-        const lastLoginDate = new Date(lastLogin);
+        // For offline users, use last_logout time; otherwise use last_login
+        const activityTime = (status === 'offline' && lastLogout) ? lastLogout : lastLogin;
+        const activityDate = new Date(activityTime);
         const now = new Date();
-        const diffMs = now - lastLoginDate;
+        const diffMs = now - activityDate;
         const diffMinutes = Math.floor(diffMs / (1000 * 60));
         const diffHours = Math.floor(diffMinutes / 60);
         const diffDays = Math.floor(diffHours / 24);
@@ -97,11 +57,11 @@ export const getTimeSinceActivity = (lastLogin) => {
         if (diffMinutes < 1) {
             return 'Just now';
         } else if (diffMinutes < 60) {
-            return `${diffMinutes} minutes ago`;
+            return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
         } else if (diffHours < 24) {
-            return `${diffHours} hours ago`;
+            return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
         } else {
-            return `${diffDays} days ago`;
+            return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
         }
     } catch (error) {
         return 'Unknown';

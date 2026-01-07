@@ -102,11 +102,11 @@ export default function DonorKPICards() {
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-5 sm:mb-6 md:mb-7 lg:mb-8">
-            {/* Total Worth of Response */}
+            {/* Total Worth of Donations Received */}
             <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-red-600 hover:shadow-md transition-shadow">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-red-600 font-semibold text-sm sm:text-base">Total Worth of Response</h3>
+                    <h3 className="text-red-600 font-semibold text-sm sm:text-base">Total Worth of Donations Received</h3>
                     <div className="bg-red-100 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
                         <HiTrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                     </div>

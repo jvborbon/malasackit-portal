@@ -8,7 +8,7 @@ export const loginUser = async (emailOrName, password) => {
         
         const userQuery = `
             SELECT 
-                u.user_id, u.full_name, u.email, u.status, u.is_approved,
+                u.user_id, u.full_name, u.email, u.status, u.is_approved, u.email_verified,
                 u.role_id, r.role_name, lc.password_hash
             FROM Users u
             LEFT JOIN Login_Credentials lc ON u.user_id = lc.user_id
@@ -43,8 +43,8 @@ export const loginUser = async (emailOrName, password) => {
             return { success: false, message: 'Incorrect password. Please try again.' };
         }
         
-        // Update last login
-        await query('UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = $1', [user.user_id]);
+        // Update last login and set user online
+        await query('UPDATE Users SET last_login = CURRENT_TIMESTAMP, is_online = true WHERE user_id = $1', [user.user_id]);
         
         // Log login activity
         await query(

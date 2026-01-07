@@ -1,7 +1,7 @@
 import React from 'react';
-import { HiSearch, HiUserAdd, HiRefresh } from 'react-icons/hi';
+import { HiSearch, HiUserAdd, HiRefresh, HiDownload } from 'react-icons/hi';
 
-function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter, yearFilter, setYearFilter, monthFilter, setMonthFilter, onWalkInClick, userRole, onRefresh, loading }) {
+function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter, yearFilter, setYearFilter, monthFilter, setMonthFilter, onWalkInClick, userRole, onRefresh, loading, onDownloadReport }) {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
   
@@ -67,6 +67,17 @@ function SearchAndFilters({ search, setSearch, statusFilter, setStatusFilter, ye
         <option value="Completed">Completed</option>
         <option value="Rejected">Rejected</option>
       </select>
+
+      {/* Download Report Button */}
+      <button 
+        onClick={onDownloadReport}
+        disabled={loading}
+        className="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 disabled:opacity-50 rounded-lg border border-blue-300 bg-white hover:bg-blue-50 text-sm font-medium whitespace-nowrap"
+        title="Download Report"
+      >
+        <HiDownload className="w-4 h-4 mr-2" />
+        Download Report
+      </button>
 
       {/* Refresh Button */}
       <button 

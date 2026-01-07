@@ -227,7 +227,7 @@ export default function ResetPasswordForm() {
                             value={formData.password}
                             onChange={handleInputChange}
                             placeholder="New Password"
-                            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
                             required
                             disabled={isLoading || success}
                         />
@@ -248,7 +248,7 @@ export default function ResetPasswordForm() {
                             value={formData.confirmPassword}
                             onChange={handleInputChange}
                             placeholder="Confirm New Password"
-                            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
                             required
                             disabled={isLoading || success}
                         />

@@ -7,6 +7,7 @@ import PersonalInfoStep from './registration/PersonalInfoStep';
 import AddressInfoStep from './registration/AddressInfoStep';
 import ParishVicariateStep from './registration/ParishVicariateStep';
 import SecurityStep from './registration/SecurityStep';
+import Modal from './common/Modal';
 import { sanitizeInput, sanitizeEmail, sanitizePhone, sanitizeFormData } from '../utils/sanitization';
 
 export default function RegisterForm({ onSwitchToLogin }) {
@@ -15,6 +16,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     
     // Address dropdown data
     const [regions, setRegions] = useState([]);
@@ -336,8 +339,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
             
             if (result.success) {
                 // Show success message and redirect to login
-                alert(`🎉 ${result.message}\n\nYou can now log in with your credentials.`);
-                onSwitchToLogin();
+                setSuccessMessage(result.message || 'Registration successful!');
+                setShowSuccessModal(true);
             } else {
                 setSubmitError(result.message || 'Registration failed. Please try again.');
             }
@@ -431,6 +434,39 @@ export default function RegisterForm({ onSwitchToLogin }) {
                     />
                 )}
             </div>
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <Modal 
+                    isOpen={true} 
+                    onClose={() => {
+                        setShowSuccessModal(false);
+                        onSwitchToLogin();
+                    }} 
+                    maxWidth="max-w-md" 
+                    showHeader={false}
+                >
+                    <div className="text-center py-4">
+                        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                            <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">🎉 Registration Successful!</h3>
+                        <p className="text-sm text-gray-600 mb-4">{successMessage}</p>
+                        <p className="text-sm text-gray-500 mb-6">You can now log in with your credentials.</p>
+                        <button
+                            onClick={() => {
+                                setShowSuccessModal(false);
+                                onSwitchToLogin();
+                            }}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                        >
+                            Go to Login
+                        </button>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }

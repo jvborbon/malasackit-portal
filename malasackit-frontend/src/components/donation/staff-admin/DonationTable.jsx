@@ -1,5 +1,5 @@
 import React from 'react';
-import { HiEye, HiCheck, HiX, HiRefresh } from 'react-icons/hi';
+import { HiEye, HiCheck, HiX, HiRefresh, HiDocumentText } from 'react-icons/hi';
 import { formatTime } from '../../../utils/donationHelpers';
 
 function DonationTable({ 
@@ -8,6 +8,7 @@ function DonationTable({
   processingId,
   onViewDetails, 
   onStatusChange,
+  onGenerateReceipt,
   getStatusColor,
   formatDate,
   formatCurrency 
@@ -143,6 +144,16 @@ function DonationTable({
                       >
                         <HiEye className="w-5 h-5" />
                       </button>
+                      
+                      {(donation.status === 'Completed' || donation.status === 'Approved') && (
+                        <button
+                          onClick={() => onGenerateReceipt(donation)}
+                          className="text-indigo-600 hover:text-indigo-900 transition-colors duration-150"
+                          title="Generate Receipt"
+                        >
+                          <HiDocumentText className="w-5 h-5" />
+                        </button>
+                      )}
                       
                       {donation.status === 'Pending' && (
                         <>

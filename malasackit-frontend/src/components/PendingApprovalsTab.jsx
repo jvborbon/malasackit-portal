@@ -10,6 +10,7 @@ import {
     HiRefresh
 } from 'react-icons/hi';
 import api from '../utils/api';
+import Modal from './common/Modal';
 
 // Pending Approvals Tab Component
 export function PendingApprovalsTab() {
@@ -17,6 +18,10 @@ export function PendingApprovalsTab() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [processingId, setProcessingId] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Fetch pending users
     const fetchPendingUsers = async () => {
@@ -44,11 +49,17 @@ export function PendingApprovalsTab() {
                 setPendingUsers(prev => prev.filter(user => user.user_id !== userId));
                 
                 // Show success message
-                alert('User approved successfully! They will receive an email notification.');
+                setSuccessMessage('User approved successfully! They will receive an email notification.');
+                setShowSuccessModal(true);
+                
+                // Auto-hide after 3 seconds
+                setTimeout(() => setShowSuccessModal(false), 3000);
             }
         } catch (error) {
             console.error('Error approving user:', error);
-            alert('Failed to approve user. Please try again.');
+            setErrorMessage('Failed to approve user. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => setShowErrorModal(false), 3000);
         } finally {
             setProcessingId(null);
         }
@@ -71,11 +82,17 @@ export function PendingApprovalsTab() {
                 setPendingUsers(prev => prev.filter(user => user.user_id !== userId));
                 
                 // Show success message
-                alert('User registration rejected and removed.');
+                setSuccessMessage('User registration rejected and removed.');
+                setShowSuccessModal(true);
+                
+                // Auto-hide after 3 seconds
+                setTimeout(() => setShowSuccessModal(false), 3000);
             }
         } catch (error) {
             console.error('Error rejecting user:', error);
-            alert('Failed to reject user. Please try again.');
+            setErrorMessage('Failed to reject user. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => setShowErrorModal(false), 3000);
         } finally {
             setProcessingId(null);
         }
@@ -255,6 +272,46 @@ export function PendingApprovalsTab() {
                         </table>
                     </div>
                 </div>
+            )}
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <Modal 
+                    isOpen={true} 
+                    onClose={() => setShowSuccessModal(false)} 
+                    maxWidth="max-w-md" 
+                    showHeader={false}
+                >
+                    <div className="text-center py-4">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Success!</h3>
+                        <p className="text-sm text-gray-600">{successMessage}</p>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Error Modal */}
+            {showErrorModal && (
+                <Modal 
+                    isOpen={true} 
+                    onClose={() => setShowErrorModal(false)} 
+                    maxWidth="max-w-md" 
+                    showHeader={false}
+                >
+                    <div className="text-center py-4">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                            <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
+                        <p className="text-sm text-gray-600">{errorMessage}</p>
+                    </div>
+                </Modal>
             )}
         </div>
     );

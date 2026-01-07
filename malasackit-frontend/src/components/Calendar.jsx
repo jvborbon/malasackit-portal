@@ -15,13 +15,20 @@ import {
 } from 'react-icons/hi';
 import { formatDate, formatTime } from '../utils/donationHelpers';
 import { getCalendarAppointments } from '../services/donationService';
+import appointmentService from '../services/appointmentService';
+import AddEventModal from './AddEventModal';
+import SuccessModal from './common/SuccessModal';
 
-export default function CalendarComponent() {
+export default function CalendarComponent({ userRole = 'donor' }) {
     const [date, setDate] = useState(new Date());
     const [view, setView] = useState('month');
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showAddEventModal, setShowAddEventModal] = useState(false);
+    const [creatingEvent, setCreatingEvent] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Load calendar appointments when component mounts or date changes
     useEffect(() => {
@@ -64,6 +71,26 @@ export default function CalendarComponent() {
             setEvents([]); // Fallback to empty events
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCreateEvent = async (eventData) => {
+        try {
+            setCreatingEvent(true);
+            const response = await appointmentService.createEvent(eventData);
+            
+            if (response.success) {
+                setSuccessMessage('Event created successfully!');
+                setShowSuccessModal(true);
+                setShowAddEventModal(false);
+                // Refresh calendar
+                loadCalendarAppointments();
+            }
+        } catch (error) {
+            console.error('Error creating event:', error);
+            setError('Failed to create event. Please try again.');
+        } finally {
+            setCreatingEvent(false);
         }
     };
 
@@ -159,10 +186,14 @@ export default function CalendarComponent() {
                         <HiRefresh className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </button>
-                    <button className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-                        <HiPlus className="w-4 h-4 mr-2" />
-                        Add Event
-                    </button>
+                    {userRole === 'admin' && (
+                        <button className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                            onClick={() => setShowAddEventModal(true)}
+                        >
+                            <HiPlus className="w-4 h-4 mr-2" />
+                            Add Event
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -344,6 +375,21 @@ export default function CalendarComponent() {
                     </div>
                 </div>
             </div>
+
+            {/* Add Event Modal */}
+            <AddEventModal
+                isOpen={showAddEventModal}
+                onClose={() => setShowAddEventModal(false)}
+                onSubmit={handleCreateEvent}
+                loading={creatingEvent}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                message={successMessage}
+            />
         </div>
     );
 }

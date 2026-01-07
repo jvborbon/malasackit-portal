@@ -3,9 +3,11 @@ import {
     getAvailableSlots,
     createAppointment,
     updateAppointment,
-    cancelAppointment
+    cancelAppointment,
+    createEvent,
+    getAllAppointments
 } from '../controllers/appointmentControllers.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -23,5 +25,11 @@ router.put('/:appointmentId', updateAppointment);
 
 // DELETE /api/appointments/:appointmentId - Cancel an appointment
 router.delete('/:appointmentId', cancelAppointment);
+
+// POST /api/appointments/events - Create standalone event (Admin/Staff only)
+router.post('/events', requireRole(['Resource Staff', 'Executive Admin']), createEvent);
+
+// GET /api/appointments/all - Get all appointments (Admin/Staff only)
+router.get('/all', requireRole(['Resource Staff', 'Executive Admin']), getAllAppointments);
 
 export default router;

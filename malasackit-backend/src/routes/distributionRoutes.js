@@ -6,7 +6,8 @@ import {
     updateDistributionPlanStatus,
     executeDistributionPlan,
     getDistributionLogs,
-    getDistributionStatistics
+    getDistributionStatistics,
+    getDistributionSummary
 } from '../controllers/distributionControllers.js';
 import { 
     generateDistributionRecommendations,
@@ -31,6 +32,9 @@ router.post('/plans', requireRole(['Resource Staff', 'Executive Admin']), create
 
 // GET /api/distribution/plans/statistics - Get distribution statistics
 router.get('/plans/statistics', requireRole(['Resource Staff', 'Executive Admin']), getDistributionStatistics);
+
+// GET /api/distribution/summary - Get distribution summary for reports
+router.get('/summary', requireRole(['Resource Staff', 'Executive Admin']), getDistributionSummary);
 
 // GET /api/distribution/plans/:planId - Get specific distribution plan details
 router.get('/plans/:planId', requireRole(['Resource Staff', 'Executive Admin']), getDistributionPlanById);

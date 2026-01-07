@@ -3,8 +3,10 @@ import { loginUser } from '../services/users/userAuth.js';
 import { registerUser } from '../services/users/userRegistration.js'; // Re-enabled but logic disabled
 import { getPendingUsers, approveUser, rejectUser, getAllUsers, getUserActivityLogs } from '../services/users/userManagement.js';
 import { requestPasswordReset, verifyResetToken, resetPassword } from '../services/users/passwordReset.js';
-import { sendPasswordResetEmail, sendPasswordResetConfirmation } from '../services/emailService.js';
+import { sendPasswordResetEmail, sendPasswordResetConfirmation, sendEmailVerification } from '../services/emailService.js';
 import { generateToken, setTokenCookie, clearTokenCookie } from '../utilities/jwt.js';
+import crypto from 'crypto';
+import { query } from '../db.js';
 
 // Enhanced password validation function
 function validatePassword(password, userInfo = {}) {
@@ -132,6 +134,26 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
+        // Update user status to offline if authenticated
+        if (req.user && req.user.userId) {
+            console.log('Logging out user:', req.user.userId);
+            
+            const updateResult = await query(
+                'UPDATE Users SET is_online = false, last_logout = CURRENT_TIMESTAMP WHERE user_id = $1',
+                [req.user.userId]
+            );
+            
+            console.log('Logout update result:', updateResult.rowCount, 'rows updated');
+            
+            // Log logout activity
+            await query(
+                'INSERT INTO UserActivityLogs (user_id, action, description) VALUES ($1, $2, $3)',
+                [req.user.userId, 'USER_LOGOUT', 'User logged out of the system']
+            );
+        } else {
+            console.log('No authenticated user found in logout request');
+        }
+        
         // Clear the HTTP-only cookie
         clearTokenCookie(res);
         
@@ -151,14 +173,27 @@ export const logout = async (req, res) => {
 
 export const getProfile = async (req, res) => {
     try {
-        // User info is available from middleware (JWT payload)
-        // Convert JWT structure to match what frontend expects
-        const userProfile = {
-            user_id: req.user.userId,
-            email: req.user.email,
-            role_name: req.user.role,
-            // Add other fields if needed
-        };
+        const userId = req.user.userId;
+        
+        // Get full user profile from database with role name
+        const result = await query(
+            `SELECT u.user_id, u.full_name, u.email, u.contact_num, 
+                    u.region_id, u.province_id, u.municipality_id, u.barangay_id, 
+                    u.streetaddress, u.email_verified, u.role_id, r.role_name
+             FROM Users u
+             LEFT JOIN Roles r ON u.role_id = r.role_id
+             WHERE u.user_id = $1`,
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        const userProfile = result.rows[0];
         
         res.json({
             success: true,
@@ -170,6 +205,125 @@ export const getProfile = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Internal server error'
+        });
+    }
+};
+
+export const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.userId; // From JWT token
+        const { fullName, email, phone, regionId, provinceId, municipalityId, barangayId, streetAddress } = req.body;
+        
+        // Validation
+        if (!fullName || !email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Full name and email are required'
+            });
+        }
+        
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email format'
+            });
+        }
+        
+        // Phone validation (if provided)
+        if (phone) {
+            const phoneRegex = /^[0-9]{10,15}$/;
+            if (!phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid phone number format'
+                });
+            }
+        }
+        
+        // Import query function
+        const { query } = await import('../db.js');
+        
+        // Check if email is already taken by another user
+        const emailCheck = await query(
+            'SELECT user_id FROM Users WHERE email = $1 AND user_id != $2',
+            [email, userId]
+        );
+        
+        if (emailCheck.rows.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'Email is already in use by another account'
+            });
+        }
+        
+        // Update user profile (including location fields)
+        const updateQuery = `
+            UPDATE Users 
+            SET 
+                full_name = $1,
+                email = $2,
+                contact_num = $3,
+                region_id = $4,
+                province_id = $5,
+                municipality_id = $6,
+                barangay_id = $7,
+                streetaddress = $8,
+                updated_at = NOW()
+            WHERE user_id = $9
+            RETURNING user_id, full_name, email, contact_num, 
+                      region_id, province_id, municipality_id, barangay_id, streetaddress
+        `;
+        
+        const result = await query(updateQuery, [
+            fullName,
+            email,
+            phone || null,
+            regionId || null,
+            provinceId || null,
+            municipalityId || null,
+            barangayId || null,
+            streetAddress || null,
+            userId
+        ]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        // Log activity
+        await query(
+            'INSERT INTO UserActivityLogs (user_id, action, description) VALUES ($1, $2, $3)',
+            [userId, 'profile_updated', 'User updated their profile information']
+        );
+        
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: {
+                user: {
+                    user_id: result.rows[0].user_id,
+                    full_name: result.rows[0].full_name,
+                    email: result.rows[0].email,
+                    contact_num: result.rows[0].contact_num,
+                    region_id: result.rows[0].region_id,
+                    province_id: result.rows[0].province_id,
+                    municipality_id: result.rows[0].municipality_id,
+                    barangay_id: result.rows[0].barangay_id,
+                    streetaddress: result.rows[0].streetaddress
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update profile. Please try again.'
         });
     }
 };
@@ -590,6 +744,167 @@ export const resetPasswordController = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Internal server error'
+        });
+    }
+};
+
+// Email Verification Controllers
+export const sendVerificationEmailController = async (req, res) => {
+    try {
+        const userId = req.user.userId; // From JWT token
+        
+        // Get user info
+        const userResult = await query(
+            'SELECT user_id, full_name, email, email_verified FROM Users WHERE user_id = $1',
+            [userId]
+        );
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        const user = userResult.rows[0];
+        
+        // Check if already verified
+        if (user.email_verified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is already verified'
+            });
+        }
+        
+        // Generate JWT verification token (valid for 24 hours)
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const tokenData = {
+            userId: user.user_id,
+            email: user.email,
+            purpose: 'email_verification',
+            token: verificationToken
+        };
+        
+        // Store hashed token temporarily (expires in 24 hours)
+        const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+        
+        await query(
+            `UPDATE Login_Credentials 
+             SET email_verification_token = $1, email_verification_expires = $2 
+             WHERE user_id = $3`,
+            [hashedToken, tokenExpiry, userId]
+        );
+        
+        // Send verification email
+        const emailResult = await sendEmailVerification(user, verificationToken);
+        
+        if (!emailResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to send verification email. Please try again.'
+            });
+        }
+        
+        // Log activity
+        await query(
+            'INSERT INTO UserActivityLogs (user_id, action, description) VALUES ($1, $2, $3)',
+            [userId, 'email_verification_sent', 'Email verification link sent to user']
+        );
+        
+        res.json({
+            success: true,
+            message: 'Verification email sent successfully. Please check your inbox.'
+        });
+        
+    } catch (error) {
+        console.error('Send verification email error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to send verification email. Please try again.'
+        });
+    }
+};
+
+export const verifyEmailController = async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: 'Verification token is required'
+            });
+        }
+        
+        // Hash the provided token to compare with stored hash
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        
+        // Find user with matching token in Login_Credentials
+        const userResult = await query(
+            `SELECT u.user_id, u.full_name, u.email, u.email_verified, lc.email_verification_expires
+             FROM Users u
+             JOIN Login_Credentials lc ON u.user_id = lc.user_id
+             WHERE lc.email_verification_token = $1`,
+            [hashedToken]
+        );
+        
+        if (userResult.rows.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired verification token'
+            });
+        }
+        
+        const user = userResult.rows[0];
+        
+        // Check if already verified
+        if (user.email_verified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is already verified'
+            });
+        }
+        
+        // Check if token expired
+        if (new Date() > new Date(user.email_verification_expires)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Verification token has expired. Please request a new one.'
+            });
+        }
+        
+        // Update user email_verified status
+        await query(
+            'UPDATE Users SET email_verified = TRUE, updated_at = NOW() WHERE user_id = $1',
+            [user.user_id]
+        );
+        
+        // Clear token from Login_Credentials
+        await query(
+            `UPDATE Login_Credentials 
+             SET email_verification_token = NULL, 
+                 email_verification_expires = NULL 
+             WHERE user_id = $1`,
+            [user.user_id]
+        );
+        
+        // Log activity
+        await query(
+            'INSERT INTO UserActivityLogs (user_id, action, description) VALUES ($1, $2, $3)',
+            [user.user_id, 'email_verified', 'User verified their email address']
+        );
+        
+        res.json({
+            success: true,
+            message: 'Email verified successfully!'
+        });
+        
+    } catch (error) {
+        console.error('Verify email error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to verify email. Please try again.'
         });
     }
 };

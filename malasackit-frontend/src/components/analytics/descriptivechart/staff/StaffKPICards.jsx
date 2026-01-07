@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaHandsHelping, FaDollarSign, FaUsers } from 'react-icons/fa';
+import { FaHandsHelping, FaDollarSign, FaUsers, FaGift } from 'react-icons/fa';
 import dashboardService from '../../../../services/dashboardService';
 
 const StaffKPICards = () => {
@@ -16,12 +16,12 @@ const StaffKPICards = () => {
         const response = await dashboardService.getStaffKPIMetrics();
         
         if (response.success) {
-          const { totalWorth, donorsEngaged, beneficiariesServed } = response.data;
+          const { totalWorth, donorsEngaged, beneficiariesServed, totalWorthResponse } = response.data;
           
           const formattedKpiData = [
             {
               id: 1,
-              title: 'Total Worth of Response',
+              title: 'Total Worth of Donations Received',
               value: dashboardService.formatCurrency(totalWorth),
               rawValue: totalWorth,
               icon: <FaDollarSign className="w-8 h-8 text-red-600" />,
@@ -48,6 +48,16 @@ const StaffKPICards = () => {
               bgColor: 'bg-red-50',
               borderColor: 'border-red-200',
               textColor: 'text-red-600'
+            },
+            {
+              id: 4,
+              title: 'Total Worth of Response',
+              value: dashboardService.formatCurrency(totalWorthResponse),
+              rawValue: totalWorthResponse,
+              icon: <FaGift className="w-8 h-8 text-red-600" />,
+              bgColor: 'bg-red-50',
+              borderColor: 'border-red-200',
+              textColor: 'text-red-600'
             }
           ];
           
@@ -63,7 +73,7 @@ const StaffKPICards = () => {
         const fallbackKpiData = [
           {
             id: 1,
-            title: 'Total Worth of Response',
+            title: 'Total Worth of Donations Received',
             value: '₱0',
             rawValue: 0,
             icon: <FaDollarSign className="w-8 h-8 text-red-600" />,
@@ -90,6 +100,16 @@ const StaffKPICards = () => {
             bgColor: 'bg-red-50',
             borderColor: 'border-red-200',
             textColor: 'text-red-600'
+          },
+          {
+            id: 4,
+            title: 'Total Worth of Response',
+            value: '₱0',
+            rawValue: 0,
+            icon: <FaGift className="w-8 h-8 text-red-600" />,
+            bgColor: 'bg-red-50',
+            borderColor: 'border-red-200',
+            textColor: 'text-red-600'
           }
         ];
         setKpiData(fallbackKpiData);
@@ -103,8 +123,8 @@ const StaffKPICards = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {[1, 2, 3].map((index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {[1, 2, 3, 4].map((index) => (
           <div key={index} className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 shadow-sm animate-pulse">
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -140,7 +160,7 @@ const StaffKPICards = () => {
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {kpiData.map((kpi) => (
           <div
             key={kpi.id}

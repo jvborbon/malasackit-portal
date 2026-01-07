@@ -13,7 +13,10 @@ export const useDonationManagement = () => {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [processingId, setProcessingId] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -22,6 +25,14 @@ export const useDonationManagement = () => {
     total: 0,
     currentPage: 1,
     pages: 0
+  });
+
+  // Statistics state (aggregated from all filtered data, not just current page)
+  const [statistics, setStatistics] = useState({
+    completed: 0,
+    pending: 0,
+    approved: 0,
+    totalValue: 0
   });
 
   useEffect(() => {
@@ -62,6 +73,16 @@ export const useDonationManagement = () => {
           pages: response.pagination.pages,
           currentPage: response.pagination.currentPage
         }));
+        
+        // Update statistics from API response (aggregated across all filtered data)
+        if (response.statistics) {
+          setStatistics({
+            completed: response.statistics.completed || 0,
+            pending: response.statistics.pending || 0,
+            approved: response.statistics.approved || 0,
+            totalValue: parseFloat(response.statistics.totalValue || 0)
+          });
+        }
       }
     } catch (err) {
       console.error('Error loading donations:', err);
@@ -102,6 +123,7 @@ export const useDonationManagement = () => {
     if (!selectedDonation || !selectedDonation.newStatus) return;
 
     try {
+      setIsUpdating(true);
       setProcessingId(selectedDonation.donation.donation_id);
       const response = await updateDonationStatus(
         selectedDonation.donation.donation_id,
@@ -110,8 +132,25 @@ export const useDonationManagement = () => {
       );
 
       if (response.success) {
-        await loadDonations(); // Refresh the list
+        // Close status modal immediately
         setShowStatusModal(false);
+        
+        // Show success message
+        const statusText = selectedDonation.newStatus === 'Completed' ? 'marked as completed' : 
+                          selectedDonation.newStatus === 'Approved' ? 'approved' : 
+                          selectedDonation.newStatus === 'Rejected' ? 'rejected' : 'updated';
+        setSuccessMessage(`Donation request has been successfully ${statusText}!`);
+        setShowSuccessModal(true);
+        
+        // Refresh the list
+        await loadDonations();
+        
+        // Auto-hide success modal after 3 seconds
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          setSuccessMessage('');
+        }, 3000);
+        
         setSelectedDonation(null);
       }
     } catch (err) {
@@ -119,6 +158,7 @@ export const useDonationManagement = () => {
       setError('Failed to update donation status');
     } finally {
       setProcessingId(null);
+      setIsUpdating(false);
     }
   };
 
@@ -137,8 +177,15 @@ export const useDonationManagement = () => {
   };
 
   const closeStatusModal = () => {
-    setShowStatusModal(false);
-    setSelectedDonation(null);
+    if (!isUpdating) {
+      setShowStatusModal(false);
+      setSelectedDonation(null);
+    }
+  };
+
+  const closeSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessMessage('');
   };
 
   return {
@@ -154,9 +201,13 @@ export const useDonationManagement = () => {
     selectedDonation,
     showDetailsModal,
     showStatusModal,
+    showSuccessModal,
+    successMessage,
     processingId,
+    isUpdating,
     pagination,
     filteredDonations,
+    statistics,
     
     // Actions
     setSearch,
@@ -170,6 +221,7 @@ export const useDonationManagement = () => {
     confirmStatusChange,
     handlePageChange,
     closeDetailsModal,
-    closeStatusModal
+    closeStatusModal,
+    closeSuccessModal
   };
 };

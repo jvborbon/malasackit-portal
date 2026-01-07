@@ -17,7 +17,8 @@ import {
     HiX,
     HiUserGroup,
     HiChevronLeft,
-    HiChevronRight
+    HiChevronRight,
+    HiUserCircle
 } from 'react-icons/hi';
 import { useAuth } from '../auth/Authentication';
 import LogoutConfirm from './dialogs/LogoutConfim';
@@ -387,9 +388,11 @@ export default function DashboardLayout({ children, userRole }) {
                             <button
                                 type="button"
                                 onClick={handleAvatarClick}
-                                className="w-8 h-8 bg-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary transition"
+                                className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
                                 aria-label="Open profile settings"
-                            />
+                            >
+                                <HiUserCircle className="w-8 h-8" />
+                            </button>
                         </div>
                     </div>
                 </header>

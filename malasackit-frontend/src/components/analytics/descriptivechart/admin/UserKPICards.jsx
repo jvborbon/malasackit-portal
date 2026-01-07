@@ -83,46 +83,13 @@ export default function UserKPICards() {
             iconColor: 'text-purple-600',
             textColor: 'text-purple-900',
             subtitleColor: 'text-purple-600'
-        },
-        {
-            title: 'Total Donors',
-            value: userStats.totalDonors,
-            subtitle: 'All registered donors',
-            icon: HiUserGroup,
-            color: 'indigo',
-            bgColor: 'bg-indigo-50',
-            iconColor: 'text-indigo-600',
-            textColor: 'text-indigo-900',
-            subtitleColor: 'text-indigo-600'
-        },
-        {
-            title: 'Registered Donors',
-            value: userStats.registeredDonors,
-            subtitle: 'Admin approved donors',
-            icon: HiCheckCircle,
-            color: 'emerald',
-            bgColor: 'bg-emerald-50',
-            iconColor: 'text-emerald-600',
-            textColor: 'text-emerald-900',
-            subtitleColor: 'text-emerald-600'
-        },
-        {
-            title: 'Pending Approval',
-            value: userStats.nonRegisteredDonors,
-            subtitle: 'Awaiting admin approval',
-            icon: HiClock,
-            color: 'orange',
-            bgColor: 'bg-orange-50',
-            iconColor: 'text-orange-600',
-            textColor: 'text-orange-900',
-            subtitleColor: 'text-orange-600'
         }
     ];
 
     if (loading) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, index) => (
+                {[...Array(3)].map((_, index) => (
                     <div key={index} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
                         <div className="flex items-center">
                             <div className="flex-shrink-0">

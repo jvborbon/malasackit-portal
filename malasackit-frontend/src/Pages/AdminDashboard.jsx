@@ -1,16 +1,15 @@
 import DashboardLayout from '../components/DashboardLayout';
 import StaffKPICards from '../components/analytics/descriptivechart/staff/StaffKPICards';
 import DonationReportsChart from '../components/analytics/descriptivechart/staff/DonationReportsChart';
-import TopDonorsSection from '../components/analytics/descriptivechart/staff/TopDonorsSection';
-import TopParishesSection from '../components/analytics/descriptivechart/admin/TopParishesSection';
-import TopMunicipalitySection from '../components/analytics/descriptivechart/admin/TopMunicipalitySection';
+import TopIndividualDonors from '../components/analytics/descriptivechart/staff/TopIndividualDonors';
+import TopOrganizationDonors from '../components/analytics/descriptivechart/staff/TopOrganizationDonors';
 import DonatedItemsChart from '../components/analytics/descriptivechart/staff/DonatedItemsChart';
 import UserKPICards from '../components/analytics/descriptivechart/admin/UserKPICards';
 import UserProfileSettings from '../components/UserProfileSettings';
 import DonationRequests from '../components/DonationRequests';
-import BeneficiaryLogs from '../components/DistributionLogs';
+import BeneficiaryLogs from '../components/DistributionLogsNew';
 import UserManagement from '../components/UserManagement';
-import BeneficiaryManagement from '../components/BeneficiaryManagement';
+import BeneficiaryManagement from '../components/BeneficiaryManagementNew';
 import Calendar from '../components/Calendar';
 import Notifs from '../components/Notifs';
 import WalkInDonationForm from '../components/WalkInDonationForm';
@@ -27,10 +26,10 @@ export default function AdminDashboard() {
                             return <UserManagement />;
                         
                         case 'Beneficiary Management':
-                            return <BeneficiaryManagement />;
+                            return <BeneficiaryManagement/>;
                         
                         case 'Distribution Logs':
-                           return <BeneficiaryLogs />;
+                           return <BeneficiaryLogs userRole="admin" />;
 
                         case 'Donation Requests':
                             return <DonationRequests onWalkInClick={() => setShowWalkInModal(true)} userRole="admin" />;
@@ -39,7 +38,7 @@ export default function AdminDashboard() {
                             return <Notifs />;
 
                         case 'Calendar':
-                            return <Calendar />;
+                            return <Calendar userRole="admin" />;
 
                         case 'Settings':
                             return <UserProfileSettings userInfo={userInfo} />;
@@ -64,14 +63,15 @@ export default function AdminDashboard() {
                                         </div>
 
                                         <div className="bg-white rounded-lg shadow-sm p-6">
-                                            <TopDonorsSection />
+                                            <TopIndividualDonors />
                                         </div>
                                     </div>
 
-                                    {/* New KPI Sections Grid */}
+                                    {/* Top Donors Section Grid */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <TopParishesSection />
-                                        <TopMunicipalitySection />
+                                        <div className="bg-white rounded-lg shadow-sm p-6">
+                                            <TopOrganizationDonors />
+                                        </div>
                                     </div>
                                 </div>
                             );

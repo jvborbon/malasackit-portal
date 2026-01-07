@@ -160,6 +160,58 @@ const emailTemplates = {
         `
     }),
 
+    emailVerification: (userData, verificationToken) => ({
+        subject: '✉️ Verify Your Email - Malasackit Portal',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px;">🏥 Malasackit Portal</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Email Verification</p>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e5e5;">
+                    <h2 style="color: #dc2626; margin-top: 0;">Hello, ${userData.full_name || userData.fullName}!</h2>
+                    
+                    <p>Thank you for registering with Malasackit Portal. Please verify your email address to complete your registration.</p>
+                    
+                    <div style="background: #d1edff; border: 1px solid #0ea5e9; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #0369a1; margin: 0 0 10px 0;">📧 Email Verification Required</h3>
+                        <p style="color: #0369a1; margin: 0;">Click the button below to verify your email address. This link will expire in 24 hours for security reasons.</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <p style="margin-bottom: 20px; color: #666;">Click the button below to verify your email:</p>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}" 
+                           style="background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                            Verify Email →
+                        </a>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">Account Information:</h3>
+                        <ul style="color: #555; line-height: 1.6;">
+                            <li><strong>Email:</strong> ${userData.email}</li>
+                            <li><strong>Request Time:</strong> ${new Date().toLocaleString()}</li>
+                            <li><strong>Expires:</strong> ${new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleString()}</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #fee2e2; border: 1px solid #fecaca; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="color: #dc2626; margin: 0 0 10px 0;">⚠️ Did not request this?</h3>
+                        <p style="color: #991b1b; margin: 0;">If you did not create an account with Malasackit Portal, you can safely ignore this email. The verification link will expire automatically.</p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 30px 0;">
+                    
+                    <p style="color: #888; font-size: 12px; text-align: center; margin: 0;">
+                        This is an automated email from Malasackit Portal.<br>
+                        Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        `
+    }),
+
     passwordResetRequest: (userData, resetToken) => ({
         subject: '🔐 Password Reset Request - Malasackit Portal',
         html: `
@@ -560,4 +612,9 @@ export const sendDonationRejectionEmail = async (donorData, donationData, reason
 export const sendDonationCompletionEmail = async (donorData, donationData, itemCount, totalValue) => {
     const template = emailTemplates.donationCompleted(donorData, donationData, itemCount, totalValue);
     return await sendEmail(donorData.email, template);
+};
+
+export const sendEmailVerification = async (userData, verificationToken) => {
+    const template = emailTemplates.emailVerification(userData, verificationToken);
+    return await sendEmail(userData.email, template);
 };

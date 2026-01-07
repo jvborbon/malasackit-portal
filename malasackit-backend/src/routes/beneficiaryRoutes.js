@@ -8,6 +8,7 @@ import {
     createBeneficiaryRequest,
     getAllBeneficiaryRequests,
     getBeneficiaryRequestById,
+    updateBeneficiaryRequest,
     updateBeneficiaryRequestStatus,
     updateBeneficiaryRequestItems,
     getBeneficiaryRequestStatistics
@@ -49,6 +50,9 @@ router.post('/requests', requireRole(['Resource Staff', 'Executive Admin']), cre
 
 // GET /api/beneficiaries/requests/:requestId - Get beneficiary request with items
 router.get('/requests/:requestId', requireRole(['Resource Staff', 'Executive Admin']), getBeneficiaryRequestById);
+
+// PUT /api/beneficiaries/requests/:requestId - Update request details (purpose, urgency, notes, individuals_served)
+router.put('/requests/:requestId', requireRole(['Resource Staff', 'Executive Admin']), updateBeneficiaryRequest);
 
 // PUT /api/beneficiaries/requests/:requestId/status - Update request status
 router.put('/requests/:requestId/status', requireRole(['Resource Staff', 'Executive Admin']), updateBeneficiaryRequestStatus);

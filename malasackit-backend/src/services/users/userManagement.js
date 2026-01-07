@@ -195,24 +195,22 @@ export const getAllUsers = async (options = {}) => {
         const allUsersQuery = `
             SELECT 
                 u.user_id, u.full_name, u.email, u.contact_num, u.account_type,
-                u.created_at, u.updated_at, u.last_login, u.status, u.is_approved, u.email_verified,
+                u.created_at, u.updated_at, u.last_login, u.last_logout, u.status, u.is_approved, u.email_verified, u.is_online,
                 r.role_name,
                 reg.region_name,
                 p.province_name,
                 m.municipality_name,
                 b.barangay_name,
-                -- Calculate comprehensive user status (Online, Offline, Inactive)
+                -- Calculate status based on actual login/logout session
                 CASE 
-                    -- Inactive: Never logged in OR not logged in for more than 30 days
+                    WHEN u.is_online = true THEN 'online'
+                    WHEN u.last_logout IS NOT NULL THEN 'offline'
                     WHEN u.last_login IS NULL THEN 'inactive'
                     WHEN u.last_login < NOW() - INTERVAL '30 days' THEN 'inactive'
-                    -- Online: Logged in within the last 15 minutes (active session)
-                    WHEN u.last_login > NOW() - INTERVAL '15 minutes' THEN 'online'
-                    -- Offline: Logged in within 30 days but not in the last 15 minutes
                     ELSE 'offline'
                 END as activity_status,
-                -- Additional info for status calculation
-                EXTRACT(EPOCH FROM (NOW() - u.last_login))/60 as minutes_since_login
+                -- Last activity time for display
+                COALESCE(u.last_logout, u.last_login) as last_activity_time
             FROM Users u
             LEFT JOIN Roles r ON u.role_id = r.role_id
             LEFT JOIN table_region reg ON u.region_id = reg.region_id
@@ -222,11 +220,11 @@ export const getAllUsers = async (options = {}) => {
             ${whereClause}
             ORDER BY 
                 CASE 
-                    WHEN u.last_login > NOW() - INTERVAL '15 minutes' THEN 1  -- Online first
-                    WHEN u.last_login > NOW() - INTERVAL '30 days' THEN 2     -- Offline second  
-                    ELSE 3                                                    -- Inactive last
+                    WHEN u.is_online = true THEN 1                              -- Online first
+                    WHEN u.last_logout IS NOT NULL THEN 2                       -- Offline second  
+                    ELSE 3                                                      -- Inactive last
                 END,
-                u.last_login DESC NULLS LAST
+                COALESCE(u.last_logout, u.last_login) DESC NULLS LAST
             LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
         `;
 

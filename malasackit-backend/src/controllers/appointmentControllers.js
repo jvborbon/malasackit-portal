@@ -270,3 +270,117 @@ export const cancelAppointment = async (req, res) => {
         });
     }
 };
+
+/**
+ * Create standalone event (Admin/Staff only)
+ */
+export const createEvent = async (req, res) => {
+    try {
+        const { date, time, description, remarks } = req.body;
+        const userId = req.user.userId;
+
+        if (!date) {
+            return res.status(400).json({
+                success: false,
+                message: 'Date is required'
+            });
+        }
+
+        if (!description) {
+            return res.status(400).json({
+                success: false,
+                message: 'Description is required'
+            });
+        }
+
+        // Create event/appointment
+        const insertQuery = `
+            INSERT INTO Appointments (appointment_date, appointment_time, description, status, remarks)
+            VALUES ($1, $2, $3, 'Scheduled', $4)
+            RETURNING *
+        `;
+
+        const result = await query(insertQuery, [
+            date,
+            time || null,
+            description,
+            remarks || null
+        ]);
+
+        // Log activity
+        const activityQuery = `
+            INSERT INTO UserActivityLogs (user_id, action, description)
+            VALUES ($1, 'event_created', $2)
+        `;
+        await query(activityQuery, [
+            userId,
+            `Created event: ${description} on ${date}`
+        ]);
+
+        res.status(201).json({
+            success: true,
+            data: result.rows[0],
+            message: 'Event created successfully'
+        });
+
+    } catch (error) {
+        console.error('Error creating event:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create event',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get all appointments/events (Admin/Staff only)
+ */
+export const getAllAppointments = async (req, res) => {
+    try {
+        const { startDate, endDate, status } = req.query;
+
+        let whereConditions = [];
+        let params = [];
+        let paramCount = 1;
+
+        if (startDate) {
+            whereConditions.push(`appointment_date >= $${paramCount++}`);
+            params.push(startDate);
+        }
+
+        if (endDate) {
+            whereConditions.push(`appointment_date <= $${paramCount++}`);
+            params.push(endDate);
+        }
+
+        if (status) {
+            whereConditions.push(`status = $${paramCount++}`);
+            params.push(status);
+        }
+
+        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+        const appointmentsQuery = `
+            SELECT * FROM Appointments
+            ${whereClause}
+            ORDER BY appointment_date DESC, appointment_time DESC
+        `;
+
+        const result = await query(appointmentsQuery, params);
+
+        res.json({
+            success: true,
+            data: result.rows,
+            message: 'Appointments retrieved successfully'
+        });
+
+    } catch (error) {
+        console.error('Error getting appointments:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve appointments',
+            error: error.message
+        });
+    }
+};
