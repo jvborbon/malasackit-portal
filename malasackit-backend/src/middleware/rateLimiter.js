@@ -14,7 +14,7 @@ export const createApiLimiter = (windowMinutes = 15, max = 300) => rateLimit({
 // Strict login rate limiter
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 12, // Allow 12 login attempts per window
+  max: 50, // Allow 50 login attempts per window (increased for testing)
   skipSuccessfulRequests: true, // Don't count successful logins
   message: 'Too many login attempts. Please try again after 15 minutes.',
   standardHeaders: true,
@@ -24,7 +24,7 @@ export const loginLimiter = rateLimit({
 // Password reset rate limiter
 export const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // Only 3 password reset requests per hour
+  max: 10, // 10 password reset requests per hour (increased from 3)
   message: 'Too many password reset requests. Please try again after 1 hour.',
   standardHeaders: true,
   legacyHeaders: false
@@ -33,7 +33,7 @@ export const passwordResetLimiter = rateLimit({
 // Account creation rate limiter
 export const accountCreationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Maximum 10 account creations per hour
+  max: 20, // 20 account creations per hour (increased from 10)
   message: 'Too many account creation attempts. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false
@@ -42,7 +42,7 @@ export const accountCreationLimiter = rateLimit({
 // Write operation rate limiter
 export const writeOperationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 write operations per window
+  max: 200, // 200 write operations per window (increased from 100)
   message: 'Too many write operations. Please slow down.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -52,7 +52,7 @@ export const writeOperationLimiter = rateLimit({
 // Combined security middleware for authentication endpoints
 export const authSecurityLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 requests to auth endpoints per window
+  max: 100, // 100 requests to auth endpoints per window (increased from 50)
   message: 'Too many authentication requests. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false
