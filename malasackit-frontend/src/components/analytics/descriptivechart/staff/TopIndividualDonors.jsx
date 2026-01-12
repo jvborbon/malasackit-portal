@@ -61,7 +61,7 @@ const TopIndividualDonors = () => {
     return fullName?.charAt(0) + '*'.repeat(Math.max(0, fullName.length - 1)) || 'Unknown';
   };
 
-  const colors = ['bg-red-500', 'bg-red-400', 'bg-red-600', 'bg-red-300', 'bg-red-700'];
+  const colors = ['bg-red-500', 'bg-red-400', 'bg-red-900', 'bg-red-300', 'bg-red-700'];
 
   const fetchAllDonors = async () => {
     try {
@@ -100,8 +100,8 @@ const TopIndividualDonors = () => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <div className="p-1.5 bg-red-100 rounded-lg mr-2">
-            <FaUser className="w-5 h-5 text-red-600" />
+          <div className="p-1.5 bg-red-900/10 rounded-lg mr-2">
+            <FaUser className="w-5 h-5 text-red-900" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">Top Individual Donors</h3>
@@ -110,7 +110,7 @@ const TopIndividualDonors = () => {
         </div>
         <button 
           onClick={handleViewAll}
-          className="text-red-600 hover:text-red-700 text-xs font-medium px-1.5 py-0.5 rounded hover:bg-red-50"
+          className="text-red-900 hover:text-red-700 text-xs font-medium px-1.5 py-0.5 rounded hover:bg-red-50"
         >
           View All
         </button>
@@ -118,7 +118,7 @@ const TopIndividualDonors = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-900"></div>
         </div>
       ) : error ? (
         <div className="text-center py-4 text-xs text-gray-500">
@@ -160,8 +160,8 @@ const TopIndividualDonors = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center">
-                <div className="p-2 bg-red-100 rounded-lg mr-3">
-                  <FaUser className="w-6 h-6 text-red-600" />
+                <div className="p-2 bg-red-900/10 rounded-lg mr-3">
+                  <FaUser className="w-6 h-6 text-red-900" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">All Individual Donors</h2>
@@ -180,7 +180,7 @@ const TopIndividualDonors = () => {
             <div className="flex-1 overflow-y-auto p-6">
               {modalLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-900"></div>
                 </div>
               ) : allDonors.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">

@@ -14,7 +14,7 @@ const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon:
         <div className="relative">
             <div className="relative">
                 <Icon className={`absolute left-3 sm:left-4 w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 z-10 ${
-                    shouldFloat ? 'top-5 sm:top-6 text-red-200' : 'top-1/2 transform -translate-y-1/2 text-red-300'
+                    shouldFloat ? 'top-5 sm:top-6 text-white/70' : 'top-1/2 transform -translate-y-1/2 text-white/50'
                 }`} />
                 <input
                     type={type}
@@ -24,15 +24,15 @@ const FloatingLoginInput = ({ label, type = "text", name, value, onChange, icon:
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-transparent border-2 text-white placeholder-transparent focus:outline-none text-sm sm:text-base rounded-lg transition-all duration-200 ${
-                        isFocused ? 'border-red-200' : 'border-white'
+                        isFocused ? 'border-white' : 'border-white/70'
                     } ${shouldFloat ? 'pt-5 sm:pt-6 pb-1 sm:pb-2' : 'pt-3 sm:pt-4 pb-3 sm:pb-4'}`}
                     placeholder=" "
                     required={required}
                     disabled={disabled}
                 />
-                <label className={`absolute transition-all duration-200 pointer-events-none bg-red-600 px-1 ${
+                <label className={`absolute transition-all duration-200 pointer-events-none bg-red-900 px-1 ${
                     shouldFloat 
-                        ? 'left-3 sm:left-4 -top-2 text-xs text-red-200 scale-90' 
+                        ? 'left-3 sm:left-4 -top-2 text-xs text-white scale-90' 
                         : 'left-10 sm:left-12 top-1/2 transform -translate-y-1/2 text-sm sm:text-base text-white'
                 }`}>
                     {label}
@@ -53,7 +53,7 @@ const FloatingPasswordInput = ({ label, name, value, onChange, icon: Icon, requi
         <div className="relative">
             <div className="relative">
                 <Icon className={`absolute left-3 sm:left-4 w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 z-10 ${
-                    shouldFloat ? 'top-5 sm:top-6 text-red-200' : 'top-1/2 transform -translate-y-1/2 text-red-300'
+                    shouldFloat ? 'top-5 sm:top-6 text-white/70' : 'top-1/2 transform -translate-y-1/2 text-white/50'
                 }`} />
                 <input
                     type={showPassword ? "text" : "password"}
@@ -63,15 +63,15 @@ const FloatingPasswordInput = ({ label, name, value, onChange, icon: Icon, requi
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     className={`w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 bg-transparent border-2 text-white placeholder-transparent focus:outline-none text-sm sm:text-base rounded-lg transition-all duration-200 ${
-                        isFocused ? 'border-red-200' : 'border-white'
+                        isFocused ? 'border-white' : 'border-white/70'
                     } ${shouldFloat ? 'pt-5 sm:pt-6 pb-1 sm:pb-2' : 'pt-3 sm:pt-4 pb-3 sm:pb-4'}`}
                     placeholder=" "
                     required={required}
                     disabled={disabled}
                 />
-                <label className={`absolute transition-all duration-200 pointer-events-none bg-red-600 px-1 ${
+                <label className={`absolute transition-all duration-200 pointer-events-none bg-red-900 px-1 ${
                     shouldFloat 
-                        ? 'left-3 sm:left-4 -top-2 text-xs text-red-200 scale-90' 
+                        ? 'left-3 sm:left-4 -top-2 text-xs text-white scale-90' 
                         : 'left-10 sm:left-12 top-1/2 transform -translate-y-1/2 text-sm sm:text-base text-white'
                 }`}>
                     {label}
@@ -79,7 +79,7 @@ const FloatingPasswordInput = ({ label, name, value, onChange, icon: Icon, requi
                 <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-red-200 transition-colors focus:outline-none"
+                    className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-white/80 transition-colors focus:outline-none"
                     tabIndex={-1}
                 >
                     {showPassword ? (
@@ -212,7 +212,7 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
             {/* Header */}
             <div className="text-center mb-6 sm:mb-8">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <HiUser className="w-7 h-7 sm:w-8 sm:h-8 text-red-600" />
+                    <HiUser className="w-7 h-7 sm:w-8 sm:h-8 text-red-900" />
                 </div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1.5 sm:mb-2">Welcome to Malasackit Portal</h2>
                 <p className="text-red-100 text-xs sm:text-sm">Sign in to continue to your account</p>
@@ -270,11 +270,11 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToForgotPassword
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-white text-red-600 font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-red-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl text-sm sm:text-base"
+                    className="w-full bg-white text-red-900 font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-red-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl text-sm sm:text-base"
                 >
                     {isLoading ? (
                         <>
-                            <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-red-600 mr-2 sm:mr-3"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-red-900 mr-2 sm:mr-3"></div>
                             <span>Signing in...</span>
                         </>
                     ) : (

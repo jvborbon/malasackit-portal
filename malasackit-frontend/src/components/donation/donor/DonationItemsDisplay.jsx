@@ -41,7 +41,7 @@ function EmptyItemsState({ setShowDonationModal }) {
             <button
                 type="button"
                 onClick={() => setShowDonationModal(true)}
-                className="bg-red-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center mx-auto text-sm sm:text-base"
+                className="bg-red-900 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-red-950 transition-colors flex items-center mx-auto text-sm sm:text-base"
             >
                 <HiPlus className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                 Add / Remove Items
@@ -60,7 +60,7 @@ function DonationItemsHeader({ itemCount, setShowDonationModal }) {
             <button
                 type="button"
                 onClick={() => setShowDonationModal(true)}
-                className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center text-xs sm:text-sm"
+                className="bg-red-900 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-950 transition-colors flex items-center justify-center text-xs sm:text-sm"
             >
                 <HiPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                 Add / Remove Items
@@ -127,7 +127,7 @@ function ItemHeader({ item, categoryInfo, removeDonationItem }) {
             <button
                 type="button"
                 onClick={() => removeDonationItem(item.id)}
-                className="text-red-600 hover:text-red-800 p-1 flex-shrink-0 ml-2"
+                className="text-red-900 hover:text-red-950 p-1 flex-shrink-0 ml-2"
                 title="Remove this item"
             >
                 <HiX className="w-4 h-4" />

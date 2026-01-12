@@ -86,13 +86,13 @@ export function BeneficiaryRequestsTab({
                         placeholder="Search requests..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-900 focus:border-red-900"
                     />
                 </div>
                 <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
                 >
                     <option value="">All Status</option>
                     <option value="Pending">Pending</option>
@@ -103,7 +103,7 @@ export function BeneficiaryRequestsTab({
                 <select
                     value={filterUrgency}
                     onChange={(e) => setFilterUrgency(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
                 >
                     <option value="">All Urgency</option>
                     <option value="Low">Low</option>
@@ -120,7 +120,7 @@ export function BeneficiaryRequestsTab({
                 </button>
                 <button
                     onClick={handleAddRequest}
-                    className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                    className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-900 hover:bg-red-950"
                 >
                     <HiPlus className="w-4 h-4 mr-2" />
                     New Request
@@ -131,7 +131,7 @@ export function BeneficiaryRequestsTab({
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-y-auto max-h-96">
                     <table className="min-w-full">
-                        <thead className="bg-red-600 sticky top-0">
+                        <thead className="bg-red-900 sticky top-0">
                             <tr>
                                 <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
                                     Beneficiary

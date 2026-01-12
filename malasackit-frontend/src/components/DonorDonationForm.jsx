@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { HiCheckCircle, HiX, HiCalendar, HiTruck, HiHome, HiLocationMarker } from 'react-icons/hi';
+import { useAuth } from '../auth/Authentication';
+import api from '../utils/api';
 
 // Import organized components
 import { FormHeader } from './donation/donor/DonationFormHeader';
@@ -14,15 +16,19 @@ import { sanitizeInput, sanitizeText } from '../utils/sanitization';
 
 export default function DonorDonationForm() {
     const { categories, isLoading } = useDonationCategories();
+    const { user } = useAuth();
     
     const [formData, setFormData] = useState({
         deliveryMethod: 'pickup',
         description: '',
         scheduleDate: '',
         appointmentTime: '',
-        pickupAddress: '', // For pickup delivery address
-        address: '' // General address field that syncs with pickupAddress
+        pickupAddress: '',
+        useExistingAddress: false,
+        address: ''
     });
+
+    const [userProfile, setUserProfile] = useState(null);
 
     const [donationItems, setDonationItems] = useState([]);
     const [showDonationModal, setShowDonationModal] = useState(false);
@@ -33,6 +39,23 @@ export default function DonorDonationForm() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [successDetails, setSuccessDetails] = useState(null);
 
+    // Fetch user profile on mount
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                const response = await api.get('/api/auth/profile');
+                if (response.data.success) {
+                    setUserProfile(response.data.data.user);
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+            }
+        };
+        if (user) {
+            fetchUserProfile();
+        }
+    }, [user]);
+
     // Set the first available category as active when categories are loaded
     useEffect(() => {
         if (!isLoading && categories && Object.keys(categories).length > 0 && !activeCategory) {
@@ -42,7 +65,23 @@ export default function DonorDonationForm() {
 
     // Event Handlers
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
+        
+        // Handle checkbox for useExistingAddress
+        if (name === 'useExistingAddress') {
+            const useExisting = checked;
+            const savedAddress = userProfile ? 
+                [userProfile.streetaddress, userProfile.barangay_id, userProfile.municipality_id, userProfile.province_id]
+                    .filter(Boolean).join(', ') : '';
+            
+            setFormData(prev => ({
+                ...prev,
+                useExistingAddress: useExisting,
+                pickupAddress: useExisting ? '' : prev.pickupAddress,
+                address: useExisting ? savedAddress : prev.pickupAddress
+            }));
+            return;
+        }
         
         // Sanitize input based on field type
         let sanitizedValue = value;
@@ -52,12 +91,13 @@ export default function DonorDonationForm() {
             sanitizedValue = sanitizeInput(value);
         }
         
-        // If pickupAddress is being changed, also update the general address field
+        // If pickupAddress is being changed, update address and uncheck existing
         if (name === 'pickupAddress') {
             setFormData(prev => ({
                 ...prev,
                 [name]: sanitizedValue,
-                address: sanitizedValue // Auto-sync address with pickupAddress
+                address: sanitizedValue,
+                useExistingAddress: false
             }));
         } else {
             setFormData(prev => ({
@@ -415,6 +455,7 @@ export default function DonorDonationForm() {
                 <DonationDetails
                     formData={formData}
                     handleInputChange={handleInputChange}
+                    userProfile={userProfile}
                 />
 
                 {/* Submit Section */}

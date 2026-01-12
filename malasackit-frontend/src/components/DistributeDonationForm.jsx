@@ -2302,6 +2302,7 @@ const DistributeDonationForm = ({ isOpen, onClose, selectedItems = [] }) => {
                       <input
                         type="date"
                         value={formData.distributionDate}
+                        min={new Date().toISOString().split('T')[0]}
                         onChange={(e) =>
                           handleInputChange("distributionDate", e.target.value)
                         }

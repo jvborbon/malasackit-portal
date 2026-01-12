@@ -29,7 +29,7 @@ const TopDonorsSection = () => {
       donations: 15,
       percentage: '+8%',
       avatar: 'AR',
-      color: 'bg-red-600'
+      color: 'bg-red-900'
     },
     {
       id: 4,
@@ -55,15 +55,15 @@ const TopDonorsSection = () => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <div className="p-1.5 bg-red-100 rounded-lg mr-2">
-            <FaHeart className="w-5 h-5 text-red-600" />
+          <div className="p-1.5 bg-red-900/10 rounded-lg mr-2">
+            <FaHeart className="w-5 h-5 text-red-900" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">Top Donors</h3>
             <p className="text-xs text-gray-500">Highest donations</p>
           </div>
         </div>
-        <button className="text-red-600 hover:text-red-700 text-xs font-medium px-1.5 py-0.5 rounded hover:bg-red-50">
+        <button className="text-red-900 hover:text-red-700 text-xs font-medium px-1.5 py-0.5 rounded hover:bg-red-50">
           View All
         </button>
       </div>

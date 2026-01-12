@@ -40,7 +40,7 @@ export default function BeneficiaryDetails({ isOpen, onClose, beneficiary, onEdi
                         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-white">
                             <div className="flex items-center space-x-4">
                                 <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center">
-                                    <span className="text-xl font-bold text-red-600">
+                                    <span className="text-xl font-bold text-red-900">
                                         {beneficiary?.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                     </span>
                                 </div>
@@ -62,7 +62,7 @@ export default function BeneficiaryDetails({ isOpen, onClose, beneficiary, onEdi
                             {/* Contact Information */}
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <HiUser className="w-5 h-5 mr-2 text-red-600" />
+                                    <HiUser className="w-5 h-5 mr-2 text-red-900" />
                                     Contact Information
                                 </h3>
                                 <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -110,12 +110,12 @@ export default function BeneficiaryDetails({ isOpen, onClose, beneficiary, onEdi
                             {/* Request History */}
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <HiClipboardList className="w-5 h-5 mr-2 text-red-600" />
+                                    <HiClipboardList className="w-5 h-5 mr-2 text-red-900" />
                                     Request History ({requests.length})
                                 </h3>
                                 {loadingRequests ? (
                                     <div className="flex justify-center py-8">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-900"></div>
                                     </div>
                                 ) : requests.length > 0 ? (
                                     <div className="bg-gray-50 rounded-lg p-4 space-y-3 max-h-60 overflow-y-auto">
@@ -160,7 +160,7 @@ export default function BeneficiaryDetails({ isOpen, onClose, beneficiary, onEdi
                         <div className="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
                             <button
                                 onClick={() => onDelete(beneficiary)}
-                                className="flex items-center px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                className="flex items-center px-4 py-2 text-red-900 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                             >
                                 <HiTrash className="w-4 h-4 mr-2" />
                                 Delete Beneficiary
@@ -174,7 +174,7 @@ export default function BeneficiaryDetails({ isOpen, onClose, beneficiary, onEdi
                                 </button>
                                 <button
                                     onClick={() => onEdit(beneficiary)}
-                                    className="flex items-center px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                                    className="flex items-center px-6 py-2 bg-red-900 text-white rounded-lg hover:bg-red-950 font-medium"
                                 >
                                     <HiPencil className="w-4 h-4 mr-2" />
                                     Edit

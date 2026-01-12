@@ -52,37 +52,41 @@ const DonatedItemsChart = () => {
           // Create offset array - pull out the highest slice
           const offsets = quantities.map((_, index) => index === maxIndex ? 15 : 0);
           
-          // Consistent color mapping based on category names
-          const categoryColorMap = {
-            'Food Items': 'rgba(239, 68, 68, 0.9)',
-            'Household Essentials/Personal Care': 'rgba(251, 146, 60, 0.9)',
-            'Kitchen Utensils': 'rgba(250, 204, 21, 0.9)',
-            'Shelter Materials': 'rgba(34, 197, 94, 0.9)',
-            'Clothing': 'rgba(59, 130, 246, 0.9)',
-            'Educational Materials': 'rgba(168, 85, 247, 0.9)',
-            'Medical Supplies': 'rgba(236, 72, 153, 0.9)'
+          // Monochromatic dark red/maroon gradient - each category gets a shade variation
+          const categoryGradientMap = {
+            'Food Items': { start: 'rgba(127, 29, 29, 0.95)', end: 'rgba(127, 29, 29, 0.7)' },
+            'Household Essentials/Personal Care': { start: 'rgba(153, 27, 27, 0.95)', end: 'rgba(153, 27, 27, 0.7)' },
+            'Kitchen Utensils': { start: 'rgba(185, 28, 28, 0.95)', end: 'rgba(185, 28, 28, 0.7)' },
+            'Shelter Materials': { start: 'rgba(220, 38, 38, 0.95)', end: 'rgba(220, 38, 38, 0.7)' },
+            'Clothing': { start: 'rgba(239, 68, 68, 0.95)', end: 'rgba(239, 68, 68, 0.7)' },
+            'Educational Materials': { start: 'rgba(248, 113, 113, 0.95)', end: 'rgba(248, 113, 113, 0.7)' },
+            'Medical Supplies': { start: 'rgba(252, 165, 165, 0.95)', end: 'rgba(252, 165, 165, 0.7)' }
           };
           
-          const categoryBorderMap = {
-            'Food Items': 'rgb(239, 68, 68)',
-            'Household Essentials/Personal Care': 'rgb(251, 146, 60)',
-            'Kitchen Utensils': 'rgb(250, 204, 21)',
-            'Shelter Materials': 'rgb(34, 197, 94)',
-            'Clothing': 'rgb(59, 130, 246)',
-            'Educational Materials': 'rgb(168, 85, 247)',
-            'Medical Supplies': 'rgb(236, 72, 153)'
+          // Fallback gradients for unmapped categories
+          const fallbackGradients = [
+            { start: 'rgba(200, 30, 30, 0.95)', end: 'rgba(200, 30, 30, 0.7)' },
+            { start: 'rgba(170, 30, 30, 0.95)', end: 'rgba(170, 30, 30, 0.7)' }
+          ];
+          
+          // Create gradients for each category
+          const createGradient = (ctx, chartArea, gradientColors) => {
+            const gradient = ctx.createRadialGradient(
+              chartArea.width / 2,
+              chartArea.height / 2,
+              0,
+              chartArea.width / 2,
+              chartArea.height / 2,
+              Math.max(chartArea.width, chartArea.height) / 2
+            );
+            gradient.addColorStop(0, gradientColors.start);
+            gradient.addColorStop(1, gradientColors.end);
+            return gradient;
           };
           
-          // Fallback colors for unmapped categories
-          const fallbackColors = ['rgba(156, 163, 175, 0.9)', 'rgba(107, 114, 128, 0.9)'];
-          const fallbackBorders = ['rgb(156, 163, 175)', 'rgb(107, 114, 128)'];
-          
-          // Map colors based on category names
-          const backgroundColors = categories.map((cat, idx) => 
-            categoryColorMap[cat] || fallbackColors[idx % fallbackColors.length]
-          );
-          const borderColors = categories.map((cat, idx) => 
-            categoryBorderMap[cat] || fallbackBorders[idx % fallbackBorders.length]
+          // Map gradient colors based on category names
+          const gradientConfigs = categories.map((cat, idx) => 
+            categoryGradientMap[cat] || fallbackGradients[idx % fallbackGradients.length]
           );
           
           setChartData({
@@ -90,10 +94,17 @@ const DonatedItemsChart = () => {
             datasets: [
               {
                 data: quantities,
-                backgroundColor: backgroundColors,
-                borderColor: borderColors,
-                borderWidth: 2,
+                backgroundColor: (context) => {
+                  const chart = context.chart;
+                  const { ctx, chartArea } = chart;
+                  if (!chartArea) return null;
+                  const index = context.dataIndex;
+                  return createGradient(ctx, chartArea, gradientConfigs[index]);
+                },
+                borderWidth: 0,
                 offset: offsets,
+                // Store gradient configs in dataset for legend access
+                _gradientConfigs: gradientConfigs
               },
             ],
           });
@@ -136,16 +147,17 @@ const DonatedItemsChart = () => {
             const data = chart.data;
             if (data.labels.length && data.datasets.length) {
               const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const gradientConfigs = data.datasets[0]._gradientConfigs || [];
               return data.labels.map((label, i) => {
                 const value = data.datasets[0].data[i];
                 const percentage = ((value / total) * 100).toFixed(1);
+                // Get the gradient start color for legend
+                const bgColor = gradientConfigs[i]?.start || 'rgba(220, 38, 38, 0.85)';
                 return {
                   text: `${label} (${percentage}%)`,
-                  fillStyle: data.datasets[0].backgroundColor[i],
+                  fillStyle: bgColor,
                   hidden: false,
-                  index: i,
-                  strokeStyle: data.datasets[0].borderColor[i],
-                  lineWidth: 2
+                  index: i
                 };
               });
             }
@@ -212,7 +224,7 @@ const DonatedItemsChart = () => {
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="text-sm bg-red-600 text-white border-0 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-red-700 cursor-pointer hover:bg-red-700 transition-colors"
+          className="text-sm bg-red-900 text-white border-0 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-red-950 cursor-pointer hover:bg-red-950 transition-colors"
         >
           {years.map(year => (
             <option key={year} value={year}>{year}</option>
@@ -222,7 +234,7 @@ const DonatedItemsChart = () => {
       <div className="h-[360px]">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-900"></div>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-full">

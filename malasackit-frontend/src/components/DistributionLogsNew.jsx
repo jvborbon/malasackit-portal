@@ -692,7 +692,7 @@ function DistributionLogs({ userRole = 'staff' }) {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-900 focus:border-red-900"
               />
             </div>
 
@@ -700,7 +700,7 @@ function DistributionLogs({ userRole = 'staff' }) {
             <select
               value={filters.year}
               onChange={(e) => handleFilterChange("year", e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
             >
               <option value="">All Years</option>
               <option value="2026">2026</option>
@@ -714,7 +714,7 @@ function DistributionLogs({ userRole = 'staff' }) {
             <select
               value={filters.month}
               onChange={(e) => handleFilterChange("month", e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
             >
               <option value="">All Months</option>
               <option value="1">January</option>
@@ -735,7 +735,7 @@ function DistributionLogs({ userRole = 'staff' }) {
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange("status", e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
             >
               <option value="">All Status</option>
               <option value="Draft">Draft</option>
@@ -752,7 +752,7 @@ function DistributionLogs({ userRole = 'staff' }) {
                 handleFilterChange("sortBy", sortBy);
                 handleFilterChange("sortOrder", sortOrder);
               }}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
             >
               <option value="distribution_date-DESC">Latest First</option>
               <option value="distribution_date-ASC">Oldest First</option>
@@ -795,7 +795,7 @@ function DistributionLogs({ userRole = 'staff' }) {
                 <div className="ml-auto">
                   <button
                     onClick={refreshLogs}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    className="text-sm text-red-900 hover:text-red-700 font-medium"
                   >
                     Try Again
                   </button>
@@ -809,7 +809,7 @@ function DistributionLogs({ userRole = 'staff' }) {
         <div className="overflow-hidden">
           <div className="overflow-y-auto max-h-96">
             <table className="min-w-full">
-              <thead className="bg-red-600 sticky top-0">
+              <thead className="bg-red-900 sticky top-0">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
                     Plan ID
@@ -1038,12 +1038,12 @@ function PlanDetailsModal({ plan, onClose, onApprove, onExecute, onGenerateRecei
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Items to Distribute</h4>
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-red-900">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase">Item</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase">Quantity</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase">Value</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase">Location</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">

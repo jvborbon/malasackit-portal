@@ -94,7 +94,7 @@ function AddEventModal({ isOpen, onClose, onSubmit, loading }) {
                                 value={formData.date}
                                 onChange={handleChange}
                                 min={new Date().toISOString().split('T')[0]}
-                                className={`pl-10 pr-3 py-2.5 block w-full rounded-md shadow-sm bg-white text-gray-900 border focus:ring-red-500 focus:border-red-500 ${
+                                className={`pl-10 pr-3 py-2.5 block w-full rounded-md shadow-sm bg-white text-gray-900 border focus:ring-red-900 focus:border-red-900 ${
                                     errors.date ? 'border-red-300' : 'border-gray-300'
                                 }`}
                                 style={{ colorScheme: 'light' }}
@@ -102,7 +102,7 @@ function AddEventModal({ isOpen, onClose, onSubmit, loading }) {
                             />
                         </div>
                         {errors.date && (
-                            <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+                            <p className="mt-1 text-sm text-red-900">{errors.date}</p>
                         )}
                     </div>
 
@@ -118,7 +118,7 @@ function AddEventModal({ isOpen, onClose, onSubmit, loading }) {
                                 name="time"
                                 value={formData.time}
                                 onChange={handleChange}
-                                className="pl-10 pr-3 py-2.5 block w-full rounded-md border border-gray-300 shadow-sm bg-white text-gray-900 focus:ring-red-500 focus:border-red-500"
+                                className="pl-10 pr-3 py-2.5 block w-full rounded-md border border-gray-300 shadow-sm bg-white text-gray-900 focus:ring-red-900 focus:border-red-900"
                                 style={{ colorScheme: 'light' }}
                                 disabled={loading}
                             />
@@ -136,13 +136,13 @@ function AddEventModal({ isOpen, onClose, onSubmit, loading }) {
                             value={formData.description}
                             onChange={handleChange}
                             placeholder="e.g., Team Meeting, Donation Drive, Community Event"
-                            className={`px-3 py-2.5 block w-full rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 border focus:ring-red-500 focus:border-red-500 ${
+                            className={`px-3 py-2.5 block w-full rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 border focus:ring-red-900 focus:border-red-900 ${
                                 errors.description ? 'border-red-300' : 'border-gray-300'
                             }`}
                             disabled={loading}
                         />
                         {errors.description && (
-                            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                            <p className="mt-1 text-sm text-red-900">{errors.description}</p>
                         )}
                     </div>
 
@@ -157,7 +157,7 @@ function AddEventModal({ isOpen, onClose, onSubmit, loading }) {
                             onChange={handleChange}
                             rows="3"
                             placeholder="Additional details about the event..."
-                            className="px-3 py-2.5 block w-full rounded-md border border-gray-300 shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:ring-red-500 focus:border-red-500"
+                            className="px-3 py-2.5 block w-full rounded-md border border-gray-300 shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:ring-red-900 focus:border-red-900"
                             disabled={loading}
                         />
                     </div>
@@ -168,14 +168,14 @@ function AddEventModal({ isOpen, onClose, onSubmit, loading }) {
                             type="button"
                             onClick={handleClose}
                             disabled={loading}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 text-sm font-medium text-white bg-red-900 border border-transparent rounded-md hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Creating...' : 'Create Event'}
                         </button>

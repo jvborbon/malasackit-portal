@@ -90,9 +90,9 @@ export default function AuthPage() {
                 className="fixed top-3 left-3 sm:top-4 sm:left-4 z-50 p-2 rounded-md transition-all duration-300 bg-white/20 hover:bg-white/30 backdrop-blur-sm"
             >
                 {isMenuOpen ? (
-                    <HiX className="w-5 h-5 sm:w-6 sm:h-6 text-white lg:text-red-600" />
+                    <HiX className="w-5 h-5 sm:w-6 sm:h-6 text-white lg:text-red-900" />
                 ) : (
-                    <HiMenu className="w-5 h-5 sm:w-6 sm:h-6 text-white lg:text-red-600" />
+                    <HiMenu className="w-5 h-5 sm:w-6 sm:h-6 text-white lg:text-red-900" />
                 )}
             </button>
 
@@ -105,36 +105,36 @@ export default function AuthPage() {
                 <div className="p-5 sm:p-6 pt-14 sm:pt-16">
                     <div className="flex items-center mb-6 sm:mb-8">
                         <img src={lasacLogo} alt="LASAC Logo" className="w-9 h-9 sm:w-10 sm:h-10 mr-2.5 sm:mr-3" />
-                        <span className="text-red-600 text-lg sm:text-xl font-bold">LASAC</span>
+                        <span className="text-red-900 text-lg sm:text-xl font-bold">LASAC</span>
                     </div>
                     <nav className="space-y-4">
                         <button
                             onClick={() => setCurrentView('login')}
-                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-900 rounded-md transition-colors"
                         >
                             Login
                         </button>
                         <button
                             onClick={() => setCurrentView('register')}
-                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-900 rounded-md transition-colors"
                         >
                             Register
                         </button>
                         <button
                             onClick={() => setCurrentView('forgot-password')}
-                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-900 rounded-md transition-colors"
                         >
                             Reset Password
                         </button>
                         <Link
                             to="/about"
-                            className="block px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                            className="block px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-900 rounded-md transition-colors"
                         >
                             About
                         </Link>
                         <Link
                             to="/contact"
-                            className="block px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                            className="block px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-900 rounded-md transition-colors"
                         >
                             Contact
                         </Link>
@@ -172,7 +172,7 @@ export default function AuthPage() {
                     <div className="mb-6 lg:mb-8">
                         <img src={lasacLogo} alt="LASAC Logo" className="w-16 h-16 lg:w-20 lg:h-20 mx-auto lg:mx-0" />
                     </div>
-                    <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold text-red-600 leading-tight transition-all duration-300 transform ${
+                    <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold text-red-900 leading-tight transition-all duration-300 transform ${
                         isMessageTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
                     }`}>
                         {getCurrentMessages()[currentMessageIndex]}
@@ -181,7 +181,7 @@ export default function AuthPage() {
             </div>
 
             {/* Right side - Dynamic Forms */}
-            <div className={`flex-1 bg-red-600 flex flex-col min-h-screen overflow-y-auto scrollbar-hide transition-all duration-700 ease-in-out ${
+            <div className={`flex-1 bg-red-900 flex flex-col min-h-screen overflow-y-auto scrollbar-hide transition-all duration-700 ease-in-out ${
                 currentView === 'register' ? 'lg:w-3/5' : ''
             }`}>
                 <div className="flex-1 flex items-center justify-center px-4 py-6 sm:p-6 md:p-8 lg:p-10">

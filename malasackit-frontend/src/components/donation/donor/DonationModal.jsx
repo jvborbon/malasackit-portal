@@ -47,7 +47,7 @@ export function DonationModal({
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Modal Header */}
-                <div className="bg-red-600 text-white p-3 sm:p-4 flex justify-between items-start sm:items-center flex-shrink-0">
+                <div className="bg-red-900 text-white p-3 sm:p-4 flex justify-between items-start sm:items-center flex-shrink-0">
                     <div className="min-w-0 flex-1">
                         <h2 className="text-base sm:text-lg md:text-xl font-bold truncate">Select Donation Items</h2>
                         <p className="text-red-100 text-xs sm:text-sm mt-0.5 sm:mt-0">Choose items from different categories and add them to your donation</p>
@@ -83,7 +83,7 @@ export function DonationModal({
                     {isLoading ? (
                         <div className="flex items-center justify-center w-full h-full">
                             <div className="text-center">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-900 mx-auto mb-4"></div>
                                 <p className="text-gray-600">Loading donation categories...</p>
                             </div>
                         </div>
@@ -168,6 +168,15 @@ function ItemSelection({ activeCategory, categories, selectedItems, toggleItemSe
                     <p className="text-gray-600 text-xs sm:text-sm">{categoryInfo?.description}</p>
                 </div>
 
+                {/* Expiration Reminder */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 sm:p-3 mb-3 sm:mb-4 flex items-start">
+                    <HiExclamationCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 flex-shrink-0 mt-0.5 mr-2" />
+                    <p className="text-amber-800 text-xs sm:text-sm">
+                        <span className="font-semibold">Important:</span> Some items in this category are prone to expiration. 
+                        Please ensure all donated items are in good condition and suitable for immediate use.
+                    </p>
+                </div>
+
                 {/* Item Type Selection Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2 sm:gap-2.5 lg:gap-3 mb-4 sm:mb-6">
                     {categoryInfo?.items.map((item, index) => {
@@ -187,13 +196,13 @@ function ItemSelection({ activeCategory, categories, selectedItems, toggleItemSe
                                 onClick={() => toggleItemSelection(activeCategory, item)}
                                 className={`p-2 sm:p-2.5 lg:p-3 text-xs sm:text-sm border rounded-lg transition-all duration-200 relative min-h-[70px] sm:min-h-[80px] flex flex-col justify-center ${
                                     isItemSelected(activeCategory, itemName)
-                                        ? 'border-red-500 bg-red-50 text-red-700'
-                                        : 'border-gray-200 hover:border-red-200 hover:bg-red-50'
+                                        ? 'border-red-900 bg-red-50 text-red-900'
+                                        : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
                                 }`}
                             >
                                 {isItemSelected(activeCategory, itemName) && (
                                     <div className="flex justify-center mb-1">
-                                        <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                        <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-900 rounded-full flex items-center justify-center">
                                             <span className="text-white text-[10px] sm:text-xs">✓</span>
                                         </div>
                                     </div>
@@ -203,11 +212,6 @@ function ItemSelection({ activeCategory, categories, selectedItems, toggleItemSe
                                 {itemPrice && (
                                     <div className="text-[10px] sm:text-xs text-gray-500 mt-1">
                                         Base: ₱{itemPrice.toLocaleString()}
-                                    </div>
-                                )}
-                                {isFixedCondition && (
-                                    <div className="text-[10px] sm:text-xs text-blue-600 mt-1 font-medium">
-                                        {conditionLabel}
                                     </div>
                                 )}
                             </button>
@@ -234,20 +238,20 @@ function SelectedItemsPreview({ selectedItems, activeCategory, toggleItemSelecti
 
     return (
         <div className="bg-red-50 rounded-lg p-2.5 sm:p-3 lg:p-4 mb-3 sm:mb-4">
-            <h4 className="font-semibold text-red-800 mb-1.5 sm:mb-2 text-xs sm:text-sm">
+            <h4 className="font-semibold text-red-900 mb-1.5 sm:mb-2 text-xs sm:text-sm">
                 Selected from {activeCategory} ({categorySelectedItems.length})
             </h4>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {categorySelectedItems.map((item, index) => (
                     <span
                         key={index}
-                        className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-[10px] sm:text-xs rounded-full"
+                        className="inline-flex items-center px-2 py-1 bg-red-100 text-red-900 text-[10px] sm:text-xs rounded-full"
                     >
                         <span className="truncate max-w-[120px] sm:max-w-none">{item.itemType}</span>
                         <button
                             type="button"
                             onClick={() => toggleItemSelection(item.category, item.itemType)}
-                            className="ml-1 text-red-600 hover:text-red-800 flex-shrink-0"
+                            className="ml-1 text-red-900 hover:text-red-950 flex-shrink-0"
                         >
                             <HiX className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         </button>
@@ -284,7 +288,7 @@ function ModalFooter({ selectedItems, onClose, onConfirm }) {
                         type="button"
                         onClick={onConfirm}
                         disabled={selectedItems.length === 0}
-                        className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-xs sm:text-sm font-medium"
+                        className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-950 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-xs sm:text-sm font-medium"
                     >
                         <HiShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                         Add Items ({selectedItems.length})

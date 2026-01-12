@@ -21,12 +21,12 @@ const FloatingInput = ({
     const themes = {
         red: {
             border: 'border-white',
-            borderFocus: 'border-red-200',
+            borderFocus: 'border-white/70',
             borderError: 'border-red-300',
             text: 'text-white',
             label: 'text-white',
-            labelFloat: 'text-red-200',
-            labelBg: 'bg-red-600'
+            labelFloat: 'text-white/70',
+            labelBg: 'bg-red-900'
         },
         blue: {
             border: 'border-blue-300',

@@ -83,7 +83,7 @@ const ParishVicariateStep = ({
                     </button>
                     <button
                         type="submit"
-                        className="bg-white text-red-600 font-semibold py-2.5 sm:py-3 md:py-3.5 rounded-lg hover:bg-red-50 transition duration-200 text-xs sm:text-sm"
+                        className="bg-white text-red-900 font-semibold py-2.5 sm:py-3 md:py-3.5 rounded-lg hover:bg-red-50 transition duration-200 text-xs sm:text-sm"
                     >
                         Next →
                     </button>

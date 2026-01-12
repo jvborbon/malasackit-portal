@@ -82,7 +82,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                         required
                                         value={formData.name}
                                         onChange={(e) => handleChange('name', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                                         placeholder="Enter beneficiary name"
                                     />
                                 </div>
@@ -95,7 +95,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                         required
                                         value={formData.type}
                                         onChange={(e) => handleChange('type', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                                     >
                                         <option value="">Select type</option>
                                         <option value="Individual">Individual</option>
@@ -114,7 +114,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                         type="text"
                                         value={formData.contact_person}
                                         onChange={(e) => handleChange('contact_person', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                                         placeholder="Enter contact person name"
                                     />
                                 </div>
@@ -127,7 +127,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                         type="tel"
                                         value={formData.phone}
                                         onChange={(e) => handleChange('phone', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                                         placeholder="Enter phone number"
                                     />
                                 </div>
@@ -140,7 +140,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => handleChange('email', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                                         placeholder="Enter email address"
                                     />
                                 </div>
@@ -153,7 +153,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                         rows="3"
                                         value={formData.address}
                                         onChange={(e) => handleChange('address', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                                         placeholder="Enter complete address"
                                     />
                                 </div>
@@ -166,7 +166,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                         rows="3"
                                         value={formData.notes}
                                         onChange={(e) => handleChange('notes', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                                         placeholder="Additional notes about the beneficiary"
                                     />
                                 </div>
@@ -184,7 +184,7 @@ export default function BeneficiaryModalForm({ isOpen, onClose, mode = 'create',
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                    className="px-6 py-3 bg-red-900 text-white rounded-lg hover:bg-red-950 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting ? (

@@ -116,7 +116,7 @@ function BeneficiaryRequestsManagement({ onNewRequest }) {
   if (loading && beneficiaryRequests.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-900"></div>
       </div>
     );
   }
@@ -127,14 +127,14 @@ function BeneficiaryRequestsManagement({ onNewRequest }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            <HiClipboardList className="w-8 h-8 text-red-600 mr-3" />
+            <HiClipboardList className="w-8 h-8 text-red-900 mr-3" />
             Beneficiary Requests
           </h1>
           <p className="text-gray-600 mt-1">Log and manage pre-verified beneficiary requests</p>
         </div>
         <button
           onClick={onNewRequest}
-          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-red-900 text-white rounded-lg hover:bg-red-950 transition-colors"
         >
           <HiPlus className="w-5 h-5 mr-2" />
           Add Request
@@ -147,7 +147,7 @@ function BeneficiaryRequestsManagement({ onNewRequest }) {
           <p className="text-red-800">{error}</p>
           <button 
             onClick={() => setError(null)}
-            className="text-red-600 hover:text-red-800 mt-2 text-sm font-medium"
+            className="text-red-900 hover:text-red-800 mt-2 text-sm font-medium"
           >
             Dismiss
           </button>
@@ -210,24 +210,24 @@ function BeneficiaryRequestsManagement({ onNewRequest }) {
         <div className="overflow-x-auto">
           <div className="max-h-[600px] overflow-y-auto">
             <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-red-900 sticky top-0">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Beneficiary
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Purpose
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Urgency
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -239,7 +239,7 @@ function BeneficiaryRequestsManagement({ onNewRequest }) {
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                            <HiUsers className="h-6 w-6 text-red-600" />
+                            <HiUsers className="h-6 w-6 text-red-900" />
                           </div>
                         </div>
                         <div className="ml-4">

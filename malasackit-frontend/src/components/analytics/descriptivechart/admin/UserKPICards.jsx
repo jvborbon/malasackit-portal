@@ -55,11 +55,11 @@ export default function UserKPICards() {
             total: userStats.totalStaff,
             subtitle: `${userStats.activeStaff}/${userStats.totalStaff} staff members`,
             icon: HiShieldCheck,
-            color: 'blue',
-            bgColor: 'bg-blue-50',
-            iconColor: 'text-blue-600',
-            textColor: 'text-blue-900',
-            subtitleColor: 'text-blue-600'
+            color: 'red',
+            bgColor: 'bg-red-50',
+            iconColor: 'text-red-900',
+            textColor: 'text-red-900',
+            subtitleColor: 'text-red-700'
         },
         {
             title: 'Active Donors',
@@ -67,22 +67,22 @@ export default function UserKPICards() {
             total: userStats.totalDonors,
             subtitle: `${userStats.activeDonors}/${userStats.totalDonors} donors active`,
             icon: HiHeart,
-            color: 'green',
-            bgColor: 'bg-green-50',
-            iconColor: 'text-green-600',
-            textColor: 'text-green-900',
-            subtitleColor: 'text-green-600'
+            color: 'red',
+            bgColor: 'bg-red-50',
+            iconColor: 'text-red-900',
+            textColor: 'text-red-900',
+            subtitleColor: 'text-red-700'
         },
         {
             title: 'Total Staff',
             value: userStats.totalStaff,
             subtitle: 'All staff members',
             icon: HiUsers,
-            color: 'purple',
-            bgColor: 'bg-purple-50',
-            iconColor: 'text-purple-600',
-            textColor: 'text-purple-900',
-            subtitleColor: 'text-purple-600'
+            color: 'red',
+            bgColor: 'bg-red-50',
+            iconColor: 'text-red-900',
+            textColor: 'text-red-900',
+            subtitleColor: 'text-red-700'
         }
     ];
 
@@ -190,7 +190,7 @@ export default function UserKPICards() {
                         <p className="text-sm text-gray-600">Total Users</p>
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className="text-2xl font-bold text-red-900">
                             {dashboardService.formatNumber(userStats.registeredDonors || 0)}
                         </p>
                         <p className="text-sm text-gray-600">Approved Donors</p>

@@ -11,7 +11,7 @@ export function ProhibitedDonations() {
             <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="flex items-center gap-2 text-red-700 hover:text-red-800 transition-colors duration-200 group"
+                className="flex items-center gap-2 text-red-900 hover:text-red-950 transition-colors duration-200 group"
             >
                 <HiExclamationCircle className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 group-hover:scale-110 transition-transform" />
                 <span className="text-sm sm:text-base font-medium underline">
@@ -36,12 +36,12 @@ function ProhibitedDonationsModal({ onClose }) {
                 {/* Modal Header */}
                 <div className="flex items-start justify-between p-3 sm:p-4 border-b border-red-200 bg-red-50 rounded-t-xl flex-shrink-0">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <HiExclamationCircle className="w-6 h-6 sm:w-7 sm:h-7 text-red-600 flex-shrink-0" />
+                        <HiExclamationCircle className="w-6 h-6 sm:w-7 sm:h-7 text-red-900 flex-shrink-0" />
                         <div className="min-w-0">
-                            <h2 className="text-base sm:text-lg lg:text-xl font-bold text-red-800 truncate">
+                            <h2 className="text-base sm:text-lg lg:text-xl font-bold text-red-900 truncate">
                                 Prohibited Donations
                             </h2>
-                            <p className="text-xs sm:text-sm text-red-700 mt-0.5">
+                            <p className="text-xs sm:text-sm text-red-800 mt-0.5">
                                 Items we cannot accept
                             </p>
                         </div>
@@ -51,7 +51,7 @@ function ProhibitedDonationsModal({ onClose }) {
                         className="p-1.5 sm:p-2 hover:bg-red-100 rounded-lg transition-colors flex-shrink-0 ml-2"
                         aria-label="Close modal"
                     >
-                        <HiX className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+                        <HiX className="w-5 h-5 sm:w-6 sm:h-6 text-red-900" />
                     </button>
                 </div>
 
@@ -65,7 +65,7 @@ function ProhibitedDonationsModal({ onClose }) {
                 <div className="flex-shrink-0 p-3 sm:p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
                     <button
                         onClick={onClose}
-                        className="w-full sm:w-auto px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base"
+                        className="w-full sm:w-auto px-6 py-2.5 bg-red-900 hover:bg-red-950 text-white rounded-lg font-medium transition-colors text-sm sm:text-base"
                     >
                         Close
                     </button>
@@ -78,7 +78,7 @@ function ProhibitedDonationsModal({ onClose }) {
 // Description Component
 function ProhibitedDescription() {
     return (
-        <p className="text-sm sm:text-base text-red-700 mb-4 sm:mb-6 leading-relaxed">
+        <p className="text-sm sm:text-base text-red-900 mb-4 sm:mb-6 leading-relaxed">
             LASAC reserves the right not to accept a proposed gift for reasons 
             <strong> including, but not limited,</strong> to the following:
         </p>
@@ -120,13 +120,13 @@ function ProhibitedItemsList() {
 function ProhibitionColumn({ title, items }) {
     return (
         <div className="bg-red-50 rounded-lg p-3 sm:p-4 border border-red-100">
-            <h4 className="font-semibold text-red-800 mb-3 text-sm sm:text-base flex items-center gap-2">
-                <span className="text-red-600">•</span>
+            <h4 className="font-semibold text-red-900 mb-3 text-sm sm:text-base flex items-center gap-2">
+                <span className="text-red-900">•</span>
                 {title}
             </h4>
             <ul className="space-y-2">
                 {items.map((item, index) => (
-                    <li key={index} className="text-xs sm:text-sm text-red-700 leading-relaxed pl-4 relative">
+                    <li key={index} className="text-xs sm:text-sm text-red-900 leading-relaxed pl-4 relative">
                         <span className="absolute left-0 top-1">→</span>
                         {item}
                     </li>

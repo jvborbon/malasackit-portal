@@ -233,9 +233,9 @@ export default function DashboardLayout({ children, userRole }) {
     // Loading state if user data is not available yet
     if (!user) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-theme-primary mx-auto"></div>
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-800 mx-auto"></div>
                     <p className="mt-4 text-gray-600">Loading...</p>
                 </div>
             </div>
@@ -260,12 +260,17 @@ export default function DashboardLayout({ children, userRole }) {
                 />
             )}
 
-            {/* Sidebar */}
-            <div className={`fixed inset-y-0 left-0 z-50 bg-theme-primary text-white transform transition-all duration-300 ease-in-out flex flex-col ${
+            {/* Sidebar - Dark Red Theme */}
+            <div className={`fixed inset-y-0 left-0 z-50 text-white transform transition-all duration-300 ease-in-out flex flex-col ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-            } ${isCollapsed ? 'lg:w-20' : 'w-64'} overflow-visible`}>
+            } ${isCollapsed ? 'lg:w-20' : 'w-64'} overflow-visible`}
+            style={{
+                background: 'linear-gradient(180deg, #4a0e0e 0%, #7f1d1d 100%)'
+            }}>
                 {/* Logo Section */}
-                <div className="flex items-center border-b border-theme-primary-dark flex-shrink-0 p-4">
+                <div className="flex items-center flex-shrink-0 p-4" style={{
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
                     {!isCollapsed ? (
                         <>
                             <div className="w-8 h-8 bg-white rounded flex items-center justify-center flex-shrink-0 p-1">
@@ -283,7 +288,12 @@ export default function DashboardLayout({ children, userRole }) {
                             {/* Close button for mobile */}
                             <button
                                 onClick={() => setIsSidebarOpen(false)}
-                                className="lg:hidden p-1.5 rounded-md hover:bg-theme-primary-dark flex-shrink-0 ml-2"
+                                className="lg:hidden p-1.5 rounded-md flex-shrink-0 ml-2"
+                                style={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
                             >
                                 <HiX className="w-4 h-4" />
                             </button>
@@ -314,11 +324,27 @@ export default function DashboardLayout({ children, userRole }) {
                                         setIsSidebarOpen(false);
                                     }}
                                     className={`w-full flex items-center text-left rounded-lg transition-colors relative group ${
-                                        activeNav === item.name
-                                            ? 'bg-theme-primary-dark text-white'
-                                            : 'text-red-100 hover:bg-theme-primary-dark hover:text-white'
-                                    } ${isCollapsed ? 'justify-center p-3' : 'px-4 py-3'}`}
-                                    style={{ overflow: 'visible' }}
+                                        isCollapsed ? 'justify-center p-3' : 'px-4 py-3'
+                                    }`}
+                                    style={{
+                                        overflow: 'visible',
+                                        backgroundColor: activeNav === item.name 
+                                            ? 'rgba(220, 38, 38, 0.3)' 
+                                            : 'transparent',
+                                        color: activeNav === item.name ? '#fca5a5' : '#fecaca'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (activeNav !== item.name) {
+                                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                                            e.currentTarget.style.color = '#ffffff';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (activeNav !== item.name) {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            e.currentTarget.style.color = '#fecaca';
+                                        }
+                                    }}
                                 >
                                     <item.icon className={`w-5 h-5 flex-shrink-0 ${!isCollapsed && 'mr-3'}`} />
                                     {!isCollapsed && (
@@ -326,15 +352,16 @@ export default function DashboardLayout({ children, userRole }) {
                                     )}
                                     
                                     {/* Tooltip - fixed position relative to viewport */}
-                                    <div className="fixed px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[9999] pointer-events-none"
+                                    <div className="fixed px-3 py-2 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[9999] pointer-events-none"
                                          style={{
                                              left: isCollapsed ? '88px' : '272px',
                                              transform: 'translateY(-50%)',
-                                             marginTop: '0'
+                                             marginTop: '0',
+                                             backgroundColor: '#1f1f1f'
                                          }}>
                                         {item.name}
                                         {/* Arrow pointing to button */}
-                                        <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-gray-900 -mr-[1px]"></div>
+                                        <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent -mr-[1px]" style={{ borderRightColor: '#1f1f1f' }}></div>
                                     </div>
                                 </button>
                             </li>
@@ -343,21 +370,34 @@ export default function DashboardLayout({ children, userRole }) {
                 </nav>
 
                 {/* Logout Button */}
-                <div className={`border-t border-theme-primary-dark flex-shrink-0 ${isCollapsed ? 'p-2' : 'p-3'}`}>
+                <div className={`flex-shrink-0 ${isCollapsed ? 'p-2' : 'p-3'}`} style={{
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
                     <button
                         onClick={handleLogoutClick}
-                        className={`w-full flex items-center text-red-100 hover:bg-theme-primary-dark hover:text-white rounded-lg transition-colors relative group ${
+                        className={`w-full flex items-center rounded-lg transition-colors relative group ${
                             isCollapsed ? 'justify-center p-3' : 'px-4 py-3'
                         }`}
+                        style={{
+                            color: '#fecaca'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.color = '#ffffff';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#fecaca';
+                        }}
                     >
                         <HiLogout className={`w-5 h-5 flex-shrink-0 ${!isCollapsed && 'mr-3'}`} />
                         {!isCollapsed && <span>Logout</span>}
                         
                         {/* Tooltip for collapsed state */}
                         {isCollapsed && (
-                            <div className="hidden lg:block absolute left-full ml-6 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[60] pointer-events-none">
+                            <div className="hidden lg:block absolute left-full ml-6 px-3 py-2 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[60] pointer-events-none" style={{ backgroundColor: '#1f1f1f' }}>
                                 Logout
-                                <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-gray-900 -mr-[1px]"></div>
+                                <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent -mr-[1px]" style={{ borderRightColor: '#1f1f1f' }}></div>
                             </div>
                         )}
                     </button>
@@ -383,12 +423,12 @@ export default function DashboardLayout({ children, userRole }) {
                         </div>
                         <div className="flex items-center space-x-1.5 sm:space-x-2 lg:space-x-4 flex-shrink-0">
                             <span className="hidden sm:inline text-gray-600 text-xs sm:text-sm lg:text-base font-medium">
-                                Welcome, {userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
+                                Welcome, {user.full_name}!
                             </span>
                             <button
                                 type="button"
                                 onClick={handleAvatarClick}
-                                className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
+                                className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-red-900 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-900 transition"
                                 aria-label="Open profile settings"
                             >
                                 <HiUserCircle className="w-8 h-8" />

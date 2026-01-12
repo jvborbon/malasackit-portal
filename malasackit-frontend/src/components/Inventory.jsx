@@ -194,7 +194,7 @@ function Inventory() {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-900 mx-auto"></div>
           <p className="text-gray-500 mt-4">Loading inventory...</p>
         </div>
       </div>
@@ -207,13 +207,13 @@ function Inventory() {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <HiExclamation className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 font-medium mb-2">{error}</p>
+          <p className="text-red-900 font-medium mb-2">{error}</p>
           <button 
             onClick={() => {
               setError(null);
               loadInventoryData();
             }}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="px-4 py-2 bg-red-900 text-white rounded-lg hover:bg-red-950 transition-colors"
           >
             Try Again
           </button>
@@ -235,13 +235,13 @@ function Inventory() {
             placeholder="Search inventory items..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="block w-full pl-10 pr-3 py-1.5 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+            className="block w-full pl-10 pr-3 py-1.5 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-900 focus:border-red-900"
           />
         </div>
         <div className="flex items-center space-x-2">
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-md ${showFilters ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`p-2 rounded-md ${showFilters ? 'bg-red-100 text-red-900' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <HiFilter className="w-5 h-5" />
           </button>
@@ -266,7 +266,7 @@ function Inventory() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-red-900 focus:border-red-900"
               >
                 <option value="">All Categories</option>
                 {categories.map((category) => (
@@ -284,7 +284,7 @@ function Inventory() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-red-900 focus:border-red-900"
               >
                 <option value="">All Statuses</option>
                 <option value="Available">Available</option>
@@ -336,7 +336,7 @@ function Inventory() {
         
         <div className="bg-white rounded-lg border border-gray-200 p-2">
           <div className="flex flex-col">
-            <dt className="text-sm font-medium text-red-600 mb-1">Total Value</dt>
+            <dt className="text-sm font-medium text-red-900 mb-1">Total Value</dt>
             <dd className="text-base font-bold text-gray-900">{formatCurrency(stats.totalValue)}</dd>
           </div>
         </div>
@@ -352,7 +352,7 @@ function Inventory() {
               <p className="text-sm text-red-700 mt-1">{error}</p>
               <button 
                 onClick={handleRefresh}
-                className="mt-2 text-sm text-red-600 hover:text-red-500 underline"
+                className="mt-2 text-sm text-red-900 hover:text-red-500 underline"
               >
                 Try again
               </button>
@@ -383,12 +383,12 @@ function Inventory() {
         <div className="overflow-y-auto max-h-96">
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-900"></div>
               <span className="ml-3 text-gray-600">Loading inventory...</span>
             </div>
           ) : (
             <table className="min-w-full">
-              <thead className="bg-red-600 sticky top-0">
+              <thead className="bg-red-900 sticky top-0">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Item</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Category</th>
@@ -473,7 +473,7 @@ function Inventory() {
       {loading && inventory.length > 0 && (
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
           <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg shadow-lg">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-900"></div>
             <span className="text-sm text-gray-600">Refreshing...</span>
           </div>
         </div>

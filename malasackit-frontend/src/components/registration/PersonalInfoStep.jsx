@@ -61,7 +61,7 @@ const PersonalInfoStep = ({
                             type="button"
                             className={`p-2.5 sm:p-3 border-2 rounded-lg transition-all duration-200 ${
                                 formData.donorType === 'INDIVIDUAL' 
-                                    ? 'border-white bg-white text-red-600' 
+                                    ? 'border-white bg-white text-red-900' 
                                     : 'border-white/40 bg-transparent text-white hover:border-white'
                             }`}
                             onClick={() => handleInputChange({ 
@@ -74,7 +74,7 @@ const PersonalInfoStep = ({
                             type="button"
                             className={`p-2.5 sm:p-3 border-2 rounded-lg transition-all duration-200 ${
                                 formData.donorType === 'ORGANIZATION' 
-                                    ? 'border-white bg-white text-red-600' 
+                                    ? 'border-white bg-white text-red-900' 
                                     : 'border-white/40 bg-transparent text-white hover:border-white'
                             }`}
                             onClick={() => handleInputChange({ 
@@ -90,7 +90,7 @@ const PersonalInfoStep = ({
                 <div className="pt-2 sm:pt-3">
                     <button
                         type="submit"
-                        className="w-full bg-white text-red-600 font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-red-50 transition-all duration-200 text-sm sm:text-base"
+                        className="w-full bg-white text-red-900 font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-red-50 transition-all duration-200 text-sm sm:text-base"
                     >
                         Continue →
                     </button>

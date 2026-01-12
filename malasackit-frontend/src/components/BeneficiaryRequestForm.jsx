@@ -251,7 +251,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
           <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-red-100 rounded-lg">
-                <HiClipboardList className="w-6 h-6 text-red-600" />
+                <HiClipboardList className="w-6 h-6 text-red-900" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
@@ -279,7 +279,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                 <p className="text-red-800">{error}</p>
                 <button 
                   onClick={() => setError(null)}
-                  className="ml-auto text-red-400 hover:text-red-600"
+                  className="ml-auto text-red-400 hover:text-red-900"
                 >
                   <HiX className="w-4 h-4" />
                 </button>
@@ -291,19 +291,19 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
           <div className="px-6 pt-4">
             <div className="flex items-center">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                step >= 1 ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-600'
+                step >= 1 ? 'bg-red-900 text-white' : 'bg-gray-300 text-gray-600'
               }`}>
                 1
               </div>
-              <div className={`flex-1 h-1 mx-3 ${step >= 2 ? 'bg-red-600' : 'bg-gray-300'}`}></div>
+              <div className={`flex-1 h-1 mx-3 ${step >= 2 ? 'bg-red-900' : 'bg-gray-300'}`}></div>
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                step >= 2 ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-600'
+                step >= 2 ? 'bg-red-900 text-white' : 'bg-gray-300 text-gray-600'
               }`}>
                 2
               </div>
-              <div className={`flex-1 h-1 mx-3 ${step >= 3 ? 'bg-red-600' : 'bg-gray-300'}`}></div>
+              <div className={`flex-1 h-1 mx-3 ${step >= 3 ? 'bg-red-900' : 'bg-gray-300'}`}></div>
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                step >= 3 ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-600'
+                step >= 3 ? 'bg-red-900 text-white' : 'bg-gray-300 text-gray-600'
               }`}>
                 3
               </div>
@@ -321,7 +321,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                       <h3 className="text-lg font-semibold text-gray-900">Select Existing Beneficiary</h3>
                       <button
                         onClick={() => setShowCreateBeneficiary(true)}
-                        className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        className="px-4 py-2 text-sm bg-red-900 text-white rounded-lg hover:bg-red-950"
                       >
                         Create New
                       </button>
@@ -337,7 +337,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search by name, type, or address..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                       />
                     </div>
 
@@ -400,7 +400,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                       <div className="flex justify-end">
                         <button
                           onClick={() => setStep(2)}
-                          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                          className="px-6 py-2 bg-red-900 text-white rounded-lg hover:bg-red-950"
                         >
                           Continue
                         </button>
@@ -431,7 +431,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           required
                           value={beneficiaryForm.name}
                           onChange={(e) => handleBeneficiaryChange('name', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                           placeholder="Enter beneficiary name"
                         />
                       </div>
@@ -444,7 +444,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           required
                           value={beneficiaryForm.type}
                           onChange={(e) => handleBeneficiaryChange('type', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                         >
                           <option value="">Select type</option>
                           <option value="Individual">Individual</option>
@@ -460,7 +460,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           type="text"
                           value={beneficiaryForm.contact_person}
                           onChange={(e) => handleBeneficiaryChange('contact_person', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                           placeholder="Enter contact person"
                         />
                       </div>
@@ -471,7 +471,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           type="tel"
                           value={beneficiaryForm.phone}
                           onChange={(e) => handleBeneficiaryChange('phone', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                           placeholder="Enter phone number"
                         />
                       </div>
@@ -482,7 +482,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                           rows="2"
                           value={beneficiaryForm.address}
                           onChange={(e) => handleBeneficiaryChange('address', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                           placeholder="Enter address"
                         />
                       </div>
@@ -499,7 +499,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        className="px-4 py-2 bg-red-900 text-white rounded-lg hover:bg-red-950 disabled:opacity-50"
                       >
                         {loading ? 'Creating...' : 'Create & Continue'}
                       </button>
@@ -516,7 +516,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-sm text-red-600 hover:text-red-800 mt-1"
+                    className="text-sm text-red-900 hover:text-red-800 mt-1"
                   >
                     Change Beneficiary
                   </button>
@@ -531,7 +531,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     required
                     value={requestForm.purpose}
                     onChange={(e) => handleRequestChange('purpose', e.target.value)}
-                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                     placeholder="Describe the purpose or reason for this request in detail..."
                   />
                 </div>
@@ -544,7 +544,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     required
                     value={requestForm.urgency}
                     onChange={(e) => handleRequestChange('urgency', e.target.value)}
-                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                   >
                     <option value="Low">Low - Routine assistance</option>
                     <option value="Medium">Medium - Standard need</option>
@@ -562,7 +562,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     required
                     value={requestForm.individuals_served}
                     onChange={(e) => handleRequestChange('individuals_served', e.target.value)}
-                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                     placeholder="e.g., 50 families, 100 individuals"
                   />
                   <p className="mt-1 text-sm text-gray-500">
@@ -578,7 +578,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     rows="3"
                     value={requestForm.notes}
                     onChange={(e) => handleRequestChange('notes', e.target.value)}
-                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                     placeholder="Any additional information about the request..."
                   />
                 </div>
@@ -602,7 +602,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     <button
                       type="button"
                       onClick={() => setStep(3)}
-                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                      className="px-6 py-3 bg-red-900 text-white rounded-lg hover:bg-red-950"
                     >
                       Continue to Items
                     </button>
@@ -632,7 +632,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      className="w-full px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                     >
                       <option value="">Select a category to add items</option>
                       {categories.map((category) => (
@@ -665,7 +665,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                             <select
                               value={item.itemtype_id}
                               onChange={(e) => updateSelectedItem(item.id, 'itemtype_id', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                               required
                             >
                               <option value="">Select item type</option>
@@ -682,14 +682,14 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                               min="1"
                               value={item.requested_quantity}
                               onChange={(e) => updateSelectedItem(item.id, 'requested_quantity', parseInt(e.target.value) || 1)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                               placeholder="Qty"
                             />
                           </div>
                           <button
                             type="button"
                             onClick={() => removeSelectedItem(item.id)}
-                            className="text-red-600 hover:text-red-800 p-1"
+                            className="text-red-900 hover:text-red-800 p-1"
                           >
                             <HiTrash className="w-4 h-4" />
                           </button>
@@ -726,7 +726,7 @@ const BeneficiaryRequestForm = ({ isOpen, onClose, onSubmit }) => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                      className="px-6 py-3 bg-red-900 text-white rounded-lg hover:bg-red-950 disabled:opacity-50"
                     >
                       {loading ? 'Submitting...' : 'Submit Request'}
                     </button>

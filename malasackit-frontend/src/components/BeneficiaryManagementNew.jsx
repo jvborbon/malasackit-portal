@@ -162,7 +162,7 @@ export default function BeneficiaryManagement() {
                             onClick={() => setActiveTab('beneficiaries')}
                             className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                                 activeTab === 'beneficiaries'
-                                    ? 'border-red-500 text-red-600'
+                                    ? 'border-red-900 text-red-900'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >
@@ -173,7 +173,7 @@ export default function BeneficiaryManagement() {
                             onClick={() => setActiveTab('requests')}
                             className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                                 activeTab === 'requests'
-                                    ? 'border-red-500 text-red-600'
+                                    ? 'border-red-900 text-red-900'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >
@@ -421,7 +421,7 @@ function RequestDetailsModal({ isOpen, onClose, request }) {
                                                             <p className="text-xs text-gray-500">{item.category_name}</p>
                                                         )}
                                                     </div>
-                                                    <span className="text-sm font-semibold text-red-600 ml-4">
+                                                    <span className="text-sm font-semibold text-red-900 ml-4">
                                                         Qty: {item.quantity_requested}
                                                     </span>
                                                 </div>
@@ -481,7 +481,7 @@ function DeleteConfirmModal({ isOpen, onClose, beneficiary, onConfirm }) {
                         <div className="p-6">
                             {/* Icon */}
                             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                                <HiTrash className="h-8 w-8 text-red-600" />
+                                <HiTrash className="h-8 w-8 text-red-900" />
                             </div>
                             
                             {/* Content */}
@@ -523,7 +523,7 @@ function DeleteConfirmModal({ isOpen, onClose, beneficiary, onConfirm }) {
                                 </button>
                                 <button
                                     onClick={handleConfirm}
-                                    className="flex-1 px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                    className="flex-1 px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-900 hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-900 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                     disabled={isDeleting}
                                 >
                                     {isDeleting ? (

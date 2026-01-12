@@ -18,7 +18,7 @@ function DonationTable({
       {/* Scrollable Container */}
       <div className="flex-1 overflow-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-red-600 sticky top-0 z-10">
+          <thead className="bg-red-900 sticky top-0 z-10">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Donor Information
@@ -70,7 +70,7 @@ function DonationTable({
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-9 w-9">
                         <div className="h-9 w-9 rounded-full bg-red-100 flex items-center justify-center">
-                          <span className="text-sm font-semibold text-red-600">
+                          <span className="text-sm font-semibold text-red-900">
                             {donation.donor_name?.charAt(0).toUpperCase()}
                           </span>
                         </div>
@@ -168,7 +168,7 @@ function DonationTable({
                           <button
                             onClick={() => onStatusChange(donation, 'Rejected')}
                             disabled={processingId === donation.donation_id}
-                            className="text-red-600 hover:text-red-900 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-red-900 hover:text-red-900 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Reject"
                           >
                             <HiX className="w-5 h-5" />

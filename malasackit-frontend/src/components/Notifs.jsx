@@ -187,7 +187,7 @@ export default function Notifs() {
                             <div>
                                 <h4 className="font-medium text-gray-700 mb-1">Priority:</h4>
                                 <p className={`capitalize font-medium ${
-                                    notification.priority === 'high' ? 'text-red-600' :
+                                    notification.priority === 'high' ? 'text-red-900' :
                                     notification.priority === 'normal' ? 'text-blue-600' : 'text-gray-600'
                                 }`}>
                                     {notification.priority}
@@ -226,7 +226,7 @@ export default function Notifs() {
                                     handleDelete(notification.notification_id);
                                     onClose();
                                 }}
-                                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                className="px-4 py-2 text-sm bg-red-900 text-white rounded-lg hover:bg-red-950 transition-colors"
                             >
                                 Delete
                             </button>
@@ -249,7 +249,7 @@ export default function Notifs() {
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
-                        <HiBell className="w-6 h-6 text-red-600 mr-3" />
+                        <HiBell className="w-6 h-6 text-red-900 mr-3" />
                         <h2 className="text-xl font-bold text-gray-900">Notifications</h2>
                         {unreadCount > 0 && (
                             <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
@@ -272,7 +272,7 @@ export default function Notifs() {
                             <button
                                 onClick={handleMarkAllAsRead}
                                 disabled={loading}
-                                className="text-sm text-red-600 hover:text-red-700 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                                className="text-sm text-red-900 hover:text-red-700 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
                             >
                                 Mark all as read
                             </button>
@@ -288,13 +288,13 @@ export default function Notifs() {
                             onClick={() => setFilter(filterType)}
                             className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                                 filter === filterType
-                                    ? 'bg-white text-red-600 shadow-sm'
+                                    ? 'bg-white text-red-900 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-900'
                             }`}
                         >
                             {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
                             {filterType === 'unread' && unreadCount > 0 && (
-                                <span className="ml-1 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">
+                                <span className="ml-1 text-xs bg-red-100 text-red-900 px-1.5 py-0.5 rounded-full">
                                     {unreadCount}
                                 </span>
                             )}
@@ -313,11 +313,11 @@ export default function Notifs() {
                 ) : error ? (
                     <div className="p-6 text-center">
                         <HiX className="w-8 h-8 text-red-400 mx-auto mb-2" />
-                        <p className="text-red-600 mb-2">Error loading notifications</p>
+                        <p className="text-red-900 mb-2">Error loading notifications</p>
                         <p className="text-sm text-gray-500 mb-4">{error}</p>
                         <button
                             onClick={loadNotifications}
-                            className="text-sm text-red-600 hover:text-red-700 px-3 py-1 rounded-lg hover:bg-red-50"
+                            className="text-sm text-red-900 hover:text-red-700 px-3 py-1 rounded-lg hover:bg-red-50"
                         >
                             Try again
                         </button>
@@ -381,7 +381,7 @@ export default function Notifs() {
                                                     <button
                                                         onClick={() => handleDelete(notification.notification_id)}
                                                         disabled={isProcessing}
-                                                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        className="p-1 text-gray-400 hover:text-red-900 hover:bg-red-50 rounded transition-colors"
                                                         title="Delete notification"
                                                     >
                                                         <HiTrash className="w-4 h-4" />
@@ -392,7 +392,7 @@ export default function Notifs() {
                                             <div className="mt-2">
                                                 <button
                                                     onClick={() => handleNotificationClick(notification)}
-                                                    className="text-xs text-red-600 hover:text-red-700 hover:underline bg-transparent border-none cursor-pointer"
+                                                    className="text-xs text-red-900 hover:text-red-700 hover:underline bg-transparent border-none cursor-pointer"
                                                 >
                                                     View Details →
                                                 </button>

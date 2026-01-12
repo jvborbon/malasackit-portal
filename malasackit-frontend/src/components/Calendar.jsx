@@ -116,7 +116,7 @@ export default function CalendarComponent({ userRole = 'donor' }) {
             if (dayEvents.length > 0) {
                 return (
                     <div className="flex justify-center">
-                        <div className="w-2 h-2 bg-red-600 rounded-full mt-1"></div>
+                        <div className="w-2 h-2 bg-red-900 rounded-full mt-1"></div>
                     </div>
                 );
             }
@@ -187,7 +187,7 @@ export default function CalendarComponent({ userRole = 'donor' }) {
                         Refresh
                     </button>
                     {userRole === 'admin' && (
-                        <button className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                        <button className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-900 hover:bg-red-950"
                             onClick={() => setShowAddEventModal(true)}
                         >
                             <HiPlus className="w-4 h-4 mr-2" />
@@ -201,11 +201,11 @@ export default function CalendarComponent({ userRole = 'donor' }) {
             {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-center">
-                        <HiX className="w-5 h-5 text-red-600 mr-2" />
+                        <HiX className="w-5 h-5 text-red-900 mr-2" />
                         <span className="text-red-800">{error}</span>
                         <button 
                             onClick={() => setError(null)}
-                            className="ml-auto text-red-600 hover:text-red-800"
+                            className="ml-auto text-red-900 hover:text-red-800"
                         >
                             <HiX className="w-4 h-4" />
                         </button>
@@ -330,7 +330,7 @@ export default function CalendarComponent({ userRole = 'donor' }) {
                             <div className="text-center py-8 flex-shrink-0">
                                 <HiCalendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                                 <p className="text-gray-500">No events scheduled for this date</p>
-                                <button className="mt-2 text-red-600 hover:text-red-700 text-sm font-medium">
+                                <button className="mt-2 text-red-900 hover:text-red-700 text-sm font-medium">
                                     Add an event
                                 </button>
                             </div>

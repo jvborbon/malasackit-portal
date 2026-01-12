@@ -181,7 +181,7 @@ const ReceiptHistory = ({ userRole = 'Donor' }) => {
     if (loading && receipts.length === 0) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-900"></div>
             </div>
         );
     }
@@ -199,7 +199,7 @@ const ReceiptHistory = ({ userRole = 'Donor' }) => {
                     <select
                         value={selectedPeriod}
                         onChange={(e) => setSelectedPeriod(parseInt(e.target.value))}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900"
                     >
                         <option value={7}>Last 7 days</option>
                         <option value={30}>Last 30 days</option>
@@ -304,7 +304,7 @@ const ReceiptHistory = ({ userRole = 'Donor' }) => {
                         <div className="bg-white rounded-lg border border-gray-200 p-6 md:col-span-2">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
-                                    <HiCurrencyDollar className="w-8 h-8 text-red-600" />
+                                    <HiCurrencyDollar className="w-8 h-8 text-red-900" />
                                 </div>
                                 <div className="ml-4">
                                     <div className="text-2xl font-bold text-gray-900">
@@ -328,7 +328,7 @@ const ReceiptHistory = ({ userRole = 'Donor' }) => {
                             placeholder="Search receipts by donation ID, description, or donor name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 bg-white text-gray-900"
                         />
                     </div>
                     
@@ -357,7 +357,7 @@ const ReceiptHistory = ({ userRole = 'Donor' }) => {
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-red-900">
                                 <tr>
                                     <th className="px-6 py-3 text-left">
                                         <input
@@ -367,26 +367,26 @@ const ReceiptHistory = ({ userRole = 'Donor' }) => {
                                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                         />
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Donation
                                     </th>
                                     {userRole !== 'Donor' && (
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                             Donor
                                         </th>
                                     )}
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Value
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Generated
                                     </th>
                                     {userRole !== 'Donor' && (
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                             Generated By
                                         </th>
                                     )}
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
@@ -452,7 +452,7 @@ const ReceiptHistory = ({ userRole = 'Donor' }) => {
                                                         receipt.donation_id, 
                                                         receipt.donor_name
                                                     )}
-                                                    className="text-red-600 hover:text-red-900"
+                                                    className="text-red-900 hover:text-red-900"
                                                     title="Download Receipt PDF"
                                                 >
                                                     <HiDownload className="w-5 h-5" />

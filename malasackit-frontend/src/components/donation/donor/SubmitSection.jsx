@@ -30,12 +30,12 @@ export function SubmitSection({
 function ErrorMessage({ message }) {
     return (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
-            <HiExclamationCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+            <HiExclamationCircle className="w-5 h-5 text-red-900 mr-3 mt-0.5 flex-shrink-0" />
             <div>
-                <h4 className="text-sm font-medium text-red-800 mb-1">
+                <h4 className="text-sm font-medium text-red-900 mb-1">
                     Submission Error
                 </h4>
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-red-900">
                     {message}
                 </p>
             </div>

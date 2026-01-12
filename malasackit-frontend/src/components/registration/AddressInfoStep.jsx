@@ -166,7 +166,7 @@ const AddressInfoStep = ({
                     </button>
                     <button
                         type="submit"
-                        className="w-full bg-white text-red-600 font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-red-50 transition duration-200 text-sm sm:text-base"
+                        className="w-full bg-white text-red-900 font-semibold py-3 sm:py-3.5 rounded-lg hover:bg-red-50 transition duration-200 text-sm sm:text-base"
                     >
                         Continue →
                     </button>

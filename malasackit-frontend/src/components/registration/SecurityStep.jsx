@@ -67,7 +67,7 @@ const SecurityStep = ({
                         className={`w-full font-semibold py-3 sm:py-3.5 rounded-lg transition duration-200 text-sm sm:text-base ${
                             isSubmitting 
                                 ? 'bg-white/50 text-red-300 cursor-not-allowed'
-                                : 'bg-white text-red-600 hover:bg-red-50'
+                                : 'bg-white text-red-900 hover:bg-red-50'
                         }`}
                     >
                         {isSubmitting ? 'Creating...' : 'Create Account'}

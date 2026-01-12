@@ -145,13 +145,13 @@ export function UsersTab({
                         placeholder="Search users..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-900 focus:border-red-900"
                     />
                 </div>
                 <select
                     value={filterRole}
                     onChange={(e) => setFilterRole(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
                 >
                     <option value="all">All Roles</option>
                     <option value="executive admin">Executive Admin</option>
@@ -161,7 +161,7 @@ export function UsersTab({
                 <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-1 focus:ring-red-900 focus:border-red-900"
                 >
                     <option value="all">All Status</option>
                     <option value="online">● Online</option>
@@ -178,7 +178,7 @@ export function UsersTab({
                 </button>
                 <button
                     onClick={handleAddUser}
-                    className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                    className="flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-900 hover:bg-red-950"
                 >
                     <HiUserAdd className="w-4 h-4 mr-2" />
                     Add User
@@ -189,7 +189,7 @@ export function UsersTab({
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-y-auto max-h-96">
                     <table className="min-w-full">
-                        <thead className="bg-red-600 sticky top-0">
+                        <thead className="bg-red-900 sticky top-0">
                             <tr>
                                 <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">
                                     User
@@ -265,7 +265,7 @@ export function UsersTab({
                                         </button>
                                         <button
                                             onClick={() => handleDeleteUser(user)}
-                                            className="text-red-600 hover:text-red-900"
+                                            className="text-red-900 hover:text-red-900"
                                             title="Delete User"
                                         >
                                             <HiTrash className="w-4 h-4" />

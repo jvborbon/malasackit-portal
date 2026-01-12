@@ -54,22 +54,30 @@ const DonationReportsChart = () => {
           // Get unique categories and sort alphabetically for consistent order
           const categories = [...new Set(monthlyData.map(item => item.category_name))].sort();
           
-          // Consistent color mapping based on category names
-          const categoryColorMap = {
-            'Food Items': { bg: 'rgba(239, 68, 68, 0.85)', border: 'rgb(239, 68, 68)' },
-            'Household Essentials/Personal Care': { bg: 'rgba(251, 146, 60, 0.85)', border: 'rgb(251, 146, 60)' },
-            'Kitchen Utensils': { bg: 'rgba(250, 204, 21, 0.85)', border: 'rgb(250, 204, 21)' },
-            'Shelter Materials': { bg: 'rgba(34, 197, 94, 0.85)', border: 'rgb(34, 197, 94)' },
-            'Clothing': { bg: 'rgba(59, 130, 246, 0.85)', border: 'rgb(59, 130, 246)' },
-            'Educational Materials': { bg: 'rgba(168, 85, 247, 0.85)', border: 'rgb(168, 85, 247)' },
-            'Medical Supplies': { bg: 'rgba(236, 72, 153, 0.85)', border: 'rgb(236, 72, 153)' }
+          // Monochromatic dark red/maroon gradient - each category gets a shade variation
+          const categoryGradientMap = {
+            'Food Items': { start: 'rgba(127, 29, 29, 0.95)', end: 'rgba(127, 29, 29, 0.7)', border: 'rgb(87, 20, 20)' },
+            'Household Essentials/Personal Care': { start: 'rgba(153, 27, 27, 0.95)', end: 'rgba(153, 27, 27, 0.7)', border: 'rgb(113, 20, 20)' },
+            'Kitchen Utensils': { start: 'rgba(185, 28, 28, 0.95)', end: 'rgba(185, 28, 28, 0.7)', border: 'rgb(145, 22, 22)' },
+            'Shelter Materials': { start: 'rgba(220, 38, 38, 0.95)', end: 'rgba(220, 38, 38, 0.7)', border: 'rgb(180, 28, 28)' },
+            'Clothing': { start: 'rgba(239, 68, 68, 0.95)', end: 'rgba(239, 68, 68, 0.7)', border: 'rgb(199, 48, 48)' },
+            'Educational Materials': { start: 'rgba(248, 113, 113, 0.95)', end: 'rgba(248, 113, 113, 0.7)', border: 'rgb(208, 73, 73)' },
+            'Medical Supplies': { start: 'rgba(252, 165, 165, 0.95)', end: 'rgba(252, 165, 165, 0.7)', border: 'rgb(212, 125, 125)' }
           };
           
-          // Fallback colors for any unmapped categories
-          const fallbackColors = [
-            { bg: 'rgba(156, 163, 175, 0.85)', border: 'rgb(156, 163, 175)' },
-            { bg: 'rgba(107, 114, 128, 0.85)', border: 'rgb(107, 114, 128)' }
+          // Fallback gradients for any unmapped categories
+          const fallbackGradients = [
+            { start: 'rgba(200, 30, 30, 0.95)', end: 'rgba(200, 30, 30, 0.7)', border: 'rgb(160, 24, 24)' },
+            { start: 'rgba(170, 30, 30, 0.95)', end: 'rgba(170, 30, 30, 0.7)', border: 'rgb(130, 23, 23)' }
           ];
+          
+          // Helper function to create vertical gradient for bars
+          const createGradient = (ctx, chartArea, gradientColors) => {
+            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            gradient.addColorStop(0, gradientColors.end);
+            gradient.addColorStop(1, gradientColors.start);
+            return gradient;
+          };
           
           // Create datasets for each category
           const datasets = categories.map((category, index) => {
@@ -84,15 +92,19 @@ const DonationReportsChart = () => {
             
             console.log(`${category} data:`, monthlyValues);
             
-            // Get color from map or use fallback
-            const colors = categoryColorMap[category] || fallbackColors[index % fallbackColors.length];
+            // Get gradient config from map or use fallback
+            const gradientConfig = categoryGradientMap[category] || fallbackGradients[index % fallbackGradients.length];
             
             return {
               label: category,
               data: monthlyValues,
-              backgroundColor: colors.bg,
-              borderColor: colors.border,
-              borderWidth: 2,
+              backgroundColor: (context) => {
+                const chart = context.chart;
+                const { ctx, chartArea } = chart;
+                if (!chartArea) return null;
+                return createGradient(ctx, chartArea, gradientConfig);
+              },
+              borderWidth: 0,
               borderRadius: 5,
               borderSkipped: false,
               barThickness: 'flex',
@@ -150,7 +162,7 @@ const DonationReportsChart = () => {
         display: false
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(127, 29, 29, 0.95)',
         padding: 12,
         titleFont: {
           size: 13,
@@ -183,7 +195,7 @@ const DonationReportsChart = () => {
         stacked: false,
         grace: '5%',
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
+          color: 'rgba(220, 38, 38, 0.08)',
           drawBorder: false
         },
         ticks: {
@@ -196,7 +208,8 @@ const DonationReportsChart = () => {
           font: {
             size: 10
           },
-          padding: 8
+          padding: 8,
+          color: '#374151'
         },
         title: {
           display: true,
@@ -205,7 +218,8 @@ const DonationReportsChart = () => {
             size: 11,
             weight: '600'
           },
-          padding: { bottom: 10 }
+          padding: { bottom: 10 },
+          color: '#374151'
         }
       },
       x: {
@@ -219,7 +233,8 @@ const DonationReportsChart = () => {
             size: 10,
             weight: '500'
           },
-          padding: 8
+          padding: 8,
+          color: '#374151'
         }
       }
     },
@@ -233,8 +248,8 @@ const DonationReportsChart = () => {
       {
         label: 'No Data',
         data: Array(12).fill(0),
-        backgroundColor: 'rgba(107, 114, 128, 0.3)',
-        borderColor: 'rgba(107, 114, 128, 0.5)',
+        backgroundColor: 'rgba(185, 28, 28, 0.2)',
+        borderColor: 'rgba(220, 38, 38, 0.4)',
         borderWidth: 1,
         borderRadius: 4,
         borderSkipped: false,
@@ -252,7 +267,7 @@ const DonationReportsChart = () => {
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="text-sm bg-red-600 text-white border-0 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-red-700 cursor-pointer hover:bg-red-700 transition-colors"
+          className="text-sm bg-red-800 text-white border-0 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-red-900 cursor-pointer hover:bg-red-900 transition-colors"
         >
           {years.map(year => (
             <option key={year} value={year}>{year}</option>
@@ -262,7 +277,7 @@ const DonationReportsChart = () => {
       <div className="h-[420px]">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-800"></div>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-full">

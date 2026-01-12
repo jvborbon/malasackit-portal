@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
     HiTrendingUp,
     HiCheckCircle,
-    HiCurrencyDollar,
+    HiCash,
     HiGift
 } from 'react-icons/hi';
 import { Doughnut } from 'react-chartjs-2';
@@ -103,18 +103,18 @@ export default function DonorKPICards() {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-5 sm:mb-6 md:mb-7 lg:mb-8">
             {/* Total Worth of Donations Received */}
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-red-600 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-red-900 hover:shadow-md transition-shadow">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-red-600 font-semibold text-sm sm:text-base">Total Worth of Donations Received</h3>
-                    <div className="bg-red-100 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
-                        <HiTrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+                    <h3 className="text-red-900 font-semibold text-sm sm:text-base">Total Worth of Donations Received</h3>
+                    <div className="bg-red-900/10 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
+                        <HiTrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-900" />
                     </div>
                 </div>
                 
                 {/* Main Value */}
                 <div className="flex items-center mb-2">
-                    <HiCurrencyDollar className="text-2xl sm:text-3xl text-red-600 mr-1.5 sm:mr-2 flex-shrink-0" />
+                    <HiCash className="text-2xl sm:text-3xl text-red-900 mr-1.5 sm:mr-2 flex-shrink-0" />
                     <span className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
                         {loading ? '...' : `₱${statistics.totalWorth.toLocaleString()}`}
                     </span>
@@ -127,12 +127,12 @@ export default function DonorKPICards() {
             </div>
 
             {/* Donation Status Overview with Chart */}
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-green-600 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-red-900 hover:shadow-md transition-shadow">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-green-600 font-semibold text-sm sm:text-base">Donation Status</h3>
-                    <div className="bg-green-100 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
-                        <HiCheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                    <h3 className="text-red-900 font-semibold text-sm sm:text-base">Donation Status</h3>
+                    <div className="bg-red-900/10 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
+                        <HiCheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-900" />
                     </div>
                 </div>
                 
@@ -168,7 +168,7 @@ export default function DonorKPICards() {
                         </div>
                         <div className="h-px bg-gray-200"></div>
                         <div className="text-center">
-                            <div className="text-lg sm:text-xl font-semibold text-red-600">
+                            <div className="text-lg sm:text-xl font-semibold text-red-900">
                                 {loading ? '...' : statistics.failedDonations}
                             </div>
                             <div className="text-xs text-gray-500">Failed</div>
@@ -178,12 +178,12 @@ export default function DonorKPICards() {
             </div>
 
             {/* Total Items Given */}
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-blue-600 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 border-l-4 border-red-900 hover:shadow-md transition-shadow">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-blue-600 font-semibold text-sm sm:text-base">Total Items Given</h3>
-                    <div className="bg-blue-100 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
-                        <HiGift className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                    <h3 className="text-red-900 font-semibold text-sm sm:text-base">Total Items Given</h3>
+                    <div className="bg-red-900/10 p-2 sm:p-2.5 md:p-3 rounded-full flex-shrink-0">
+                        <HiGift className="w-5 h-5 sm:w-6 sm:h-6 text-red-900" />
                     </div>
                 </div>
                 
@@ -212,7 +212,7 @@ export default function DonorKPICards() {
                             {statistics.categories.slice(0, 3).map((category, index) => (
                                 <div key={index} className="flex justify-between items-center text-xs">
                                     <span className="text-gray-600 truncate">{category.category_name}</span>
-                                    <span className="text-blue-600 font-medium">
+                                    <span className="text-red-900 font-medium">
                                         {category.total_quantity} items
                                     </span>
                                 </div>

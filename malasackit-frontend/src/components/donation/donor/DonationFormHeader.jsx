@@ -10,7 +10,7 @@ export function FormHeader() {
 // Form Title Component
 function FormTitle() {
     return (
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-red-600 mb-1.5 sm:mb-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-red-900 mb-1.5 sm:mb-2">
             What are you donating?
         </h1>
     );

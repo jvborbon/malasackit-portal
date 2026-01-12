@@ -95,9 +95,18 @@ export default function DonationTrendsChart() {
             {
                 label: 'Donation Amount (₱)',
                 data: donationData.map(d => d.amount),
-                backgroundColor: '#DC2626',
-                borderColor: '#B91C1C',
-                borderWidth: 1,
+                backgroundColor: (context) => {
+                    const chart = context.chart;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return '#DC2626';
+                    // Create vertical gradient from dark red at bottom to lighter red at top
+                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                    gradient.addColorStop(0, 'rgba(127, 29, 29, 0.85)'); // Darker maroon at bottom
+                    gradient.addColorStop(0.5, 'rgba(185, 28, 28, 0.9)'); // Mid red
+                    gradient.addColorStop(1, 'rgba(220, 38, 38, 0.95)'); // Brighter red at top
+                    return gradient;
+                },
+                borderWidth: 0,
                 borderRadius: 4,
                 borderSkipped: false,
             }
@@ -185,7 +194,7 @@ export default function DonationTrendsChart() {
                 <h3 className="text-lg font-semibold text-gray-900">Donation Trends</h3>
                 <div className="flex items-center space-x-2">
                     <select 
-                        className="text-sm bg-red-600 text-white border border-red-600 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 hover:bg-red-700 transition-colors"
+                        className="text-sm bg-red-900 text-white border border-red-900 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-red-900 focus:border-red-900 hover:bg-red-950 transition-colors"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                     >
@@ -203,7 +212,7 @@ export default function DonationTrendsChart() {
             <div className="relative h-80">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-900"></div>
                     </div>
                 ) : (
                     <Bar data={barChartData} options={barChartOptions} />
@@ -240,7 +249,7 @@ export default function DonationTrendsChart() {
                     <div className="text-sm text-gray-500">Highest</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg font-semibold text-red-600">
+                    <div className="text-lg font-semibold text-red-900">
                         {loading ? '...' : 
                          statistics.lowest > 0 ? 
                          (statistics.lowest >= 1000 ? 

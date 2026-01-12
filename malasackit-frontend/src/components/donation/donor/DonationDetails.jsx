@@ -3,7 +3,7 @@ import { HiLocationMarker } from 'react-icons/hi';
 import { getAvailableSlots } from '../../../services/donationService';
 import { formatTime } from '../../../utils/donationHelpers';
 
-export function DonationDetails({ formData, handleInputChange }) {
+export function DonationDetails({ formData, handleInputChange, userProfile }) {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
 
@@ -39,6 +39,7 @@ export function DonationDetails({ formData, handleInputChange }) {
                 handleInputChange={handleInputChange}
                 availableSlots={availableSlots}
                 loadingSlots={loadingSlots}
+                userProfile={userProfile}
             />
         </div>
     );
@@ -54,7 +55,7 @@ function SectionHeader() {
 }
 
 // Details Grid Component
-function DetailsGrid({ formData, handleInputChange, availableSlots, loadingSlots }) {
+function DetailsGrid({ formData, handleInputChange, availableSlots, loadingSlots, userProfile }) {
     return (
         <div className="space-y-4 sm:space-y-5 md:space-y-6">
             <div className="grid grid-cols-1 md:lg:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
@@ -82,6 +83,7 @@ function DetailsGrid({ formData, handleInputChange, availableSlots, loadingSlots
                 <PickupAddressSection 
                     formData={formData}
                     handleInputChange={handleInputChange}
+                    userProfile={userProfile}
                 />
             )}
             
@@ -128,7 +130,7 @@ function DeliveryMethodOption({ value, label, checked, onChange }) {
                 value={value}
                 checked={checked}
                 onChange={onChange}
-                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300"
+                className="h-4 w-4 text-red-900 focus:ring-red-900 border-gray-300"
             />
             <span className="ml-2 text-xs sm:text-sm text-gray-700">{label}</span>
         </label>
@@ -169,7 +171,7 @@ function ScheduleDateSection({ formData, handleInputChange }) {
                 value={formData.scheduleDate}
                 onChange={handleInputChange}
                 min={today}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-300 outline-none transition-colors bg-white text-sm cursor-pointer"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary outline-none transition-colors bg-white text-sm cursor-pointer"
                 style={{
                     colorScheme: 'light'
                 }}
@@ -190,7 +192,7 @@ function AppointmentTimeSection({ formData, handleInputChange, availableSlots, l
                     Preferred Time
                 </label>
                 <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-900"></div>
                     <span className="ml-2 text-sm text-gray-600">Loading available times...</span>
                 </div>
             </div>
@@ -248,7 +250,7 @@ function TimeSlotOption({ slot, selected, onChange }) {
                 px-3 py-2 text-sm rounded-lg border transition-all duration-200
                 ${slot.available 
                     ? selected 
-                        ? 'bg-red-600 text-white border-red-600'
+                        ? 'bg-red-900 text-white border-red-900'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-red-300 hover:bg-red-50'
                     : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                 }
@@ -264,38 +266,77 @@ function TimeSlotOption({ slot, selected, onChange }) {
 }
 
 // Pickup Address Section
-function PickupAddressSection({ formData, handleInputChange }) {
+function PickupAddressSection({ formData, handleInputChange, userProfile }) {
+    const savedAddress = userProfile ? 
+        [userProfile.streetaddress, userProfile.barangay_id, userProfile.municipality_id, userProfile.province_id]
+            .filter(Boolean).join(', ') : null;
+    
     return (
-        <div className="space-y-2">
-            <label htmlFor="pickupAddress" className="block text-xs sm:text-sm font-medium text-gray-700">
+        <div className="space-y-3">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">
                 Pickup Address <span className="text-red-500">*</span>
             </label>
-            <textarea
-                id="pickupAddress"
-                name="pickupAddress"
-                value={formData.pickupAddress}
-                onChange={handleInputChange}
-                placeholder="Enter your complete address for pickup (e.g., House/Unit No., Street, Barangay, City, Province)"
-                rows={3}
-                className="w-full px-3 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-theme-primary resize-none"
-                required
-            />
-            <p className="text-xs text-gray-500">
-                Please provide your complete address where we will pick up the donation items.
-            </p>
             
-            {/* Display saved address below the textarea */}
-            {formData.address && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
-                    <div className="flex items-start">
-                        <HiLocationMarker className="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-green-800 mb-1">Saved Address:</p>
-                            <p className="text-sm text-green-700">{formData.address}</p>
+            {/* Option 1: Use Existing Address (show even if no saved address) */}
+            <div className="space-y-3">
+                <label className="flex items-start space-x-3 cursor-pointer p-3 border-2 rounded-lg transition-colors"
+                       style={{
+                           borderColor: formData.useExistingAddress ? '#7f1d1d' : '#d1d5db',
+                           backgroundColor: formData.useExistingAddress ? '#fef2f2' : 'white',
+                           opacity: savedAddress ? 1 : 0.6
+                       }}>
+                    <input
+                        type="checkbox"
+                        name="useExistingAddress"
+                        checked={formData.useExistingAddress}
+                        onChange={handleInputChange}
+                        disabled={!savedAddress}
+                        className="mt-1 w-4 h-4 text-red-900 border-gray-300 rounded focus:ring-red-900 focus:ring-2 disabled:opacity-50"
+                    />
+                    <div className="flex-1">
+                        <div className="flex items-center mb-1">
+                            <HiLocationMarker className="w-4 h-4 text-red-900 mr-1.5" />
+                            <span className="text-sm font-medium text-gray-900">Use my saved address</span>
                         </div>
+                        {savedAddress ? (
+                            <p className="text-sm text-gray-600">{savedAddress}</p>
+                        ) : (
+                            <p className="text-xs text-gray-500 italic">No saved address found. Update your profile to save an address.</p>
+                        )}
+                    </div>
+                </label>
+                
+                {/* OR Divider */}
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500">OR</span>
                     </div>
                 </div>
-            )}
+            </div>
+            
+            {/* Option 2: Enter Custom Address (always visible) */}
+            <div className="space-y-2">
+                <label htmlFor="pickupAddress" className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Enter a different pickup address
+                </label>
+                <textarea
+                    id="pickupAddress"
+                    name="pickupAddress"
+                    value={formData.pickupAddress}
+                    onChange={handleInputChange}
+                    disabled={formData.useExistingAddress}
+                    placeholder="Enter your complete address for pickup (e.g., House/Unit No., Street, Barangay, City, Province)"
+                    rows={3}
+                    className="w-full px-3 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    required={!formData.useExistingAddress}
+                />
+                <p className="text-xs text-gray-500">
+                    Please provide your complete address where we will pick up the donation items.
+                </p>
+            </div>
         </div>
     );
 }
