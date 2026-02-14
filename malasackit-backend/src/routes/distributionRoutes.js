@@ -7,7 +7,8 @@ import {
     executeDistributionPlan,
     getDistributionLogs,
     getDistributionStatistics,
-    getDistributionSummary
+    getDistributionSummary,
+    getReservedInventory
 } from '../controllers/distributionControllers.js';
 import { 
     generateDistributionRecommendations,
@@ -35,6 +36,9 @@ router.get('/plans/statistics', requireRole(['Resource Staff', 'Executive Admin'
 
 // GET /api/distribution/summary - Get distribution summary for reports
 router.get('/summary', requireRole(['Resource Staff', 'Executive Admin']), getDistributionSummary);
+
+// GET /api/distribution/reserved - Get all reserved inventory items
+router.get('/reserved', requireRole(['Resource Staff', 'Executive Admin']), getReservedInventory);
 
 // GET /api/distribution/plans/:planId - Get specific distribution plan details
 router.get('/plans/:planId', requireRole(['Resource Staff', 'Executive Admin']), getDistributionPlanById);

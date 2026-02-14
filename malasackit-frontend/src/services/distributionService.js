@@ -339,6 +339,20 @@ class DistributionService {
             throw error;
         }
     }
+
+    /**
+     * Get reserved inventory items
+     * Shows all items currently reserved in approved/ongoing distribution plans
+     */
+    async getReservedInventory() {
+        try {
+            const response = await api.get('/distribution/reserved');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching reserved inventory:', error);
+            throw error;
+        }
+    }
 }
 
 // Export singleton instance

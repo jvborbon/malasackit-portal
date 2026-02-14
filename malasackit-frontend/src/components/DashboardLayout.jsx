@@ -185,7 +185,7 @@ export default function DashboardLayout({ children, userRole }) {
         }
         
         const titleMap = {
-            'Inventory': 'Inventory Management', 
+            'Inventory': 'Inventory Management',
             'Donation Requests': 'Donation Request Management',
             'Distribution Logs': 'Distribution Management',
             'User Management': 'User Administration',

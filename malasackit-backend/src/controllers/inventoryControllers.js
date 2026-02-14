@@ -94,7 +94,23 @@ export const getAllInventory = async (req, res) => {
                     ELSE it.avg_retail_price 
                 END as unit_value,
                 ic.category_name,
-                ic.description as category_description
+                ic.description as category_description,
+                -- Calculate reserved quantity from approved/ongoing distribution plans
+                COALESCE((
+                    SELECT SUM(dpi.quantity)
+                    FROM DistributionPlanItems dpi
+                    JOIN DistributionPlans dp ON dpi.plan_id = dp.plan_id
+                    WHERE dpi.inventory_id = i.inventory_id
+                    AND dp.status IN ('Approved', 'Ongoing')
+                ), 0) as reserved_quantity,
+                -- Calculate truly available quantity
+                i.quantity_available - COALESCE((
+                    SELECT SUM(dpi.quantity)
+                    FROM DistributionPlanItems dpi
+                    JOIN DistributionPlans dp ON dpi.plan_id = dp.plan_id
+                    WHERE dpi.inventory_id = i.inventory_id
+                    AND dp.status IN ('Approved', 'Ongoing')
+                ), 0) as truly_available
             FROM Inventory i
             JOIN ItemType it ON i.itemtype_id = it.itemtype_id
             JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id

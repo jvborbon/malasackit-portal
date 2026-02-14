@@ -392,45 +392,71 @@ function Inventory() {
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Item</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Quantity</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Total Stock</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Reserved</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Available</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Total Value</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Location</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-white uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {inventory.map((item) => (
-                  <tr 
-                    key={item.inventory_id} 
-                    className="hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-3 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{item.itemtype_name}</div>
-                      <div className="text-sm text-gray-500">Unit FMV: {formatCurrency(item.unit_fmv)}</div>
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                      {item.category_name}
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      {item.quantity_available.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(item.total_fmv_value)}
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                      {item.location || 'Not specified'}
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(item.status)}`}>
-                        {getStatusIcon(item.status)}
-                        <span className={getStatusIcon(item.status) ? 'ml-1' : ''}>{item.status}</span>
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {inventory.map((item) => {
+                  const reservedQty = item.reserved_quantity || 0;
+                  const trulyAvailable = item.truly_available ?? item.quantity_available;
+                  const hasReservations = reservedQty > 0;
+                  
+                  return (
+                    <tr 
+                      key={item.inventory_id} 
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{item.itemtype_name}</div>
+                        <div className="text-sm text-gray-500">Unit FMV: {formatCurrency(item.unit_fmv)}</div>
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {item.category_name}
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        {item.quantity_available.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        {hasReservations ? (
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                            {reservedQty.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <span className={`text-sm font-semibold ${
+                          trulyAvailable === 0 ? 'text-red-600' :
+                          hasReservations && trulyAvailable < reservedQty ? 'text-orange-600' :
+                          'text-green-600'
+                        }`}>
+                          {trulyAvailable.toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {formatCurrency(item.total_fmv_value)}
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {item.location || 'Not specified'}
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(item.status)}`}>
+                          {getStatusIcon(item.status)}
+                          <span className={getStatusIcon(item.status) ? 'ml-1' : ''}>{item.status}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {inventory.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
+                    <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-500">
                       <div className="flex flex-col items-center">
                         <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />

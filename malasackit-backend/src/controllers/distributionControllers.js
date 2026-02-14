@@ -1,4 +1,5 @@
 import { query } from '../db.js';
+import { getTrulyAvailableQuantity, checkInventoryAvailability } from '../utilities/reservationHelpers.js';
 
 /**
  * Create a new distribution plan
@@ -100,7 +101,7 @@ export const createDistributionPlan = async (req, res) => {
 
                 // Check inventory availability and get item details
                 const inventoryCheck = await query(
-                    `SELECT i.quantity_available, it.avg_retail_price 
+                    `SELECT i.quantity_available, it.avg_retail_price, it.itemtype_name
                      FROM Inventory i
                      JOIN ItemType it ON i.itemtype_id = it.itemtype_id
                      WHERE i.inventory_id = $1`,
@@ -111,10 +112,18 @@ export const createDistributionPlan = async (req, res) => {
                     throw new Error(`Inventory item ${inventory_id} not found`);
                 }
 
-                const { quantity_available, avg_retail_price } = inventoryCheck.rows[0];
+                const { quantity_available, avg_retail_price, itemtype_name } = inventoryCheck.rows[0];
 
-                if (quantity_available < quantity) {
-                    throw new Error(`Insufficient stock for inventory item ${inventory_id}. Available: ${quantity_available}, Requested: ${quantity}`);
+                // Check truly available quantity (accounting for reservations in other approved/ongoing plans)
+                const availability = await getTrulyAvailableQuantity(inventory_id);
+                
+                if (availability.truly_available < quantity) {
+                    throw new Error(
+                        `Insufficient unreserved stock for ${itemtype_name}. ` +
+                        `Requested: ${quantity}, Available in stock: ${quantity_available}, ` +
+                        `Reserved in other plans: ${availability.reserved_quantity}, ` +
+                        `Truly available: ${availability.truly_available}`
+                    );
                 }
 
                 // Calculate allocated value based on quantity and unit price
@@ -496,14 +505,30 @@ export const executeDistributionPlan = async (req, res) => {
 
             // Process each item in the distribution plan
             for (const item of planDetails.items) {
-                // Check current inventory availability
+                // Check current inventory availability (including truly available after reservations)
                 const inventoryCheck = await query(
                     'SELECT quantity_available FROM Inventory WHERE inventory_id = $1',
                     [item.inventory_id]
                 );
 
-                if (inventoryCheck.rows.length === 0 || inventoryCheck.rows[0].quantity_available < item.quantity) {
-                    throw new Error(`Insufficient inventory for item ${item.itemtype_name}. Available: ${inventoryCheck.rows[0]?.quantity_available || 0}, Required: ${item.quantity}`);
+                if (inventoryCheck.rows.length === 0) {
+                    throw new Error(`Inventory item ${item.itemtype_name} not found`);
+                }
+
+                const quantityAvailable = inventoryCheck.rows[0].quantity_available;
+                
+                // Verify the reservation is still valid
+                const availability = await getTrulyAvailableQuantity(item.inventory_id);
+                
+                // Add back this plan's reservation since we're about to execute it
+                const trulyAvailableForExecution = availability.truly_available + item.quantity;
+                
+                if (quantityAvailable < item.quantity) {
+                    throw new Error(
+                        `Insufficient inventory for item ${item.itemtype_name}. ` +
+                        `Available: ${quantityAvailable}, Required: ${item.quantity}, ` +
+                        `Reserved in other plans: ${availability.reserved_quantity}`
+                    );
                 }
 
                 // Create distribution log entry
@@ -863,6 +888,72 @@ export const getDistributionSummary = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve distribution summary',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get all reserved inventory items
+ * Shows what items are currently reserved in approved/ongoing distribution plans
+ */
+export const getReservedInventory = async (req, res) => {
+    try {
+        const result = await query(
+            `SELECT 
+                dpi.inventory_id,
+                it.itemtype_name,
+                ic.category_name,
+                i.quantity_available,
+                COALESCE(SUM(dpi.quantity), 0) as total_reserved,
+                COUNT(DISTINCT dp.plan_id) as plan_count,
+                i.quantity_available - COALESCE(SUM(dpi.quantity), 0) as truly_available,
+                json_agg(
+                    json_build_object(
+                        'plan_id', dp.plan_id,
+                        'quantity', dpi.quantity,
+                        'status', dp.status,
+                        'beneficiary', b.name,
+                        'planned_date', dp.planned_date
+                    ) ORDER BY dp.planned_date
+                ) as reservations
+             FROM DistributionPlanItems dpi
+             JOIN DistributionPlans dp ON dpi.plan_id = dp.plan_id
+             JOIN Inventory i ON dpi.inventory_id = i.inventory_id
+             JOIN ItemType it ON i.itemtype_id = it.itemtype_id
+             JOIN ItemCategory ic ON it.itemcategory_id = ic.itemcategory_id
+             LEFT JOIN BeneficiaryRequests br ON dp.request_id = br.request_id
+             LEFT JOIN Beneficiaries b ON br.beneficiary_id = b.beneficiary_id
+             WHERE dp.status IN ('Approved', 'Ongoing')
+             GROUP BY dpi.inventory_id, it.itemtype_name, ic.category_name, i.quantity_available
+             ORDER BY ic.category_name, it.itemtype_name`
+        );
+        
+        const reservedItems = result.rows.map(row => ({
+            inventory_id: row.inventory_id,
+            item_name: row.itemtype_name,
+            category: row.category_name,
+            quantity_available: parseInt(row.quantity_available),
+            total_reserved: parseInt(row.total_reserved),
+            truly_available: Math.max(0, parseInt(row.truly_available)),
+            plan_count: parseInt(row.plan_count),
+            reservations: row.reservations
+        }));
+
+        res.json({
+            success: true,
+            data: reservedItems,
+            summary: {
+                total_items_with_reservations: reservedItems.length,
+                total_quantity_reserved: reservedItems.reduce((sum, item) => sum + item.total_reserved, 0)
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting reserved inventory:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get reserved inventory',
             error: error.message
         });
     }
